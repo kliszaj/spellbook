@@ -1,0 +1,679 @@
+SCRYFALL SEARCH SYNTAX REFERENCE
+=================================
+Extracted from https://scryfall.com/docs/syntax and https://scryfall.com/advanced
+Last fetched: 2026-06-29
+
+================================================================================
+1. DEFAULT BEHAVIOR (bare words)
+================================================================================
+
+When you type bare words (without any keyword prefix), Scryfall searches card
+NAMES. All terms are combined with implicit AND -- all must match.
+
+  Example: "fire ice" finds cards with both "fire" and "ice" in their name.
+
+Words can be negated with a hyphen prefix:
+  Example: "-fire" excludes cards with "fire" in their name.
+
+Partial matching is used by default for names.
+
+================================================================================
+2. EXACT NAME SEARCH
+================================================================================
+
+Prefix with ! to search for an exact card name (case-insensitive):
+  !fire                     -> the card named exactly "Fire"
+  !"sift through sands"     -> the card named exactly "Sift Through Sands"
+
+================================================================================
+3. BOOLEAN LOGIC
+================================================================================
+
+AND (implicit):
+  All search terms are ANDed together by default. Every condition must match.
+
+OR:
+  Use "or" or "OR" between terms to match either condition.
+  t:fish or t:bird          -> cards that are Fish OR Birds
+
+Parentheses for grouping:
+  t:legendary (t:goblin or t:elf)   -> legendary goblins or legendary elves
+  through (depths or sands or mists) -> cards with "through" and one of those words
+
+Negation:
+  Prefix any keyword with - to negate it.
+  -c:red                    -> not red cards
+  -t:creature               -> not creatures
+
+  The is: keyword has a special inverted form not: (equivalent to -is:)
+  not:reprint               -> same as -is:reprint
+  -not:reprint              -> same as is:reprint
+
+  All keywords EXCEPT "include" can be negated.
+
+================================================================================
+4. QUOTING
+================================================================================
+
+Use double quotes " " around text that contains spaces or punctuation:
+  o:"draw a card"           -> oracle text contains "draw a card"
+  a:"proce"                 -> artist name contains "proce"
+
+================================================================================
+5. COLORS AND COLOR IDENTITY
+================================================================================
+
+Keywords: c: / color: (card color), id: / identity: (color identity)
+
+Values:
+  Single colors: w (white), u (blue), b (black), r (red), g (green)
+  Full names: white, blue, black, red, green
+  Colorless: c, colorless
+  Multicolor: m, multicolor
+
+Guild names (2-color):
+  azorius (WU), dimir (UB), rakdos (BR), gruul (RG), selesnya (GW)
+  orzhov (WB), izzet (UR), golgari (BG), boros (RW), simic (GU)
+
+Shard names (3-color):
+  bant (GWU), esper (WUB), grixis (UBR), jund (BRG), naya (RGW)
+
+College names (3-color):
+  quandrix, silverquill, lorehold, prismari, witherbloom
+
+Wedge names (3-color):
+  abzan (WBG), jeskai (URW), sultai (BGU), mardu (RWB), temur (GUR)
+
+Four-color nicknames:
+  chaos, aggression, altruism, growth, artifice
+
+Comparison operators: =, !=, <, >, <=, >=
+  c:rg                     -> cards that are red AND green
+  c>=uw                    -> cards that are at least white and blue
+  c=2                      -> cards that are exactly two colors (numeric)
+  id<=esper                -> color identity within Esper (for commander)
+  id:c                     -> colorless identity
+
+Color indicator: has:indicator -> cards that have a color indicator
+
+================================================================================
+6. CARD TYPES
+================================================================================
+
+Keywords: t: / type:
+Searches supertypes, card types, and subtypes. Partial words allowed.
+
+Card Types: artifact, battle, boss, conspiracy, creature, dungeon, emblem,
+  enchantment, event, hero, instant, kindred, land, phenomenon, plane,
+  planeswalker, scheme, sorcery, vanguard
+
+Supertypes: basic, elite, legendary, ongoing, snow, token, world
+
+Artifact subtypes: attraction, blood, bobblehead, book, clue, contraption,
+  equipment, food, fortification, gold, incubator, infinity, junk, map,
+  powerstone, stone, terminus, treasure, vehicle, spacecraft
+
+Enchantment subtypes: aura, background, cartouche, case, class, curse, plan,
+  role, room, rune, saga, shard, shrine
+
+Land subtypes: cave, cloud, desert, forest, gate, island, lair, locus, mine,
+  mountain, sphere, plains, planet, power-plant, swamp, tower, town, urza's
+
+Spell subtypes: adventure, arcane, chorus, lesson, omen, trap
+
+Creature subtypes: (hundreds -- angel, beast, bird, cat, demon, dragon, dwarf,
+  elf, faerie, goblin, human, knight, merfolk, monk, ninja, rogue, soldier,
+  spirit, vampire, warrior, wizard, zombie, etc.)
+
+Planeswalker subtypes: ajani, chandra, elspeth, garruk, gideon, jace, karn,
+  liliana, nissa, sorin, teferi, ugin, vivien, vraska, wrenn, etc.
+
+Plane subtypes: dominaria, innistrad, ravnica, zendikar, etc.
+
+Examples:
+  t:merfolk t:legend        -> legendary merfolk
+  t:goblin -t:creature      -> goblin cards that aren't creatures
+
+================================================================================
+7. CARD TEXT (ORACLE TEXT)
+================================================================================
+
+Keywords: o: / oracle: (oracle text, no reminder text)
+          fo: / fulloracle: (full oracle text including reminder text)
+          keyword: / kw: (keyword abilities)
+
+Use ~ as placeholder for the card's own name.
+Uses current Oracle text (e.g., "dies" not "is put into a graveyard").
+
+Examples:
+  o:draw t:creature         -> creatures that mention drawing
+  o:"~ enters tapped"      -> cards that enter tapped
+  kw:flying -t:creature     -> noncreatures with flying keyword
+
+================================================================================
+8. MANA COSTS
+================================================================================
+
+Keywords: m: / mana: (mana cost symbols)
+          mv / manavalue (mana value / converted mana cost)
+          devotion: (devotion contribution)
+          produces: (mana production)
+
+Mana symbol syntax:
+  Simple: W, U, B, R, G, C (colorless), S (snow), X
+  Wrapped: {W}, {U}, {B}, {R}, {G}, {C}, {S}, {X}
+  Generic: {0}, {1}, {2}, ... {20}
+  Hybrid: {W/U}, {W/B}, {U/B}, {U/R}, {B/R}, {B/G}, {R/G}, {R/W}, {G/W}, {G/U}
+  Phyrexian: {W/P}, {U/P}, {B/P}, {R/P}, {G/P}, {H} (generic Phyrexian)
+  Hybrid Phyrexian: {B/G/P}, {B/R/P}, {G/U/P}, {G/W/P}, {R/G/P}, {R/W/P},
+                    {U/B/P}, {U/R/P}, {W/B/P}, {W/U/P}
+  Colorless hybrid: {C/W}, {C/U}, {C/B}, {C/R}, {C/G}
+  Two-generic hybrid: {2/W}, {2/U}, {2/B}, {2/R}, {2/G}
+
+  Other symbols: {T} (tap), {Q} (untap), {E} (energy), {P} (pawprint),
+                 {PW} (planeswalker), {CHAOS} (chaos), {TK} (ticket)
+
+Shorthand: G is same as {G}. Complex/split symbols MUST be wrapped: {2/G}
+Comparison operators work on mana costs (subset/superset logic).
+
+Mana value: mv=5, mv>3, mv<=2, manavalue:even, manavalue:odd
+
+is:hybrid       -> cards with hybrid mana symbols
+is:phyrexian    -> cards with Phyrexian mana symbols
+
+Examples:
+  mana:{G}{U}              -> cards with green and blue in cost
+  m:2WW                    -> cards costing 2 generic + 2 white
+  m>3WU                    -> cards costing more than 3WU
+  m:{R/P}                  -> cards with Phyrexian red mana
+  c:u mv=5                 -> blue cards with mana value 5
+  devotion:{u/b}{u/b}{u/b} -> 3 devotion to black and blue
+  produces=wu              -> produces blue and white mana
+
+================================================================================
+9. POWER, TOUGHNESS, AND LOYALTY
+================================================================================
+
+Keywords: power / pow, toughness / tou, pt / powtou (total P+T), loyalty / loy
+
+All use numeric expressions: =, !=, <, >, <=, >=
+Can compare against numbers or against each other.
+
+Examples:
+  pow>=8                   -> power 8 or more
+  pow>tou c:w t:creature   -> white creatures with power > toughness
+  t:planeswalker loy=3     -> planeswalkers starting at 3 loyalty
+
+================================================================================
+10. MULTI-FACED CARDS
+================================================================================
+
+is:split       -> split cards
+is:flip        -> flip cards
+is:transform   -> transform cards (alias: tdfc)
+is:meld        -> meld cards
+is:meldpart    -> meld parts specifically
+is:meldresult  -> meld results specifically
+is:leveler     -> Level Up cards
+is:dfc         -> double-faced cards (any kind)
+is:mdfc        -> modal double-faced cards
+
+================================================================================
+11. SPELLS, PERMANENTS, AND EFFECTS
+================================================================================
+
+is:spell        -> cards cast as spells
+is:permanent    -> permanent cards
+is:historic     -> historic cards
+is:party        -> creatures that can be in your party
+is:outlaw       -> creatures that are outlaws
+is:modal        -> modal effects
+is:vanilla      -> vanilla creatures (no abilities)
+is:frenchvanilla -> French vanilla (only keyword abilities)
+is:bear         -> 2/2/2 "bear" creatures (2 mana, 2/2)
+is:manland      -> lands that can become creatures
+
+================================================================================
+12. RARITY
+================================================================================
+
+Keywords: r: / rarity:
+
+Values: common (c), uncommon (u), rare (r), special (s), mythic (m), bonus (b)
+
+Comparison operators: =, !=, <, >, <=, >=
+  r:common                 -> common cards
+  r>=r                     -> rare or mythic
+  r:mythic                 -> mythic rares
+
+Special modifiers:
+  new:rarity               -> first time printed at this rarity
+  in:rare                  -> cards that have EVER been printed at rare
+  is:newinpauper            -> cards new to pauper
+
+================================================================================
+13. SETS AND BLOCKS
+================================================================================
+
+Keywords: s: / e: / set: / edition: (set code)
+          b: / block: (block code)
+          g: / group: (set group -- parent, sibling, child sets)
+          cn: / number: (collector number)
+          st: (set type)
+          in: (card has appeared in this set/type)
+
+Set types (st:):
+  Primary: core, expansion, draftinnovation
+  Series: masters, funny, commander, duel_deck, from_the_vault, spellbook,
+          premium_deck
+  Specialized: alchemy, archenemy, masterpiece, memorabilia, planechase,
+               promo, starter, token, treasure_chest, vanguard
+
+Promo types (is:):
+  is:booster, is:planeswalker_deck, is:league, is:buyabox, is:giftbox,
+  is:intro_pack, is:gameday, is:prerelease, is:release, is:fnm,
+  is:judge_gift, is:arena_league, is:player_rewards, is:media_insert,
+  is:instore, is:convention, is:set_promo, is:datestamped
+
+Examples:
+  e:war                    -> War of the Spark
+  e:war is:booster         -> booster box cards from WAR
+  b:wwk                    -> Zendikar Block (using Worldwake code)
+  g:fin or g:fic           -> Final Fantasy and its Commander deck related sets
+  cn:50                    -> collector number 50
+  cn>50                    -> collector number greater than 50
+  in:lea in:m15            -> cards in both Alpha and M2015
+  st:masters               -> cards from masters sets
+  -in:booster              -> never printed in a booster set
+
+================================================================================
+14. CUBES
+================================================================================
+
+Keyword: cube:
+
+Values: arena, grixis, legacy, chuck, twisted, april, protour, uncommon,
+        modern, amaz, tinkerer, livethedream, chromatic, vintage, apcube
+
+Examples:
+  cube:vintage             -> cards in the Vintage Cube
+  cube:modern t:planeswalker -> planeswalkers in the Modern Cube
+
+================================================================================
+15. FORMAT LEGALITY
+================================================================================
+
+Keywords: f: / format: (legal in format)
+          banned: (banned in format)
+          restricted: (restricted in format)
+
+Formats: standard, future, historic, timeless, gladiator, pioneer, modern,
+  legacy, pauper, vintage, penny, commander, oathbreaker, standardbrawl,
+  brawl, competitivebrawl, alchemy, paupercommander, duel, oldschool,
+  premodern, predh, tlr
+
+Commander-specific:
+  is:commander     -> can be your commander
+  is:brawler       -> can be your Brawl commander
+  is:companion     -> companion cards
+  is:duelcommander -> can be your Duel Commander
+  is:oathbreaker   -> can be your Oathbreaker
+  is:partner       -> has any Partner mechanic
+  is:gamechanger   -> Commander Gamechangers
+
+  edhrecrank / edhrec + numeric expression (1 = most popular)
+    edhrecrank<=100 sort:edhrec -> top 100 by EDHREC ranking
+
+  is:reserved      -> Reserved List cards
+
+Examples:
+  f:pauper c:g t:creature  -> green pauper-legal creatures
+  banned:legacy            -> cards banned in Legacy
+
+================================================================================
+16. USD/EUR/TIX PRICES
+================================================================================
+
+Keywords: usd, eur, tix (with numeric expressions)
+          cheapest:usd, cheapest:eur, cheapest:tix
+
+Examples:
+  tix>15.00                -> costs more than 15 TIX
+  usd>=0.50 e:ema          -> worth 50+ cents in Eternal Masters
+  cheapest:usd             -> cheapest USD printing of each card
+
+================================================================================
+17. ARTIST, FLAVOR TEXT, AND WATERMARK
+================================================================================
+
+Keywords: a: / artist: (artist name)
+          ft: / flavor: (flavor text)
+          wm: / watermark: (watermark name)
+          artists>1 (multiple artists)
+          illustrations>1 (multiple illustrations)
+          has:watermark (any watermark)
+
+Special modifiers:
+  new:art       -> new illustration
+  new:artist    -> first time by this artist
+  new:flavor    -> new flavor text
+
+Examples:
+  a:"proce"                -> illustrated by Vincent Proce
+  ft:mishra                -> mentions Mishra in flavor text
+  wm:orzhov                -> Orzhov guild watermark
+
+================================================================================
+18. BORDER, FRAME, FOIL, AND RESOLUTION
+================================================================================
+
+Border: border:black, border:white, border:silver, border:borderless
+
+Frame editions: frame:1993, frame:1997, frame:2003, frame:2015, frame:future
+
+Frame effects: frame:legendary, frame:colorshifted, frame:tombstone,
+               frame:enchantment
+
+Foil/finish:
+  is:foil, is:nonfoil, is:etched, is:glossy
+  is:foil is:nonfoil       -> available in both (most booster cards)
+
+Misc:
+  is:full / is:fullart     -> full art cards
+  is:hires                 -> high-resolution images
+  is:new                   -> 2015 holofoil-stamp frame
+  is:old                   -> 1993 or 1997 classic frame
+  new:frame                -> first time in this frame
+  is:default               -> default Magic frame
+  is:atypical              -> atypical frame treatment
+  is:universesbeyond       -> Universes Beyond cards
+  not:universesbeyond      -> non-Universes Beyond cards
+  is:borderless            -> borderless cards
+  is:extended              -> extended art cards
+  is:showcase              -> showcase treatment
+
+Security stamp: stamp:oval, stamp:acorn, stamp:triangle, stamp:arena
+
+================================================================================
+19. GAMES, PROMOS, AND SPOTLIGHTS
+================================================================================
+
+Keywords: game: (available in game environment)
+          in: (any printing available in game)
+Values: paper, mtgo, arena
+
+is:digital       -> only available digitally
+is:alchemy       -> Arena Alchemy cards
+is:rebalanced    -> Arena rebalanced cards
+is:promo         -> promotional cards
+is:spotlight     -> Story Spotlight cards
+is:scryfallpreview -> previewed by Scryfall
+
+Examples:
+  game:arena               -> cards on MTG Arena
+  -in:mtgo f:legacy        -> legacy cards not on MTGO
+  game:paper               -> paper printings
+
+================================================================================
+20. YEAR AND DATE
+================================================================================
+
+Keywords: year (year only), date (full date)
+
+Formats: year=YYYY, date=YYYY-MM-DD
+Can use set codes as date proxies. Can use "now" or "today" for current date.
+Numeric expressions: =, !=, <, >, <=, >=
+
+Examples:
+  year<=1994               -> cards from 1994 and before
+  year=2026                -> cards from this year
+  date>=2015-08-18         -> printed on or after Aug 18, 2015
+  date>ori                 -> printed after Magic Origins release
+  date>now                 -> future release dates
+
+================================================================================
+21. TAGGER TAGS
+================================================================================
+
+Art tags: art: / atag: / arttag: (things in the illustration)
+Oracle tags: function: / otag: / oracletag: (card function descriptions)
+
+Data comes from the Tagger community project.
+
+Examples:
+  art:squirrel             -> art contains a squirrel
+  function:removal         -> cards tagged as removal
+
+================================================================================
+22. REPRINTS
+================================================================================
+
+is:reprint       -> reprint cards
+not:reprint      -> new cards in their set
+is:unique        -> only appeared in one set ever
+
+Numeric comparisons:
+  prints=1       -> printed exactly once
+  prints>5       -> printed more than 5 times
+  sets=1         -> appeared in exactly 1 set
+  sets>=20       -> appeared in 20+ sets
+  paperprints=1  -> paper printings count
+  papersets=1    -> paper sets count
+
+================================================================================
+23. LANGUAGES
+================================================================================
+
+Keywords: lang: / language:
+
+Values: en (English), es (Spanish), fr (French), de (German), it (Italian),
+  pt (Portuguese), ja (Japanese), ko (Korean), ru (Russian),
+  zhs (Simplified Chinese), zht (Traditional Chinese),
+  he (Hebrew), la (Latin), grc (Ancient Greek), ar (Arabic),
+  sa (Sanskrit), ph (Phyrexian), qya (Quenya)
+
+Special: lang:any (any language)
+
+Modifiers:
+  new:language             -> first printing in this language
+  in:ru                    -> ever printed in Russian
+
+Examples:
+  lang:japanese            -> Japanese printings
+  lang:any t:planeswalker unique:prints -> all planeswalker printings in any language
+
+================================================================================
+24. REGULAR EXPRESSIONS
+================================================================================
+
+Use forward slashes // instead of quotes with: type:, t:, oracle:, o:,
+flavor:, ft:, and name:
+
+Supported features:
+  .*?                      -> wildcards
+  (a|b)                    -> option groups
+  [ab]                     -> character brackets
+  \d, \w                   -> character classes
+  (?!), \b, ^, $           -> anchors
+  \/                       -> escaped forward slash
+
+Examples:
+  t:creature o:/^{T}:/     -> creatures with tap-only activated abilities
+  t:instant o:/\spp/       -> instants with +X/+X effects
+  name:/\bizzet\b/         -> "izzet" as whole word (not "mizzet")
+
+================================================================================
+25. LAND SHORTCUTS / NICKNAMES
+================================================================================
+
+is:bikeland (aliases: cycleland, bicycleland)
+is:bondland (aliases: crowdland, bbdland, battlebondland)
+is:bounceland (alias: karoo)
+is:canopyland (alias: canland)
+is:checkland
+is:creatureland
+is:dual
+is:fastland
+is:fetchland
+is:filterland
+is:gainland
+is:painland
+is:pathway
+is:scryland
+is:surveilland
+is:shadowland (alias: snarl)
+is:shockland
+is:slowland
+is:storageland
+is:tangoland (alias: battleland)
+is:tricycleland (aliases: trikeland, triome)
+is:triland
+is:masterpiece
+
+Other shortcuts:
+  is:colorshifted
+
+================================================================================
+26. EXTRA / FUNNY CARDS
+================================================================================
+
+Vanguard, plane, scheme, phenomenon cards are HIDDEN by default.
+Must search by type: or set: to find them.
+
+is:funny         -> un-cards, holiday cards, funny cards
+include:extras   -> show ALL cards including extras
+
+================================================================================
+27. DISPLAY KEYWORDS
+================================================================================
+
+Uniqueness:
+  unique:cards             -> one result per card name (default)
+  unique:prints            -> every printing (alias: ++)
+  unique:art               -> every unique illustration (alias: @@)
+
+Display mode:
+  display:grid             -> card image grid
+  display:checklist        -> checklist format
+  display:full             -> full card details
+  display:text             -> text only
+
+Sort order:
+  order:name, order:released, order:set, order:rarity, order:color,
+  order:cmc, order:power, order:toughness, order:usd, order:tix,
+  order:eur, order:artist, order:edhrec, order:penny, order:review,
+  order:spoiled, order:imageupdated
+
+Direction:
+  direction:asc            -> ascending
+  direction:desc           -> descending
+
+Preferred printing:
+  prefer:oldest, prefer:newest
+  prefer:usd-low, prefer:usd-high (also eur, tix variants)
+  prefer:promo
+  prefer:default           -> default Magic frame
+  prefer:atypical          -> atypical frames
+  prefer:universesbeyond / prefer:ub
+  prefer:notuniversesbeyond / prefer:notub
+
+================================================================================
+28. CRITERIA (is: / not: / has: keyword values)
+================================================================================
+
+From the advanced search "Criteria" dropdown, all valid is: values:
+
+adventure, arenaid, artseries, artist, artistmisprint, lights (attraction lights),
+atypical, augmentation (augment), back, bear, beginnerbox, booster, borderless,
+brawlcommander, buyabox, cardmarket, class, ci (color indicator), colorshifted,
+commander, companion, contentwarning, covered, manland (creature land),
+datestamped, default, digital, doublesided, duelcommander, etb,
+englishart, etch (etched), extended, extra, ff (final fantasy), firstprint,
+flavorname, flavor, flip, foil, fbb (foreign black border), fwb (foreign white border),
+frenchvanilla, fullart, funny, future, gamechanger, gameday, hires,
+historic, splitmana (hybrid mana), illustration, intropack, invitational,
+leveler, localizedname, mtgoid, masterpiece, meld, modal, mdfc,
+modern, multiverse, new, nonfoil, notuniversesbeyond, oathbreaker, old,
+outlaw, oversized, partner, paperart, party, permanent, phyrexia (phyrexian mana),
+planar, planeswalkerdeck, prepare, prerelease, printedtext, promo, related,
+release, reprint, reserved, reversible, stamp (security stamp), showcase,
+spell, spellbook, spikey, split, stamped, startercollection, starterdeck,
+story (spotlight), tcgplayer, textless, token, tombstone, transform,
+translucent, onlyprint (unique), universesbeyond, vanilla, variation,
+watermark, worthy
+
+================================================================================
+29. COMPLETE KEYWORD QUICK REFERENCE
+================================================================================
+
+FIELD KEYWORDS:
+  Card name (default)    -> bare words, or name:
+  Oracle text            -> o: / oracle:
+  Full oracle text       -> fo: / fulloracle:
+  Keyword abilities      -> keyword: / kw:
+  Type line              -> t: / type:
+  Color                  -> c: / color:
+  Color identity         -> id: / identity:
+  Mana cost              -> m: / mana:
+  Mana value             -> mv / manavalue
+  Power                  -> pow / power
+  Toughness              -> tou / toughness
+  Total P/T              -> pt / powtou
+  Loyalty                -> loy / loyalty
+  Set                    -> s: / e: / set: / edition:
+  Block                  -> b: / block:
+  Set group              -> g: / group:
+  Collector number       -> cn: / number:
+  Set type               -> st:
+  Format legal           -> f: / format:
+  Banned                 -> banned:
+  Restricted             -> restricted:
+  Rarity                 -> r: / rarity:
+  Artist                 -> a: / artist:
+  Flavor text            -> ft: / flavor:
+  Watermark              -> wm: / watermark:
+  Cube                   -> cube:
+  USD price              -> usd
+  EUR price              -> eur
+  TIX price              -> tix
+  Year                   -> year
+  Date                   -> date
+  Language               -> lang: / language:
+  Art tag                -> art: / atag: / arttag:
+  Oracle tag             -> function: / otag: / oracletag:
+  EDHREC rank            -> edhrecrank / edhrec
+  Border                 -> border:
+  Frame                  -> frame:
+  Stamp                  -> stamp:
+  Game environment       -> game:
+  Devotion               -> devotion:
+  Produces mana          -> produces:
+  Number of prints       -> prints
+  Number of sets         -> sets
+  Paper prints           -> paperprints
+  Paper sets             -> papersets
+  Number of artists      -> artists
+  Number of illustrations -> illustrations
+  Cheapest print         -> cheapest:usd / cheapest:eur / cheapest:tix
+
+BOOLEAN KEYWORDS:
+  is: / not:             -> boolean properties (see section 28 for full list)
+  has:                   -> has a property (indicator, watermark, etc.)
+  in:                    -> card has appeared in (set, format, game, language)
+  new:                   -> first time for (art, artist, flavor, rarity, frame, language)
+
+DISPLAY KEYWORDS:
+  unique:                -> cards, prints, art
+  display:               -> grid, checklist, full, text
+  order:                 -> name, released, set, rarity, color, cmc, power, etc.
+  direction:             -> asc, desc
+  prefer:                -> oldest, newest, usd-low, usd-high, promo, etc.
+  include:extras         -> show hidden card types
+
+COMPARISON OPERATORS (for numeric/comparable fields):
+  =    equal to
+  !=   not equal to
+  <    less than
+  >    greater than
+  <=   less than or equal to
+  >=   greater than or equal to

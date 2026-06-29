@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spellbook</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: #F5F5F4;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e6;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: -0.02em;
+    }
+
+    .header-actions { display: flex; gap: 2px; align-items: center; }
+
+    .nav-pills {
+      display: flex;
+      gap: 2px;
+      background: #f0f0ee;
+      border-radius: 999px;
+      padding: 3px;
+      margin-right: 12px;
+    }
+
+    .tab-btn {
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: #888;
+      font: 13px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover { color: #555; }
+    .tab-btn.active { background: #fff; color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+    #settings-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #e0e0de;
+      background: #fff;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    #settings-btn:hover { border-color: #ccc; color: #555; }
+
+    /* ── Main ── */
+    main { max-width: 900px; margin: 0 auto; padding: 28px 24px; }
+
+    /* ── Search Section ── */
+    .search-section {
+      margin-bottom: 24px;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1.5px solid #e0e0de;
+      border-radius: 12px;
+      padding: 4px 4px 4px 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-bar:focus-within {
+      border-color: #bbb;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+    }
+
+    .search-bar input {
+      flex: 1;
+      border: none;
+      background: none;
+      font: 15px/1.4 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      color: #1a1a1a;
+      outline: none;
+      padding: 10px 0;
+    }
+
+    .search-bar input::placeholder { color: #bbb; }
+
+    .search-bar button {
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #1a1a1a;
+      color: #fff;
+      font: 14px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .search-bar button:hover { background: #333; }
+    .search-bar button:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* ── Commander Identity (Reader style) ── */
+    .color-identity {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .color-identity label {
+      font-size: 12px;
+      color: #999;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .color-toggles { display: flex; gap: 4px; }
+
+    .color-toggle {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1.5px solid #e0e0de;
+      background: #fff;
+      color: #ccc;
+      font: 13px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .color-toggle:hover { border-color: #ccc; color: #999; }
+
+    .color-toggle[data-color="w"].active { background: #F9FAF4; border-color: #E0D6B5; color: #8B7D3C; }
+    .color-toggle[data-color="u"].active { background: #E8F1F8; border-color: #0E68AB; color: #0E68AB; }
+    .color-toggle[data-color="b"].active { background: #2a2a2a; border-color: #2a2a2a; color: #bbb; }
+    .color-toggle[data-color="r"].active { background: #FDECEA; border-color: #D3202A; color: #D3202A; }
+    .color-toggle[data-color="g"].active { background: #E8F5EE; border-color: #00733E; color: #00733E; }
+
+    .identity-display {
+      font: 11px/1 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      color: #aaa;
+    }
+
+    /* ── Query Display ── */
+    .query-display {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 7px 12px;
+      background: #EEEEE8;
+      border-radius: 8px;
+      font: 12px/1.3 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      color: #777;
+    }
+
+    .query-display.visible { display: flex; }
+    .query-display code { flex: 1; word-break: break-all; }
+
+    .query-display button {
+      background: none;
+      border: none;
+      color: #0066CC;
+      font: 11px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      padding: 2px 6px;
+    }
+
+    .query-display button:hover { text-decoration: underline; }
+
+    /* ── Example Queries ── */
+    .example-queries {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .example-queries button {
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid #e0e0de;
+      background: #fff;
+      color: #888;
+      font: 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .example-queries button:hover { border-color: #bbb; color: #555; }
+
+    /* ── Status ── */
+    .status {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .status.error { color: #D3202A; }
+
+    /* ── Results Grid (Card Collector style, Apple Sidebar size) ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px;
+      perspective: 800px;
+    }
+
+    .card-item {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.25s ease-out;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .card-item:hover {
+      box-shadow: 0 14px 36px rgba(0,0,0,0.12);
+    }
+
+    .card-item img {
+      width: 100%;
+      display: block;
+    }
+
+    .card-info {
+      padding: 10px 12px;
+    }
+
+    .card-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: #1a1a1a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-type {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-price {
+      font-size: 13px;
+      font-weight: 600;
+      color: #2d8a4e;
+      margin-top: 6px;
+    }
+
+    .card-price.no-price { color: #ccc; font-weight: 400; }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .card-actions button {
+      flex: 1;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid #e8e8e6;
+      background: #fff;
+      color: #888;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .card-actions button:hover { border-color: #ccc; color: #555; }
+
+    .card-actions button.saved {
+      background: #1a1a1a;
+      border-color: #1a1a1a;
+      color: #fff;
+    }
+
+    .card-actions button.saved:hover { background: #333; }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .pagination button {
+      padding: 8px 24px;
+      border-radius: 999px;
+      border: 1px solid #e0e0de;
+      background: #fff;
+      color: #555;
+      font: 13px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pagination button:hover { border-color: #ccc; color: #1a1a1a; }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Modals ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+
+    .modal h2 {
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .modal label {
+      display: block;
+      font-size: 12px;
+      color: #999;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #e0e0de;
+      background: #fff;
+      color: #1a1a1a;
+      font-size: 14px;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .modal input:focus { border-color: #999; }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .modal-actions button {
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .modal-actions .btn-save { background: #1a1a1a; color: #fff; }
+    .modal-actions .btn-save:hover { background: #333; }
+    .modal-actions .btn-cancel { background: #f0f0ee; color: #555; }
+    .modal-actions .btn-cancel:hover { background: #e8e8e6; }
+
+    /* ── Card Detail Modal ── */
+    .card-detail-modal .modal {
+      max-width: 680px;
+      display: flex;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .card-detail-modal .modal img {
+      width: 220px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .card-detail-modal .detail-info { flex: 1; }
+    .card-detail-modal .detail-info h3 { margin-bottom: 10px; font-size: 18px; font-weight: 700; }
+
+    .card-detail-modal .detail-info .detail-row {
+      margin-bottom: 5px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .card-detail-modal .detail-info .detail-label { color: #aaa; }
+
+    .card-detail-modal .detail-info .oracle-text {
+      margin-top: 12px;
+      padding: 12px;
+      background: #F5F5F4;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #333;
+      white-space: pre-wrap;
+    }
+
+    .card-detail-modal .card-actions {
+      margin-top: 16px;
+    }
+
+    .card-detail-modal .card-actions button {
+      font-size: 12px;
+      padding: 6px 14px;
+    }
+
+    /* ── Saved / Empty ── */
+    .saved-section { display: none; }
+    .saved-section.visible { display: block; }
+    .search-content.hidden { display: none; }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #bbb;
+    }
+
+    .empty-state p { font-size: 16px; margin-bottom: 6px; color: #999; }
+    .empty-state small { font-size: 13px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .search-bar { flex-direction: column; padding: 12px; gap: 8px; }
+      .search-bar input { padding: 12px 0; }
+      .search-bar button { width: 100%; padding: 12px; }
+      .card-detail-modal .modal { flex-direction: column; }
+      .card-detail-modal .modal img { width: 100%; }
+      .results-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+      .nav-pills { margin-right: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Spellbook</h1>
+    <div class="header-actions">
+      <div class="nav-pills">
+        <button class="tab-btn active" data-tab="search">Search</button>
+        <button class="tab-btn" data-tab="saved">Saved <span id="saved-count">0</span></button>
+      </div>
+      <button id="settings-btn">&#9881;</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="search-content" id="search-content">
+      <div class="search-section">
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="What kind of card are you looking for?" autofocus>
+          <button id="search-btn">Search</button>
+        </div>
+        <div class="color-identity">
+          <label>Commander</label>
+          <div class="color-toggles">
+            <button class="color-toggle" data-color="w" title="White">W</button>
+            <button class="color-toggle" data-color="u" title="Blue">U</button>
+            <button class="color-toggle" data-color="b" title="Black">B</button>
+            <button class="color-toggle" data-color="r" title="Red">R</button>
+            <button class="color-toggle" data-color="g" title="Green">G</button>
+          </div>
+          <span class="identity-display" id="identity-display">no colors set</span>
+        </div>
+        <div class="query-display" id="query-display">
+          <code id="query-text"></code>
+          <button id="copy-query-btn">Copy</button>
+          <button id="open-scryfall-btn">Scryfall</button>
+        </div>
+        <div class="example-queries">
+          <button>creatures that give all my creatures trample</button>
+          <button>enchantments that make lands tap for extra mana</button>
+          <button>artifacts that draw cards when creatures enter</button>
+          <button>cheap removal for any permanent</button>
+        </div>
+      </div>
+
+      <div id="status" class="status" style="display:none"></div>
+      <div id="results" class="results-grid"></div>
+      <div id="pagination" class="pagination" style="display:none">
+        <button id="load-more-btn">Load more</button>
+      </div>
+    </div>
+
+    <div class="saved-section" id="saved-section">
+      <div class="search-section">
+        <div class="search-bar">
+          <input type="text" id="saved-filter" placeholder="Filter saved cards...">
+        </div>
+      </div>
+      <div id="saved-empty" class="empty-state">
+        <p>No saved cards yet</p>
+        <small>Search for cards and save them to build your list</small>
+      </div>
+      <div id="saved-grid" class="results-grid"></div>
+    </div>
+  </main>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal">
+      <h2>Settings</h2>
+      <label for="api-key-input">Claude API Key</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-...">
+      <small style="color: #aaa; display: block; margin-top: -12px; margin-bottom: 20px; font-size: 12px;">
+        Stored in your browser only. Used to translate your searches.
+      </small>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="settings-cancel">Cancel</button>
+        <button class="btn-save" id="settings-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Detail Modal -->
+  <div class="modal-overlay card-detail-modal" id="detail-modal">
+    <div class="modal">
+      <img id="detail-img" src="" alt="">
+      <div class="detail-info">
+        <h3 id="detail-name"></h3>
+        <div class="detail-row"><span class="detail-label">Type: </span><span id="detail-type"></span></div>
+        <div class="detail-row"><span class="detail-label">Mana: </span><span id="detail-mana"></span></div>
+        <div class="detail-row"><span class="detail-label">Set: </span><span id="detail-set"></span></div>
+        <div class="detail-row"><span class="detail-label">Rarity: </span><span id="detail-rarity"></span></div>
+        <div class="detail-row" id="detail-pt-row"><span class="detail-label">P/T: </span><span id="detail-pt"></span></div>
+        <div class="detail-row"><span class="detail-label">Cardmarket: </span><span id="detail-price"></span></div>
+        <div class="detail-row"><span class="detail-label">Foil: </span><span id="detail-foil-price"></span></div>
+        <div id="detail-oracle" class="oracle-text"></div>
+        <div class="card-actions" style="margin-top: 16px;">
+          <button id="detail-save-btn">Save</button>
+          <button id="detail-cardmarket-btn">Cardmarket</button>
+          <button id="detail-scryfall-btn">Scryfall</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      apiKey: localStorage.getItem("claude_api_key") || "",
+      savedCards: JSON.parse(localStorage.getItem("saved_cards") || "[]"),
+      results: [],
+      currentQuery: "",
+      nextPage: null,
+      activeTab: "search",
+      detailCard: null,
+      colorIdentity: JSON.parse(localStorage.getItem("color_identity") || "[]"),
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+    const searchInput = $("#search-input");
+    const searchBtn = $("#search-btn");
+    const queryDisplay = $("#query-display");
+    const queryText = $("#query-text");
+    const statusEl = $("#status");
+    const resultsEl = $("#results");
+    const paginationEl = $("#pagination");
+    const loadMoreBtn = $("#load-more-btn");
+    const savedCountEl = $("#saved-count");
+    const savedGrid = $("#saved-grid");
+    const savedEmpty = $("#saved-empty");
+    const savedFilter = $("#saved-filter");
+
+    updateSavedCount();
+    if (!state.apiKey) showSettings();
+
+    // Color identity
+    const identityDisplay = $("#identity-display");
+
+    function updateIdentityDisplay() {
+      const id = state.colorIdentity.join("").toUpperCase();
+      identityDisplay.textContent = id || "no colors set";
+      document.querySelectorAll(".color-toggle").forEach((btn) => {
+        btn.classList.toggle("active", state.colorIdentity.includes(btn.dataset.color));
+      });
+    }
+
+    document.querySelectorAll(".color-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const c = btn.dataset.color;
+        const idx = state.colorIdentity.indexOf(c);
+        if (idx >= 0) state.colorIdentity.splice(idx, 1);
+        else state.colorIdentity.push(c);
+        localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
+        updateIdentityDisplay();
+      });
+    });
+
+    updateIdentityDisplay();
+
+    // Tabs
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.activeTab = btn.dataset.tab;
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (state.activeTab === "search") {
+          $("#search-content").classList.remove("hidden");
+          $("#saved-section").classList.remove("visible");
+        } else {
+          $("#search-content").classList.add("hidden");
+          $("#saved-section").classList.add("visible");
+          renderSavedCards();
+        }
+      });
+    });
+
+    // Settings
+    $("#settings-btn").addEventListener("click", showSettings);
+    $("#settings-cancel").addEventListener("click", hideSettings);
+    $("#settings-save").addEventListener("click", () => {
+      const key = $("#api-key-input").value.trim();
+      if (key) { state.apiKey = key; localStorage.setItem("claude_api_key", key); }
+      hideSettings();
+    });
+
+    function showSettings() { $("#api-key-input").value = state.apiKey; $("#settings-modal").classList.add("visible"); }
+    function hideSettings() { $("#settings-modal").classList.remove("visible"); }
+
+    // Search
+    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+    searchBtn.addEventListener("click", doSearch);
+
+    document.querySelectorAll(".example-queries button").forEach((btn) => {
+      btn.addEventListener("click", () => { searchInput.value = btn.textContent; doSearch(); });
+    });
+
+    async function doSearch() {
+      const query = searchInput.value.trim();
+      if (!query) return;
+      if (!state.apiKey) return showSettings();
+
+      searchBtn.disabled = true;
+      searchBtn.textContent = "Searching...";
+      showStatus("Translating your request...");
+      queryDisplay.classList.remove("visible");
+      resultsEl.innerHTML = "";
+      paginationEl.style.display = "none";
+      state.results = [];
+      state.nextPage = null;
+
+      try {
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, apiKey: state.apiKey, colorIdentity: state.colorIdentity.join("") || null }),
+        });
+        if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Translation failed"); }
+        const { scryfallQuery } = await res.json();
+        state.currentQuery = scryfallQuery;
+        queryText.textContent = scryfallQuery;
+        queryDisplay.classList.add("visible");
+        showStatus("Fetching cards...");
+        await searchScryfall(scryfallQuery);
+      } catch (err) {
+        showStatus(err.message, true);
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = "Search";
+      }
+    }
+
+    async function searchScryfall(query, pageUrl) {
+      try {
+        const url = pageUrl || `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=cards`;
+        const res = await fetch(url);
+        if (!res.ok) { const err = await res.json(); throw new Error(err.details || "No cards found — try rephrasing"); }
+        const data = await res.json();
+        state.results.push(...data.data);
+        state.nextPage = data.has_more ? data.next_page : null;
+        hideStatus();
+        renderResults(data.data, !!pageUrl);
+        paginationEl.style.display = state.nextPage ? "flex" : "none";
+      } catch (err) { showStatus(err.message, true); }
+    }
+
+    loadMoreBtn.addEventListener("click", () => { if (state.nextPage) searchScryfall(null, state.nextPage); });
+
+    $("#copy-query-btn").addEventListener("click", () => {
+      navigator.clipboard.writeText(state.currentQuery);
+      $("#copy-query-btn").textContent = "Copied!";
+      setTimeout(() => ($("#copy-query-btn").textContent = "Copy"), 1500);
+    });
+
+    $("#open-scryfall-btn").addEventListener("click", () => {
+      window.open(`https://scryfall.com/search?q=${encodeURIComponent(state.currentQuery)}`, "_blank");
+    });
+
+    // Render results
+    function renderResults(cards, append) {
+      if (!append) resultsEl.innerHTML = "";
+      cards.forEach((card) => {
+        const el = document.createElement("div");
+        el.className = "card-item";
+        const imgUrl = getCardImage(card);
+        const price = getPrice(card);
+        const isSaved = state.savedCards.some((s) => s.id === card.id);
+
+        el.innerHTML = `
+          <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
+          <div class="card-info">
+            <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
+            <div class="card-type">${esc(card.type_line || "")}</div>
+            <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
+            <div class="card-actions">
+              <button class="save-btn ${isSaved ? "saved" : ""}" data-id="${card.id}">${isSaved ? "Saved" : "Save"}</button>
+              <button class="detail-btn" data-id="${card.id}">Details</button>
+            </div>
+          </div>`;
+
+        el.querySelector(".save-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleSave(card);
+          const btn = el.querySelector(".save-btn");
+          const nowSaved = state.savedCards.some((s) => s.id === card.id);
+          btn.textContent = nowSaved ? "Saved" : "Save";
+          btn.classList.toggle("saved", nowSaved);
+        });
+        el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
+        el.querySelector("img").addEventListener("click", () => showDetail(card));
+        resultsEl.appendChild(el);
+      });
+    }
+
+    function renderSavedCards() {
+      const filter = savedFilter.value.toLowerCase();
+      const cards = state.savedCards.filter((c) => !filter || c.name.toLowerCase().includes(filter) || (c.type_line || "").toLowerCase().includes(filter));
+      savedEmpty.style.display = cards.length ? "none" : "block";
+      savedGrid.innerHTML = "";
+      cards.forEach((card) => {
+        const el = document.createElement("div");
+        el.className = "card-item";
+        const imgUrl = getCardImage(card);
+        const price = getPrice(card);
+        el.innerHTML = `
+          <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
+          <div class="card-info">
+            <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
+            <div class="card-type">${esc(card.type_line || "")}</div>
+            <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
+            <div class="card-actions">
+              <button class="remove-btn" data-id="${card.id}">Remove</button>
+              <button class="detail-btn" data-id="${card.id}">Details</button>
+            </div>
+          </div>`;
+        el.querySelector(".remove-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleSave(card); renderSavedCards(); });
+        el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
+        el.querySelector("img").addEventListener("click", () => showDetail(card));
+        savedGrid.appendChild(el);
+      });
+    }
+
+    savedFilter.addEventListener("input", renderSavedCards);
+
+    // Detail modal
+    function showDetail(card) {
+      state.detailCard = card;
+      const imgUrl = getCardImage(card);
+      const price = getPrice(card);
+      const foilPrice = card.prices?.eur_foil ? `€${card.prices.eur_foil}` : "N/A";
+      const isSaved = state.savedCards.some((s) => s.id === card.id);
+      $("#detail-img").src = imgUrl;
+      $("#detail-name").textContent = card.name;
+      $("#detail-type").textContent = card.type_line || "Unknown";
+      $("#detail-mana").textContent = card.mana_cost || "None";
+      $("#detail-set").textContent = `${card.set_name || "Unknown"} (${(card.set || "").toUpperCase()})`;
+      $("#detail-rarity").textContent = capitalize(card.rarity || "unknown");
+      $("#detail-price").textContent = price || "N/A";
+      $("#detail-foil-price").textContent = foilPrice;
+      $("#detail-oracle").textContent = getOracleText(card);
+      if (card.power !== undefined && card.toughness !== undefined) {
+        $("#detail-pt").textContent = `${card.power}/${card.toughness}`;
+        $("#detail-pt-row").style.display = "block";
+      } else { $("#detail-pt-row").style.display = "none"; }
+      const saveBtn = $("#detail-save-btn");
+      saveBtn.textContent = isSaved ? "Saved" : "Save";
+      saveBtn.className = isSaved ? "saved" : "";
+      $("#detail-modal").classList.add("visible");
+    }
+
+    $("#detail-modal").addEventListener("click", (e) => { if (e.target === $("#detail-modal")) $("#detail-modal").classList.remove("visible"); });
+
+    $("#detail-save-btn").addEventListener("click", () => {
+      if (!state.detailCard) return;
+      toggleSave(state.detailCard);
+      const isSaved = state.savedCards.some((s) => s.id === state.detailCard.id);
+      $("#detail-save-btn").textContent = isSaved ? "Saved" : "Save";
+      $("#detail-save-btn").className = isSaved ? "saved" : "";
+      refreshResultsSaveState();
+    });
+
+    $("#detail-cardmarket-btn").addEventListener("click", () => {
+      if (state.detailCard?.purchase_uris?.cardmarket) window.open(state.detailCard.purchase_uris.cardmarket, "_blank");
+      else window.open(`https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(state.detailCard?.name || "")}`, "_blank");
+    });
+
+    $("#detail-scryfall-btn").addEventListener("click", () => {
+      if (state.detailCard?.scryfall_uri) window.open(state.detailCard.scryfall_uri, "_blank");
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { hideSettings(); $("#detail-modal").classList.remove("visible"); }
+    });
+
+    // Save/unsave
+    function toggleSave(card) {
+      const idx = state.savedCards.findIndex((s) => s.id === card.id);
+      if (idx >= 0) state.savedCards.splice(idx, 1);
+      else state.savedCards.push(card);
+      localStorage.setItem("saved_cards", JSON.stringify(state.savedCards));
+      updateSavedCount();
+    }
+
+    function refreshResultsSaveState() {
+      resultsEl.querySelectorAll(".save-btn").forEach((btn) => {
+        const id = btn.dataset.id;
+        const isSaved = state.savedCards.some((s) => s.id === id);
+        btn.textContent = isSaved ? "Saved" : "Save";
+        btn.classList.toggle("saved", isSaved);
+      });
+    }
+
+    function updateSavedCount() { savedCountEl.textContent = state.savedCards.length; }
+
+    // Helpers
+    function getCardImage(card) {
+      if (card.image_uris?.normal) return card.image_uris.normal;
+      if (card.card_faces?.[0]?.image_uris?.normal) return card.card_faces[0].image_uris.normal;
+      return "";
+    }
+
+    function getOracleText(card) {
+      if (card.oracle_text) return card.oracle_text;
+      if (card.card_faces) return card.card_faces.map((f) => f.oracle_text || "").join("\n---\n");
+      return "";
+    }
+
+    function getPrice(card) {
+      if (card.prices?.eur) return `€${card.prices.eur}`;
+      if (card.prices?.eur_foil) return `€${card.prices.eur_foil} (foil)`;
+      return null;
+    }
+
+    function esc(str) { const d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
+    function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
+
+    function showStatus(msg, isError) {
+      statusEl.textContent = msg;
+      statusEl.className = `status${isError ? " error" : ""}`;
+      statusEl.style.display = "block";
+    }
+
+    function hideStatus() { statusEl.style.display = "none"; }
+
+    // 3D tilt effect (rotateAmplitude: 12, scaleOnHover: 1)
+    const ROTATE_AMP = 3;
+    const SCALE_HOVER = 1;
+
+    function initTilt(container) {
+      container.querySelectorAll(".card-item").forEach((card) => {
+        if (card._tiltBound) return;
+        card._tiltBound = true;
+
+        let animId = null;
+        let targetRx = 0, targetRy = 0;
+        let currentRx = 0, currentRy = 0;
+
+        function springTo() {
+          currentRx += (targetRx - currentRx) * 0.15;
+          currentRy += (targetRy - currentRy) * 0.15;
+          card.style.transform = `perspective(800px) rotateX(${currentRx}deg) rotateY(${currentRy}deg) scale(${card._hovered ? SCALE_HOVER : 1})`;
+          if (Math.abs(targetRx - currentRx) > 0.05 || Math.abs(targetRy - currentRy) > 0.05) {
+            animId = requestAnimationFrame(springTo);
+          } else {
+            card.style.transform = `perspective(800px) rotateX(${targetRx}deg) rotateY(${targetRy}deg) scale(${card._hovered ? SCALE_HOVER : 1})`;
+            animId = null;
+          }
+        }
+
+        function startAnim() {
+          if (!animId) animId = requestAnimationFrame(springTo);
+        }
+
+        card.addEventListener("mousemove", (e) => {
+          const rect = card.getBoundingClientRect();
+          const offsetX = e.clientX - rect.left - rect.width / 2;
+          const offsetY = e.clientY - rect.top - rect.height / 2;
+          targetRx = (offsetY / (rect.height / 2)) * -ROTATE_AMP;
+          targetRy = (offsetX / (rect.width / 2)) * ROTATE_AMP;
+          startAnim();
+        });
+
+        card.addEventListener("mouseenter", () => {
+          card._hovered = true;
+          startAnim();
+        });
+
+        card.addEventListener("mouseleave", () => {
+          card._hovered = false;
+          targetRx = 0;
+          targetRy = 0;
+          startAnim();
+        });
+      });
+    }
+
+    const tiltObserver = new MutationObserver(() => {
+      initTilt(resultsEl);
+      initTilt(savedGrid);
+    });
+    tiltObserver.observe(resultsEl, { childList: true });
+    tiltObserver.observe(savedGrid, { childList: true });
+  </script>
+</body>
+</html>
