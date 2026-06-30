@@ -253,6 +253,18 @@ function extractQuery(text) {
   return text;
 }
 
+// Deterministically guarantee the mandatory Commander filters, so color identity
+// (and f:commander / game:paper) never depend on the model remembering them.
+// Idempotent: only adds a clause the query is missing.
+function enforceCommanderFilters(query, colorIdentity) {
+  let q = (query || "").trim();
+  if (!/\bf(?:ormat)?:commander\b/i.test(q)) q += " f:commander";
+  if (!/\bgame:paper\b/i.test(q)) q += " game:paper";
+  const id = typeof colorIdentity === "string" ? colorIdentity.trim().toLowerCase() : "";
+  if (id && !/\b(?:id|identity)\s*[<>=:]/i.test(q)) q += ` id<=${id}`;
+  return q.replace(/\s{2,}/g, " ").trim();
+}
+
 app.get("/api/app-state", async (req, res) => {
   try {
     res.json(publicAppState(await readAppState()));
@@ -334,7 +346,7 @@ ${userMessage}`;
 
     // Search path: the model returned a Scryfall query string as text.
     const textBlock = message.content.find((b) => b.type === "text");
-    const scryfallQuery = extractQuery((textBlock?.text || "").trim());
+    const scryfallQuery = enforceCommanderFilters(extractQuery((textBlock?.text || "").trim()), colorIdentity);
     res.json({ type: "query", query: scryfallQuery, scryfallQuery });
   } catch (err) {
     const status = err.status || 500;

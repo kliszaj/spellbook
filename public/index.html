@@ -2092,6 +2092,19 @@
       return run === activeSearchRun;
     }
 
+    // Guarantee the mandatory Commander filters are present even if the AI — or a
+    // stale, persisted translateCache entry — left them out. Color identity is the
+    // one that matters most: without it Scryfall returns every color. Idempotent,
+    // so it never duplicates a clause the query already has.
+    function withCommanderFilters(query) {
+      let q = (query || "").trim();
+      if (!/\bf(?:ormat)?:commander\b/i.test(q)) q += " f:commander";
+      if (!/\bgame:paper\b/i.test(q)) q += " game:paper";
+      const id = state.colorIdentity.join("").toLowerCase();
+      if (id && !/\b(?:id|identity)\s*[<>=:]/i.test(q)) q += ` id<=${id}`;
+      return q.replace(/\s{2,}/g, " ").trim();
+    }
+
     async function doSearch() {
       const query = searchInput.value.trim();
       if (!query) return;
@@ -2138,7 +2151,7 @@
           // Search path — AI returned a Scryfall query string.
           state.mode = "search";
           setSortMode("search");
-          const scryfallQuery = data.query || data.scryfallQuery || "";
+          const scryfallQuery = withCommanderFilters(data.query || data.scryfallQuery || "");
           state.currentQuery = scryfallQuery;
           queryText.textContent = scryfallQuery;
           queryDisplay.classList.add("visible");
