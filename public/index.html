@@ -97,7 +97,12 @@
       grid-template-columns: 340px minmax(0, 1fr) 340px;
       gap: 18px;
       align-items: start;
+      transition: grid-template-columns 0.22s ease;
     }
+
+    .app-shell.nav-collapsed { grid-template-columns: 48px minmax(0, 1fr) 340px; }
+    .app-shell.detail-collapsed { grid-template-columns: 340px minmax(0, 1fr) 48px; }
+    .app-shell.nav-collapsed.detail-collapsed { grid-template-columns: 48px minmax(0, 1fr) 48px; }
 
     .side-menu,
     .detail-panel,
@@ -116,6 +121,58 @@
       padding: 14px;
       max-height: calc(100dvh - 104px);
       overflow: auto;
+      transition: padding 0.22s ease;
+    }
+
+    .panel-toggle {
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(31,29,25,0.12);
+      border-radius: 9px;
+      background: #FFFEFA;
+      color: #807B72;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+    }
+
+    .panel-toggle:hover { background: #EFEEE7; color: #181715; border-color: rgba(31,29,25,0.2); }
+    .panel-toggle:active { transform: translateY(1px) scale(0.98); }
+    .panel-toggle svg { width: 16px; height: 16px; display: block; }
+
+    .rail-header,
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .rail-icon-label {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #777167;
+    }
+
+    .rail-icon-label svg { width: 18px; height: 18px; display: block; }
+
+    .app-shell.nav-collapsed .side-menu {
+      padding: 8px;
+      overflow: hidden;
+    }
+
+    .app-shell.nav-collapsed .side-menu .rail-section,
+    .app-shell.nav-collapsed .side-menu .rail-icon-label { display: none; }
+
+    .app-shell.nav-collapsed .side-menu .rail-header {
+      justify-content: center;
+      margin-bottom: 0;
     }
 
     .content-panel {
@@ -144,6 +201,7 @@
     }
 
     .rail-tab,
+    .history-row,
     .history-btn,
     .cache-btn {
       display: flex;
@@ -164,7 +222,7 @@
     }
 
     .rail-tab:hover,
-    .history-btn:hover,
+    .history-row:hover,
     .cache-btn:hover { background: #EFEEE7; color: #181715; }
 
     .rail-tab:active,
@@ -172,6 +230,32 @@
     .cache-btn:active { transform: translateY(1px) scale(0.99); }
 
     .rail-tab.active { background: #223126; color: #FFFEFA; }
+
+    .history-row {
+      align-items: center;
+      padding: 2px;
+      cursor: default;
+    }
+
+    .history-btn {
+      min-width: 0;
+      padding: 7px 8px;
+    }
+
+    .history-remove {
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #A8A49A;
+      cursor: pointer;
+      flex-shrink: 0;
+      font: 16px/1 inherit;
+      transition: background 0.16s ease, color 0.16s ease;
+    }
+
+    .history-remove:hover { background: rgba(31,29,25,0.08); color: #5E5A51; }
 
     .rail-count,
     .history-meta,
@@ -206,17 +290,30 @@
 
     /* ── Search Section ── */
     .search-section {
-      margin-bottom: 24px;
+      margin-bottom: 14px;
     }
 
     .search-bar {
+      --edge-proximity: 0;
+      --cursor-angle: 110deg;
+      --edge-sensitivity: 30;
+      --color-sensitivity: 52;
+      --cone-spread: 8;
+      --glow-padding: 26px;
+      position: relative;
       display: flex;
       align-items: center;
       background: #fff;
       border: 1.5px solid #e0e0de;
       border-radius: 12px;
       padding: 4px 4px 4px 18px;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      isolation: isolate;
+    }
+
+    .search-bar > * {
+      position: relative;
+      z-index: 2;
     }
 
     .search-bar:focus-within {
@@ -224,7 +321,111 @@
       box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
     }
 
-    .search-bar input {
+    .search-bar.ai-active {
+      background: #FFFEFA;
+      border-color: transparent;
+      box-shadow: 0 0 0 3px rgba(199,154,46,0.1), 0 12px 30px -24px rgba(199,154,46,0.65);
+    }
+
+    .search-bar.ai-active:focus-within {
+      border-color: transparent;
+      box-shadow: 0 0 0 3px rgba(199,154,46,0.15), 0 12px 30px -24px rgba(199,154,46,0.78);
+    }
+
+    .search-bar.ai-active::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1.5px solid transparent;
+      background:
+        linear-gradient(#FFFEFA 0 100%) padding-box,
+        linear-gradient(rgb(255 255 255 / 0%) 0 100%) border-box,
+        radial-gradient(at 80% 55%, #F2C14E 0px, transparent 50%) border-box,
+        radial-gradient(at 69% 34%, #FFD66B 0px, transparent 50%) border-box,
+        radial-gradient(at 8% 6%, #FCE9B0 0px, transparent 50%) border-box,
+        radial-gradient(at 41% 38%, #C79A2E 0px, transparent 50%) border-box,
+        radial-gradient(at 86% 85%, #E8A23D 0px, transparent 50%) border-box,
+        linear-gradient(#FFD66B 0 100%) border-box;
+      mask-image:
+        conic-gradient(
+          from var(--cursor-angle) at center,
+          black calc(var(--cone-spread) * 1%),
+          transparent calc((var(--cone-spread) + 14) * 1%),
+          transparent calc((100 - var(--cone-spread) - 14) * 1%),
+          black calc((100 - var(--cone-spread)) * 1%)
+        );
+      opacity: calc((var(--edge-proximity) - var(--color-sensitivity)) / (100 - var(--color-sensitivity)));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .search-bar.ai-active::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid transparent;
+      background:
+        radial-gradient(at 80% 55%, #F2C14E 0px, transparent 50%) padding-box,
+        radial-gradient(at 69% 34%, #FFD66B 0px, transparent 50%) padding-box,
+        radial-gradient(at 8% 6%, #FCE9B0 0px, transparent 50%) padding-box,
+        radial-gradient(at 41% 38%, #C79A2E 0px, transparent 50%) padding-box,
+        radial-gradient(at 86% 85%, #E8A23D 0px, transparent 50%) padding-box;
+      mask-image:
+        linear-gradient(to bottom, black, black),
+        radial-gradient(ellipse at 50% 50%, black 40%, transparent 66%),
+        conic-gradient(from var(--cursor-angle) at center, transparent 5%, black 15%, black 85%, transparent 95%);
+      mask-composite: subtract, add;
+      mix-blend-mode: soft-light;
+      opacity: calc(0.22 * (var(--edge-proximity) - var(--color-sensitivity)) / (100 - var(--color-sensitivity)));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .search-bar > .search-edge-light {
+      position: absolute;
+      inset: calc(var(--glow-padding) * -1);
+      border-radius: calc(12px + var(--glow-padding));
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      mix-blend-mode: multiply;
+      mask-image:
+        conic-gradient(
+          from var(--cursor-angle) at center,
+          black 2.5%,
+          transparent 10%,
+          transparent 90%,
+          black 97.5%
+        );
+      transition: opacity 0.28s ease;
+    }
+
+    .search-bar.ai-active > .search-edge-light {
+      opacity: calc((var(--edge-proximity) - var(--edge-sensitivity)) / (100 - var(--edge-sensitivity)));
+    }
+
+    .search-bar > .search-edge-light::before {
+      content: "";
+      position: absolute;
+      inset: var(--glow-padding);
+      border-radius: 12px;
+      box-shadow:
+        inset 0 0 0 1px hsl(44deg 78% 56% / 65%),
+        inset 0 0 3px 0 hsl(44deg 78% 56% / 36%),
+        inset 0 0 9px 0 hsl(44deg 78% 56% / 20%),
+        0 0 3px 0 hsl(44deg 78% 56% / 34%),
+        0 0 9px 1px hsl(44deg 78% 56% / 18%),
+        0 0 22px 4px hsl(44deg 78% 56% / 10%);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .search-bar { --edge-proximity: 88; --cursor-angle: 110deg; }
+    }
+
+    .search-bar input,
+    .search-bar textarea {
       flex: 1;
       border: none;
       background: none;
@@ -232,12 +433,22 @@
       color: #1a1a1a;
       outline: none;
       padding: 10px 0;
+      min-height: 41px;
     }
 
-    .search-bar input::placeholder { color: #bbb; }
+    .search-bar textarea {
+      resize: none;
+      overflow: hidden;
+      max-height: 132px;
+      transition: height 0.18s ease;
+    }
+
+    .search-bar input::placeholder,
+    .search-bar textarea::placeholder { color: #bbb; }
 
     .search-bar button {
       padding: 9px 20px;
+      align-self: center;
       border-radius: 8px;
       border: none;
       background: #1a1a1a;
@@ -245,19 +456,69 @@
       font: 14px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
       white-space: nowrap;
     }
 
     .search-bar button:hover { background: #333; }
     .search-bar button:disabled { background: #ccc; cursor: not-allowed; }
 
+    .search-bar .ai-search-toggle {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      max-width: 38px;
+      flex: 0 0 38px;
+      aspect-ratio: 1 / 1;
+      margin-right: 8px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1.5px solid rgba(31,29,25,0.12);
+      background: #FFFEFA;
+      color: #B6B2A8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+      line-height: 1;
+      overflow: hidden;
+    }
+
+    .search-bar .ai-search-toggle:hover {
+      background: #FFFEFA;
+      border-color: rgba(31,29,25,0.22);
+      color: #6D685F;
+    }
+
+    .search-bar .ai-search-toggle.active {
+      background: #181715;
+      border-color: #181715;
+      color: #FFFEFA;
+      box-shadow: 0 8px 22px -14px rgba(24,23,21,0.85), inset 0 1px 0 rgba(255,255,255,0.16);
+    }
+
+    .search-bar .ai-search-toggle.active:hover {
+      background: #181715;
+      border-color: #181715;
+      color: #FFFEFA;
+    }
+
+    .search-bar .ai-search-toggle svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      flex: 0 0 18px;
+      stroke: currentColor;
+    }
+
     /* ── Commander Identity (Reader style) ── */
     .color-identity {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 14px;
-      margin-top: 12px;
+      margin: 0 0 12px;
     }
 
     .color-identity label {
@@ -357,27 +618,6 @@
 
     .query-display button:hover { text-decoration: underline; }
 
-    /* ── Example Queries ── */
-    .example-queries {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 12px;
-    }
-
-    .example-queries button {
-      padding: 5px 12px;
-      border-radius: 999px;
-      border: 1px solid #e0e0de;
-      background: #fff;
-      color: #888;
-      font: 12px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .example-queries button:hover { border-color: #bbb; color: #555; }
-
     /* ── Status ── */
     .status {
       text-align: center;
@@ -406,7 +646,11 @@
       grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
       justify-content: center;
       gap: 14px;
-      perspective: 800px;
+      /* No container `perspective` here on purpose: each card supplies its own
+         self-centered perspective(800px) in its transform. A shared container
+         perspective adds a single vanishing point at the grid's center, which
+         shears off-center cards toward it — barely visible on the short saved
+         grid, but badly distorts the wide, many-row search grid. */
       width: 100%;
       margin-left: 0;
     }
@@ -642,7 +886,34 @@
       padding: 14px;
       max-height: calc(100dvh - 104px);
       overflow: auto;
+      transition: padding 0.22s ease;
     }
+
+    .detail-header {
+      margin-bottom: 8px;
+    }
+
+    .detail-header-title {
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 0.075em;
+      text-transform: uppercase;
+      color: #9E9B92;
+    }
+
+    .app-shell.detail-collapsed .detail-panel {
+      padding: 8px;
+      overflow: hidden;
+    }
+
+    .app-shell.detail-collapsed .detail-header {
+      justify-content: center;
+      margin-bottom: 0;
+    }
+
+    .app-shell.detail-collapsed .detail-header-title,
+    .app-shell.detail-collapsed .detail-empty,
+    .app-shell.detail-collapsed .detail-content { display: none; }
 
     .detail-panel.empty .detail-content { display: none; }
     .detail-panel:not(.empty) .detail-empty { display: none; }
@@ -715,30 +986,57 @@
     .sort-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
       margin: 2px 0 14px;
       font-size: 13px;
     }
 
-    .sort-bar .sort-label { font-weight: 600; color: #666; }
+    .sort-bar .sort-label {
+      font-weight: 700;
+      color: #9E9B92;
+      font-size: 11px;
+      letter-spacing: 0.075em;
+      text-transform: uppercase;
+      margin-right: 2px;
+    }
 
     .sort-bar select,
-    .sort-bar #sort-dir {
+    .sort-dir-btn {
       font-family: inherit;
       font-size: 13px;
-      padding: 6px 10px;
-      border: 1px solid #e8e8e6;
+      border: 1px solid rgba(31,29,25,0.1);
       border-radius: 8px;
-      background: #fff;
-      color: #444;
+      background: #FFFEFA;
+      color: #504B42;
       cursor: pointer;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .sort-bar select {
+      padding: 7px 30px 7px 10px;
     }
 
     .sort-bar select:hover,
-    .sort-bar #sort-dir:hover { border-color: #ccc; }
+    .sort-dir-btn:hover {
+      border-color: rgba(31,29,25,0.18);
+      background: #EFEEE7;
+      color: #181715;
+    }
 
-    .sort-bar #sort-dir { font-weight: 600; min-width: 74px; }
+    .sort-dir-btn {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .sort-dir-btn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
 
     /* ── AI recommendations summary ── */
     .ai-summary {
@@ -1009,10 +1307,18 @@
         grid-template-columns: 220px minmax(0, 1fr);
       }
 
+      .app-shell.nav-collapsed { grid-template-columns: 48px minmax(0, 1fr); }
+      .app-shell.detail-collapsed { grid-template-columns: 220px minmax(0, 1fr); }
+      .app-shell.nav-collapsed.detail-collapsed { grid-template-columns: 48px minmax(0, 1fr); }
+
       .detail-panel {
         grid-column: 2;
         position: static;
         max-height: none;
+      }
+
+      .app-shell.detail-collapsed .detail-panel {
+        display: none;
       }
     }
 
@@ -1021,9 +1327,19 @@
       header { grid-template-columns: 1fr auto; height: auto; gap: 10px; padding: 12px 16px; }
       .nav-pills { grid-column: 1 / -1; grid-row: 2; }
       .app-shell { grid-template-columns: 1fr; }
+      .app-shell.nav-collapsed,
+      .app-shell.detail-collapsed,
+      .app-shell.nav-collapsed.detail-collapsed { grid-template-columns: 1fr; }
       .side-menu {
         position: static;
         max-height: none;
+      }
+      .app-shell.nav-collapsed .side-menu {
+        min-height: 46px;
+      }
+      .app-shell.detail-collapsed .detail-panel {
+        display: block;
+        min-height: 46px;
       }
       .detail-panel { grid-column: auto; }
       .folder-rail { flex-direction: row; flex-wrap: wrap; }
@@ -1036,6 +1352,15 @@
       .search-bar { flex-direction: column; padding: 12px; gap: 8px; }
       .search-bar input { padding: 12px 0; }
       .search-bar button { width: 100%; padding: 12px; }
+      .search-bar .ai-search-toggle {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        max-width: 38px;
+        flex-basis: 38px;
+        padding: 0;
+        align-self: center;
+      }
       /* one card per row on mobile — never shrink to two across */
       .results-grid { grid-template-columns: 1fr; gap: 10px; width: auto; margin-left: 0; }
       .nav-pills { margin-right: 8px; }
@@ -1056,8 +1381,12 @@
   </header>
 
   <main>
-    <div class="app-shell">
+    <div class="app-shell" id="app-shell">
       <aside class="side-menu search-mode" id="side-menu" aria-label="Spellbook navigation">
+        <div class="rail-header">
+          <span class="rail-icon-label" title="Recents" aria-label="Recents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg></span>
+          <button class="panel-toggle" id="nav-collapse-btn" title="Collapse recents" aria-label="Collapse recents" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+        </div>
         <div class="rail-section workspace-section">
           <div class="rail-label">Workspace</div>
           <button class="rail-tab active" data-tab="search">
@@ -1075,7 +1404,6 @@
         </div>
 
         <div class="rail-section history-section">
-          <div class="rail-label">Search history</div>
           <div class="history-list" id="history-list"></div>
         </div>
 
@@ -1088,10 +1416,6 @@
       <section class="content-panel">
         <div class="search-content" id="search-content">
           <div class="search-section">
-            <div class="search-bar">
-              <input type="text" id="search-input" placeholder="What kind of card are you looking for?" autofocus>
-              <button id="search-btn">Search</button>
-            </div>
             <div class="color-identity">
               <div class="color-toggles">
                 <button class="color-toggle" data-color="w" title="White">W</button>
@@ -1102,16 +1426,16 @@
               </div>
               <span class="identity-display" id="identity-display" aria-live="polite"></span>
             </div>
+            <div class="search-bar">
+              <span class="search-edge-light" aria-hidden="true"></span>
+              <textarea id="search-input" rows="1" placeholder="What spells are you looking for?" autofocus></textarea>
+              <button class="ai-search-toggle" id="ai-search-toggle" type="button" title="Force AI web search" aria-label="Force AI web search" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg></button>
+              <button id="search-btn">Search</button>
+            </div>
             <div class="query-display" id="query-display">
               <code id="query-text"></code>
               <button id="copy-query-btn">Copy</button>
               <button id="open-scryfall-btn">Scryfall</button>
-            </div>
-            <div class="example-queries">
-              <button>cheap removal for any permanent</button>
-              <button>enchantments that make lands tap for extra mana</button>
-              <button>top budget upgrades for the Bello animated army precon</button>
-              <button>cards that combo with Kiki-Jiki, Mirror Breaker</button>
             </div>
           </div>
 
@@ -1129,7 +1453,7 @@
               <option value="toughness">Toughness</option>
               <option value="eur">Price</option>
             </select>
-            <button id="sort-dir" data-dir="asc" title="Toggle ascending / descending">&#8593; Asc</button>
+            <button class="sort-dir-btn" id="sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
           </div>
           <div id="results" class="results-grid"></div>
           <div id="pagination" class="pagination" style="display:none">
@@ -1142,6 +1466,17 @@
           <div class="search-bar">
             <input type="text" id="saved-filter" placeholder="Filter saved cards...">
           </div>
+          <div class="sort-bar saved-sort-bar" id="saved-sort-bar">
+            <span class="sort-label">Sort</span>
+            <select id="saved-sort-field">
+              <option value="name">Name</option>
+              <option value="cmc" selected>Mana value</option>
+              <option value="power">Power</option>
+              <option value="toughness">Toughness</option>
+              <option value="eur">Price</option>
+            </select>
+            <button class="sort-dir-btn" id="saved-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
+          </div>
           <div id="saved-empty" class="empty-state">
             <p>No saved cards yet</p>
             <small>Search for cards and save them to build your list</small>
@@ -1152,6 +1487,10 @@
       </section>
 
       <aside class="detail-panel empty" id="detail-panel" aria-label="Card details">
+        <div class="detail-header">
+          <span class="detail-header-title">Focus</span>
+          <button class="panel-toggle" id="detail-collapse-btn" title="Collapse focus" aria-label="Collapse focus" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
         <div class="detail-empty">
           <div>
             <strong>Card focus</strong>
@@ -1189,7 +1528,7 @@
       <label for="api-key-input">Claude API Key</label>
       <input type="password" id="api-key-input" placeholder="sk-ant-...">
       <small style="color: #aaa; display: block; margin-top: -12px; margin-bottom: 20px; font-size: 12px;">
-        Stored in your browser only. Used to translate your searches.
+        Stored in the appdata folder for this Spellbook container.
       </small>
       <div class="modal-actions">
         <button class="btn-cancel" id="settings-cancel">Cancel</button>
@@ -1212,7 +1551,7 @@
 
   <script>
     const state = {
-      apiKey: localStorage.getItem("claude_api_key") || "",
+      hasApiKey: false,
       savedCards: JSON.parse(localStorage.getItem("saved_cards") || "[]"),
       results: [],
       currentQuery: "",
@@ -1222,20 +1561,30 @@
       colorIdentity: JSON.parse(localStorage.getItem("color_identity") || "[]"),
       sortField: "cmc",
       sortDir: "asc",
+      savedSortField: "cmc",
+      savedSortDir: "asc",
       folders: JSON.parse(localStorage.getItem("card_folders") || "[]"),
       membership: JSON.parse(localStorage.getItem("card_membership") || "null"),
       activeFolder: "all",
       popoverCard: null,
       mode: "search",
       recommendOrder: [],
+      forceAiSearch: JSON.parse(localStorage.getItem("force_ai_search") || "false"),
     };
 
     const DEFAULT_FOLDER = "default";
     const DEFAULT_FOLDER_NAME = "Unsorted";
+    let serverStateReady = false;
+    let appStateSaveTimer = null;
+    let activeSearchRun = 0;
+    let activeSearchController = null;
+    let searchGlowFrame = null;
 
     const $ = (sel) => document.querySelector(sel);
+    const appShell = $("#app-shell");
     const searchInput = $("#search-input");
     const searchBtn = $("#search-btn");
+    const aiSearchToggle = $("#ai-search-toggle");
     const queryDisplay = $("#query-display");
     const queryText = $("#query-text");
     const statusEl = $("#status");
@@ -1245,6 +1594,8 @@
     const sortBar = $("#sort-bar");
     const sortField = $("#sort-field");
     const sortDir = $("#sort-dir");
+    const savedSortField = $("#saved-sort-field");
+    const savedSortDir = $("#saved-sort-dir");
     const savedCountEl = $("#saved-count");
     const savedCountRailEl = $("#saved-count-rail");
     const savedGrid = $("#saved-grid");
@@ -1261,11 +1612,27 @@
     const popAddBtn = $("#pop-add-btn");
     const popAddForm = $("#pop-add-form");
     const popAddInput = $("#pop-add-input");
+    const navCollapseBtn = $("#nav-collapse-btn");
+    const detailCollapseBtn = $("#detail-collapse-btn");
+    const ICON_RECENTS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>`;
+    const ICON_CHEVRON_LEFT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>`;
+    const ICON_SORT_ASC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 5-6 6"/><path d="m12 5 6 6"/><path d="M12 5v14"/></svg>`;
+    const ICON_SORT_DESC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-6-6"/><path d="m12 19 6-6"/><path d="M12 5v14"/></svg>`;
+
+    function updateSortDirButton(btn, dir) {
+      btn.dataset.dir = dir;
+      btn.innerHTML = dir === "asc" ? ICON_SORT_ASC : ICON_SORT_DESC;
+      btn.title = dir === "asc" ? "Ascending" : "Descending";
+      btn.setAttribute("aria-label", btn.title);
+    }
 
     migrateMembership();
     updateSavedCount();
     renderFolderRail();
-    if (!state.apiKey) showSettings();
+    updateAiSearchToggle();
+    updateSortDirButton(sortDir, state.sortDir);
+    updateSortDirButton(savedSortDir, state.savedSortDir);
+    loadApiSettings();
 
     // Color identity
     const identityDisplay = $("#identity-display");
@@ -1286,6 +1653,7 @@
         else state.colorIdentity.push(c);
         localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
         updateIdentityDisplay();
+        persistAppStateSoon();
       });
     });
 
@@ -1317,33 +1685,104 @@
     // Settings
     $("#settings-btn").addEventListener("click", showSettings);
     $("#settings-cancel").addEventListener("click", hideSettings);
-    $("#settings-save").addEventListener("click", () => {
+    $("#settings-save").addEventListener("click", async () => {
       const key = $("#api-key-input").value.trim();
-      if (key) { state.apiKey = key; localStorage.setItem("claude_api_key", key); }
-      hideSettings();
+      if (!key) return;
+      await saveApiKey(key);
     });
 
-    function showSettings() { $("#api-key-input").value = state.apiKey; $("#settings-modal").classList.add("visible"); }
+    async function loadApiSettings() {
+      const localKey = localStorage.getItem("claude_api_key") || "";
+      if (localKey) {
+        await saveApiKey(localKey, { migrated: true });
+        localStorage.removeItem("claude_api_key");
+        return;
+      }
+      try {
+        const res = await fetch("/api/settings");
+        if (!res.ok) throw new Error("Could not load settings");
+        const data = await res.json();
+        state.hasApiKey = Boolean(data.hasApiKey);
+      } catch (err) {
+        console.warn(err);
+      }
+      if (!state.hasApiKey) showSettings();
+    }
+
+    async function saveApiKey(key, options = {}) {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: key }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showStatus(err.error || "Could not save API key", true);
+        return;
+      }
+      state.hasApiKey = true;
+      localStorage.removeItem("claude_api_key");
+      if (!options.migrated) hideSettings();
+    }
+
+    function showSettings() { $("#api-key-input").value = ""; $("#settings-modal").classList.add("visible"); }
     function hideSettings() { $("#settings-modal").classList.remove("visible"); }
 
     // Search
-    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
-    searchBtn.addEventListener("click", doSearch);
+    function autoSizeSearchInput() {
+      searchInput.style.height = "auto";
+      searchInput.style.height = `${Math.min(searchInput.scrollHeight, 132)}px`;
+    }
 
-    document.querySelectorAll(".example-queries button").forEach((btn) => {
-      btn.addEventListener("click", () => { searchInput.value = btn.textContent; doSearch(); });
+    searchInput.addEventListener("input", autoSizeSearchInput);
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        doSearch();
+      }
     });
+    searchBtn.addEventListener("click", doSearch);
+    aiSearchToggle.addEventListener("click", () => {
+      state.forceAiSearch = !state.forceAiSearch;
+      localStorage.setItem("force_ai_search", JSON.stringify(state.forceAiSearch));
+      updateAiSearchToggle();
+      persistAppStateSoon();
+    });
+    autoSizeSearchInput();
 
     historyList.addEventListener("click", (e) => {
+      const removeBtn = e.target.closest(".history-remove");
+      if (removeBtn) {
+        removeSearch(removeBtn.dataset.query || "", removeBtn.dataset.ci || "", removeBtn.dataset.forceAi === "true");
+        return;
+      }
       const btn = e.target.closest(".history-btn");
       if (!btn) return;
-      runHistorySearch(btn.dataset.query || "", btn.dataset.ci || "");
+      runHistorySearch(btn.dataset.query || "", btn.dataset.ci || "", btn.dataset.forceAi === "true");
     });
 
     cacheList.addEventListener("click", (e) => {
       const btn = e.target.closest(".cache-btn");
       if (!btn) return;
-      runHistorySearch(btn.dataset.query || "", btn.dataset.ci || "");
+      runHistorySearch(btn.dataset.query || "", btn.dataset.ci || "", btn.dataset.forceAi === "true");
+    });
+
+    navCollapseBtn.addEventListener("click", () => {
+      const collapsed = appShell.classList.toggle("nav-collapsed");
+      navCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
+      navCollapseBtn.title = collapsed ? "Expand recents" : "Collapse recents";
+      navCollapseBtn.setAttribute("aria-label", navCollapseBtn.title);
+      navCollapseBtn.innerHTML = collapsed ? ICON_RECENTS : ICON_CHEVRON_LEFT;
+    });
+
+    detailCollapseBtn.addEventListener("click", () => {
+      const collapsed = appShell.classList.toggle("detail-collapsed");
+      detailCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
+      detailCollapseBtn.title = collapsed ? "Expand focus" : "Collapse focus";
+      detailCollapseBtn.setAttribute("aria-label", detailCollapseBtn.title);
+      detailCollapseBtn.innerHTML = collapsed
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>`;
     });
 
     // ── Cache the AI's /api/translate response (skips Claude + web search on repeat asks) ──
@@ -1352,41 +1791,93 @@
     const TRANSLATE_CACHE_MAX = 60;
     const SEARCH_HISTORY_MAX = 10;
     const TRANSLATE_CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
-    const translateCacheKey = (q, ci) => (ci || "") + "|" + q.trim().toLowerCase().replace(/\s+/g, " ");
+    const translateCacheKey = (q, ci, forceAi = false) => `${forceAi ? "ai" : "query"}|${ci || ""}|${q.trim().toLowerCase().replace(/\s+/g, " ")}`;
     function readTranslateCache() { try { return JSON.parse(localStorage.getItem(TRANSLATE_CACHE_KEY) || "{}"); } catch { return {}; } }
     function readSearchHistory() { try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]"); } catch { return []; } }
-    function getCachedTranslate(q, ci) {
-      const c = readTranslateCache(); const hit = c[translateCacheKey(q, ci)];
+    function updateAiSearchToggle() {
+      aiSearchToggle.classList.toggle("active", state.forceAiSearch);
+      const bar = aiSearchToggle.closest(".search-bar");
+      bar?.classList.toggle("ai-active", state.forceAiSearch);
+      aiSearchToggle.setAttribute("aria-pressed", String(state.forceAiSearch));
+      aiSearchToggle.title = state.forceAiSearch ? "AI web search on" : "Force AI web search";
+      aiSearchToggle.setAttribute("aria-label", aiSearchToggle.title);
+      setSearchGlowRunning(state.forceAiSearch);
+    }
+
+    function setSearchGlowRunning(active) {
+      const bar = aiSearchToggle.closest(".search-bar");
+      if (!bar) return;
+      if (!active || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        if (searchGlowFrame) cancelAnimationFrame(searchGlowFrame);
+        searchGlowFrame = null;
+        bar.style.setProperty("--edge-proximity", active ? "86" : "0");
+        bar.style.setProperty("--cursor-angle", "110deg");
+        return;
+      }
+      if (searchGlowFrame) return;
+      const start = performance.now();
+      const tick = (now) => {
+        const lap = ((now - start) % 6200) / 6200;
+        const angle = 110 + lap * 360;
+        const pulse = 88 + Math.sin(lap * Math.PI * 2) * 5;
+        bar.style.setProperty("--cursor-angle", `${angle.toFixed(2)}deg`);
+        bar.style.setProperty("--edge-proximity", pulse.toFixed(2));
+        searchGlowFrame = requestAnimationFrame(tick);
+      };
+      searchGlowFrame = requestAnimationFrame(tick);
+    }
+    function getCachedTranslate(q, ci, forceAi) {
+      const c = readTranslateCache(); const hit = c[translateCacheKey(q, ci, forceAi)];
       return hit && (Date.now() - hit.ts) < TRANSLATE_CACHE_TTL ? hit.data : null;
     }
-    function putCachedTranslate(q, ci, data) {
+    function putCachedTranslate(q, ci, forceAi, data) {
       const c = readTranslateCache();
-      c[translateCacheKey(q, ci)] = { ts: Date.now(), data };
+      c[translateCacheKey(q, ci, forceAi)] = { ts: Date.now(), data };
       const keys = Object.keys(c);
       if (keys.length > TRANSLATE_CACHE_MAX) {
         keys.sort((a, b) => c[a].ts - c[b].ts).slice(0, keys.length - TRANSLATE_CACHE_MAX).forEach((k) => delete c[k]);
       }
       try { localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(c)); } catch {}
       renderCacheList();
+      persistAppStateSoon();
     }
-    function rememberSearch(q, ci, data) {
-      const item = { q, ci: ci || "", type: data?.type || "query", ts: Date.now() };
-      const history = readSearchHistory().filter((h) => translateCacheKey(h.q || "", h.ci || "") !== translateCacheKey(q, ci));
+    function rememberSearch(q, ci, forceAi, data) {
+      const item = { q, ci: ci || "", forceAi: !!forceAi, type: data?.type || "query", ts: Date.now() };
+      const history = readSearchHistory().filter((h) => translateCacheKey(h.q || "", h.ci || "", !!h.forceAi) !== translateCacheKey(q, ci, forceAi));
       history.unshift(item);
       try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, SEARCH_HISTORY_MAX))); } catch {}
       renderSearchHistory();
+      persistAppStateSoon();
     }
-    function runHistorySearch(q, ci) {
+    function removeSearch(q, ci, forceAi) {
+      const key = translateCacheKey(q, ci, forceAi);
+      const history = readSearchHistory().filter((h) => translateCacheKey(h.q || "", h.ci || "", !!h.forceAi) !== key);
+      const cache = readTranslateCache();
+      delete cache[key];
+      try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history)); } catch {}
+      try { localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(cache)); } catch {}
+      renderSearchHistory();
+      renderCacheList();
+      persistAppStateSoon();
+    }
+    function runHistorySearch(q, ci, forceAi) {
       searchInput.value = q;
+      autoSizeSearchInput();
+      state.forceAiSearch = !!forceAi;
+      localStorage.setItem("force_ai_search", JSON.stringify(state.forceAiSearch));
+      updateAiSearchToggle();
       state.colorIdentity = (ci || "").split("").filter(Boolean);
       localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
       updateIdentityDisplay();
+      persistAppStateSoon();
       setActiveTab("search");
       doSearch();
     }
     function cacheDisplayKey(key) {
       const parts = key.split("|");
-      return { ci: parts[0], q: parts.slice(1).join("|") };
+      return parts.length >= 3
+        ? { forceAi: parts[0] === "ai", ci: parts[1], q: parts.slice(2).join("|") }
+        : { forceAi: false, ci: parts[0], q: parts.slice(1).join("|") };
     }
     function renderSearchHistory() {
       const cache = readTranslateCache();
@@ -1394,9 +1885,9 @@
         .filter(([, v]) => v && (Date.now() - v.ts) < TRANSLATE_CACHE_TTL)
         .map(([key, v]) => ({ ...cacheDisplayKey(key), ts: v.ts, cached: true }));
       const seen = new Set();
-      const items = [...readSearchHistory().map((h) => ({ ...h, cached: !!cache[translateCacheKey(h.q || "", h.ci || "")] })), ...cacheItems]
+      const items = [...readSearchHistory().map((h) => ({ ...h, cached: !!cache[translateCacheKey(h.q || "", h.ci || "", !!h.forceAi)] })), ...cacheItems]
         .filter((h) => {
-          const key = translateCacheKey(h.q || "", h.ci || "");
+          const key = translateCacheKey(h.q || "", h.ci || "", !!h.forceAi);
           if (!h.q || seen.has(key)) return false;
           seen.add(key);
           return true;
@@ -1404,14 +1895,16 @@
         .sort((a, b) => (b.ts || 0) - (a.ts || 0))
         .slice(0, SEARCH_HISTORY_MAX);
       if (!items.length) {
-        historyList.innerHTML = `<div class="rail-empty">Recent searches appear here. Cached searches are marked after they run once.</div>`;
+        historyList.innerHTML = `<div class="rail-empty">Recent searches appear here.</div>`;
         return;
       }
       historyList.innerHTML = items.map((h) => `
-        <button class="history-btn" data-query="${esc(h.q || "")}" data-ci="${esc(h.ci || "")}">
-          <span>${esc(h.q || "")}</span>
-          <span class="history-meta">${h.cached ? "cached" : esc((h.ci || "any").toUpperCase())}</span>
-        </button>`).join("");
+        <div class="history-row">
+          <button class="history-btn" data-query="${esc(h.q || "")}" data-ci="${esc(h.ci || "")}" data-force-ai="${h.forceAi ? "true" : "false"}">
+            <span>${esc(h.q || "")}</span>
+          </button>
+          <button class="history-remove" data-query="${esc(h.q || "")}" data-ci="${esc(h.ci || "")}" data-force-ai="${h.forceAi ? "true" : "false"}" title="Remove" aria-label="Remove ${esc(h.q || "search")}">&times;</button>
+        </div>`).join("");
     }
     function renderCacheList() {
       const cache = readTranslateCache();
@@ -1427,7 +1920,7 @@
         const d = cacheDisplayKey(key);
         const label = d.q || "cached search";
         const type = v.data?.type === "cards" ? "AI picks" : "query";
-        return `<button class="cache-btn" data-query="${esc(label)}" data-ci="${esc(d.ci || "")}">
+        return `<button class="cache-btn" data-query="${esc(label)}" data-ci="${esc(d.ci || "")}" data-force-ai="${d.forceAi ? "true" : "false"}">
           <span>${esc(label)}</span>
           <span class="cache-meta">${type}</span>
         </button>`;
@@ -1435,12 +1928,176 @@
     }
     renderSearchHistory();
     renderCacheList();
+    loadAppState();
+
+    function currentAppStatePayload() {
+      return {
+        savedCards: state.savedCards,
+        folders: state.folders,
+        membership: state.membership,
+        colorIdentity: state.colorIdentity,
+        translateCache: readTranslateCache(),
+        searchHistory: readSearchHistory(),
+        forceAiSearch: state.forceAiSearch,
+      };
+    }
+
+    function hasUsefulAppState(data) {
+      return Boolean(
+        (Array.isArray(data.savedCards) && data.savedCards.length) ||
+        (Array.isArray(data.folders) && data.folders.length) ||
+        (data.membership && typeof data.membership === "object" && Object.keys(data.membership).length) ||
+        (Array.isArray(data.colorIdentity) && data.colorIdentity.length) ||
+        data.forceAiSearch ||
+        (data.translateCache && typeof data.translateCache === "object" && Object.keys(data.translateCache).length) ||
+        (Array.isArray(data.searchHistory) && data.searchHistory.length)
+      );
+    }
+
+    function applyAppState(data) {
+      if (!data || typeof data !== "object") return;
+      if (Array.isArray(data.savedCards)) {
+        state.savedCards = data.savedCards;
+        localStorage.setItem("saved_cards", JSON.stringify(state.savedCards));
+      }
+      if (Array.isArray(data.folders)) {
+        state.folders = data.folders;
+        localStorage.setItem("card_folders", JSON.stringify(state.folders));
+      }
+      if (data.membership && typeof data.membership === "object") {
+        state.membership = data.membership;
+        localStorage.setItem("card_membership", JSON.stringify(state.membership));
+      }
+      if (Array.isArray(data.colorIdentity)) {
+        state.colorIdentity = data.colorIdentity;
+        localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
+      }
+      if (typeof data.forceAiSearch === "boolean") {
+        state.forceAiSearch = data.forceAiSearch;
+        localStorage.setItem("force_ai_search", JSON.stringify(state.forceAiSearch));
+      }
+      if (data.translateCache && typeof data.translateCache === "object") {
+        localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(data.translateCache));
+      }
+      if (Array.isArray(data.searchHistory)) {
+        localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(data.searchHistory));
+      }
+      migrateMembership();
+      updateIdentityDisplay();
+      updateAiSearchToggle();
+      updateSavedCount();
+      renderFolderRail();
+      renderSearchHistory();
+      renderCacheList();
+      if (state.activeTab === "saved") renderSavedCards();
+    }
+
+    function mergeById(a = [], b = []) {
+      const merged = new Map();
+      [...a, ...b].forEach((item) => {
+        if (item && item.id) merged.set(item.id, { ...merged.get(item.id), ...item });
+      });
+      return [...merged.values()];
+    }
+
+    function mergeMembership(a, b) {
+      const merged = {};
+      [a, b].forEach((source) => {
+        if (!source || typeof source !== "object") return;
+        Object.entries(source).forEach(([cardId, folders]) => {
+          const next = new Set(merged[cardId] || []);
+          (Array.isArray(folders) ? folders : []).forEach((folderId) => next.add(folderId));
+          merged[cardId] = [...next];
+        });
+      });
+      return Object.keys(merged).length ? merged : null;
+    }
+
+    function mergeTranslateCache(a = {}, b = {}) {
+      const merged = { ...a };
+      Object.entries(b || {}).forEach(([key, value]) => {
+        if (!merged[key] || (value?.ts || 0) > (merged[key]?.ts || 0)) merged[key] = value;
+      });
+      return merged;
+    }
+
+    function mergeSearchHistory(a = [], b = []) {
+      const merged = new Map();
+      [...a, ...b].forEach((item) => {
+        if (!item || !item.q) return;
+        const key = translateCacheKey(item.q || "", item.ci || "", !!item.forceAi);
+        if (!merged.has(key) || (item.ts || 0) > (merged.get(key).ts || 0)) merged.set(key, item);
+      });
+      return [...merged.values()].sort((x, y) => (y.ts || 0) - (x.ts || 0)).slice(0, SEARCH_HISTORY_MAX);
+    }
+
+    function mergeAppState(localState, serverState) {
+      localState = localState || {};
+      serverState = serverState || {};
+      return {
+        savedCards: mergeById(serverState.savedCards, localState.savedCards),
+        folders: mergeById(serverState.folders, localState.folders),
+        membership: mergeMembership(serverState.membership, localState.membership),
+        colorIdentity: Array.isArray(localState.colorIdentity) && localState.colorIdentity.length
+          ? localState.colorIdentity
+          : (serverState.colorIdentity || []),
+        translateCache: mergeTranslateCache(serverState.translateCache, localState.translateCache),
+        searchHistory: mergeSearchHistory(serverState.searchHistory, localState.searchHistory),
+        forceAiSearch: typeof localState.forceAiSearch === "boolean" ? localState.forceAiSearch : Boolean(serverState.forceAiSearch),
+      };
+    }
+
+    async function loadAppState() {
+      try {
+        const res = await fetch("/api/app-state");
+        if (!res.ok) throw new Error("Could not load saved app state");
+        const serverState = await res.json();
+        const mergedState = mergeAppState(currentAppStatePayload(), serverState);
+        applyAppState(mergedState);
+        serverStateReady = true;
+        persistAppStateSoon();
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        serverStateReady = true;
+      }
+    }
+
+    function persistAppStateSoon() {
+      if (!serverStateReady) return;
+      clearTimeout(appStateSaveTimer);
+      appStateSaveTimer = setTimeout(persistAppState, 300);
+    }
+
+    async function persistAppState() {
+      try {
+        await fetch("/api/app-state", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(currentAppStatePayload()),
+        });
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
+    function startSearchRun() {
+      activeSearchRun += 1;
+      if (activeSearchController) activeSearchController.abort();
+      activeSearchController = new AbortController();
+      return { run: activeSearchRun, signal: activeSearchController.signal };
+    }
+
+    function isActiveSearch(run) {
+      return run === activeSearchRun;
+    }
 
     async function doSearch() {
       const query = searchInput.value.trim();
       if (!query) return;
-      if (!state.apiKey) return showSettings();
+      if (!state.hasApiKey) return showSettings();
 
+      const searchRun = startSearchRun();
       searchBtn.disabled = true;
       searchBtn.textContent = "Searching...";
       startLoadingAnimation();
@@ -1453,25 +2110,30 @@
       state.nextPage = null;
 
       const ci = state.colorIdentity.join("") || null;
+      const forceAiSearch = state.forceAiSearch;
       try {
-        let data = getCachedTranslate(query, ci);
+        let data = getCachedTranslate(query, ci, forceAiSearch);
         if (!data) {
           const res = await fetch("/api/translate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query, apiKey: state.apiKey, colorIdentity: ci }),
+            body: JSON.stringify({ query, colorIdentity: ci, forceAiSearch }),
+            signal: searchRun.signal,
           });
+          if (!isActiveSearch(searchRun.run)) return;
           if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Translation failed"); }
           data = await res.json();
-          putCachedTranslate(query, ci, data);
+          if (!isActiveSearch(searchRun.run)) return;
+          putCachedTranslate(query, ci, forceAiSearch, data);
         }
-        rememberSearch(query, ci, data);
+        rememberSearch(query, ci, forceAiSearch, data);
+        if (!isActiveSearch(searchRun.run)) return;
 
         if (data.type === "cards") {
           // Recommendation path — AI returned a curated list of card names.
           state.mode = "recommend";
           state.currentQuery = "";
-          await resolveRecommendations(data.cards || [], data.summary || "");
+          await resolveRecommendations(data.cards || [], data.summary || "", searchRun.run, searchRun.signal);
         } else {
           // Search path — AI returned a Scryfall query string.
           state.mode = "search";
@@ -1480,18 +2142,21 @@
           state.currentQuery = scryfallQuery;
           queryText.textContent = scryfallQuery;
           queryDisplay.classList.add("visible");
-          await searchScryfall(scryfallQuery);
+          await searchScryfall(scryfallQuery, null, searchRun.run, searchRun.signal);
         }
       } catch (err) {
+        if (err.name === "AbortError" || !isActiveSearch(searchRun.run)) return;
         showStatus(err.message, true);
       } finally {
-        searchBtn.disabled = false;
-        searchBtn.textContent = "Search";
+        if (isActiveSearch(searchRun.run)) {
+          searchBtn.disabled = false;
+          searchBtn.textContent = "Search";
+        }
       }
     }
 
     // Resolve AI-recommended card names to full Scryfall cards (batch), preserving AI ranking.
-    async function resolveRecommendations(entries, summary) {
+    async function resolveRecommendations(entries, summary, run = activeSearchRun, signal = activeSearchController?.signal) {
       const list = (entries || []).filter((e) => e && e.name).slice(0, 75);
       if (!list.length) { showStatus("No recommendations came back — try rephrasing.", true); return; }
       try {
@@ -1499,9 +2164,12 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ identifiers: list.map((e) => ({ name: e.name })) }),
+          signal,
         });
+        if (!isActiveSearch(run)) return;
         if (!res.ok) { const err = await res.json(); throw new Error(err.details || "Couldn't look up the recommended cards"); }
         const data = await res.json();
+        if (!isActiveSearch(run)) return;
 
         // Reorder Scryfall results to match the AI's ranking, and attach each reason.
         const norm = (s) => (s || "").toLowerCase().split("//")[0].trim();
@@ -1532,22 +2200,41 @@
         aiSummaryText.innerHTML = esc(summary) + (notFound ? ` <span class="ai-not-found">(${notFound} suggestion${notFound === 1 ? "" : "s"} couldn't be matched on Scryfall)</span>` : "");
         aiSummary.style.display = ordered.length || summary ? "flex" : "none";
         if (!ordered.length) showStatus("None of the recommended cards could be found on Scryfall.", true);
-      } catch (err) { showStatus(err.message, true); }
+      } catch (err) {
+        if (err.name === "AbortError" || !isActiveSearch(run)) return;
+        showStatus(err.message, true);
+      }
     }
 
-    async function searchScryfall(query, pageUrl) {
+    // The dropdown is the single source of truth for ordering. Strip any inline
+    // order:/direction:/dir: tokens the AI baked into the query — Scryfall lets an
+    // inline order: keyword override the URL `order=` param, which silently
+    // ignored the user's sort choice and made results look randomly ordered.
+    function stripInlineOrder(query) {
+      return query
+        .replace(/\b(?:order|direction|dir)\s*:\s*[^\s)]+/gi, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    async function searchScryfall(query, pageUrl, run = activeSearchRun, signal = activeSearchController?.signal) {
       try {
-        const url = pageUrl || `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=cards&order=${state.sortField}&dir=${state.sortDir}`;
-        const res = await fetch(url);
+        const url = pageUrl || `https://api.scryfall.com/cards/search?q=${encodeURIComponent(stripInlineOrder(query))}&unique=cards&order=${state.sortField}&dir=${state.sortDir}`;
+        const res = await fetch(url, { signal });
+        if (!isActiveSearch(run)) return;
         if (!res.ok) { const err = await res.json(); throw new Error(err.details || "No cards found — try rephrasing"); }
         const data = await res.json();
+        if (!isActiveSearch(run)) return;
         state.results.push(...data.data);
         state.nextPage = data.has_more ? data.next_page : null;
         hideStatus();
         renderResults(data.data, !!pageUrl);
         paginationEl.style.display = state.nextPage ? "flex" : "none";
         sortBar.style.display = state.results.length ? "flex" : "none";
-      } catch (err) { showStatus(err.message, true); }
+      } catch (err) {
+        if (err.name === "AbortError" || !isActiveSearch(run)) return;
+        showStatus(err.message, true);
+      }
     }
 
     // Re-run the current (already-translated) query with the chosen Scryfall ordering
@@ -1571,7 +2258,8 @@
           sortField.insertBefore(o, sortField.firstChild);
         }
         state.sortField = "ai"; sortField.value = "ai";
-        state.sortDir = "asc"; sortDir.dataset.dir = "asc"; sortDir.innerHTML = "&#8593; Asc";
+        state.sortDir = "asc";
+        updateSortDirButton(sortDir, state.sortDir);
       } else {
         if (aiOpt) aiOpt.remove();
         if (state.sortField === "ai") { state.sortField = "cmc"; sortField.value = "cmc"; }
@@ -1589,28 +2277,33 @@
       return isNaN(n) ? null : n;
     };
 
+    function sortCardsByField(cards, field, direction) {
+      const mul = direction === "desc" ? -1 : 1;
+      return cards.slice().sort((a, b) => {
+        if (field === "eur") {
+          const av = priceNum(a), bv = priceNum(b);
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          return (av - bv) * mul;
+        }
+        let cmp = 0;
+        if (field === "name") cmp = (a.name || "").localeCompare(b.name || "");
+        else if (field === "cmc") cmp = (a.cmc ?? 0) - (b.cmc ?? 0);
+        else if (field === "power") cmp = statVal(a.power) - statVal(b.power);
+        else if (field === "toughness") cmp = statVal(a.toughness) - statVal(b.toughness);
+        return cmp * mul;
+      });
+    }
+
     // Sort the recommendation results in-place on the client (no Scryfall re-query).
     function clientSortCards() {
       let cards = (state.recommendOrder || state.results).slice();
-      const f = state.sortField, mul = state.sortDir === "desc" ? -1 : 1;
+      const f = state.sortField;
       if (f === "ai") {
         if (state.sortDir === "desc") cards.reverse();
       } else {
-        cards.sort((a, b) => {
-          if (f === "eur") {
-            const av = priceNum(a), bv = priceNum(b); // cards with no price always sink to the bottom
-            if (av == null && bv == null) return 0;
-            if (av == null) return 1;
-            if (bv == null) return -1;
-            return (av - bv) * mul;
-          }
-          let cmp = 0;
-          if (f === "name") cmp = (a.name || "").localeCompare(b.name || "");
-          else if (f === "cmc") cmp = (a.cmc ?? 0) - (b.cmc ?? 0);
-          else if (f === "power") cmp = statVal(a.power) - statVal(b.power);
-          else if (f === "toughness") cmp = statVal(a.toughness) - statVal(b.toughness);
-          return cmp * mul;
-        });
+        cards = sortCardsByField(cards, f, state.sortDir);
       }
       state.results = cards;
       renderResults(cards, false);
@@ -1622,9 +2315,18 @@
     });
     sortDir.addEventListener("click", () => {
       state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-      sortDir.dataset.dir = state.sortDir;
-      sortDir.innerHTML = state.sortDir === "asc" ? "&#8593; Asc" : "&#8595; Desc";
+      updateSortDirButton(sortDir, state.sortDir);
       if (state.mode === "recommend") clientSortCards(); else applySort();
+    });
+
+    savedSortField.addEventListener("change", () => {
+      state.savedSortField = savedSortField.value;
+      renderSavedCards();
+    });
+    savedSortDir.addEventListener("click", () => {
+      state.savedSortDir = state.savedSortDir === "asc" ? "desc" : "asc";
+      updateSortDirButton(savedSortDir, state.savedSortDir);
+      renderSavedCards();
     });
 
     loadMoreBtn.addEventListener("click", () => { if (state.nextPage) searchScryfall(null, state.nextPage); });
@@ -1683,12 +2385,17 @@
         el.querySelector("img").addEventListener("click", () => showDetail(card));
         resultsEl.appendChild(el);
       });
+      scheduleTiltInit(resultsEl);
     }
 
     function renderSavedCards() {
       renderFolderRail();
       const filter = savedFilter.value.toLowerCase();
-      const cards = getFolderCards(state.activeFolder).filter((c) => !filter || c.name.toLowerCase().includes(filter) || (c.type_line || "").toLowerCase().includes(filter));
+      const cards = sortCardsByField(
+        getFolderCards(state.activeFolder).filter((c) => !filter || c.name.toLowerCase().includes(filter) || (c.type_line || "").toLowerCase().includes(filter)),
+        state.savedSortField,
+        state.savedSortDir
+      );
       if (!cards.length) {
         savedEmpty.style.display = "block";
         const anySaved = state.savedCards.length > 0;
@@ -1721,6 +2428,7 @@
         el.querySelector("img").addEventListener("click", () => showDetail(card));
         savedGrid.appendChild(el);
       });
+      scheduleTiltInit(savedGrid);
     }
 
     savedFilter.addEventListener("input", renderSavedCards);
@@ -1749,7 +2457,7 @@
       $("#detail-oracle").textContent = getOracleText(card);
       if (card.power !== undefined && card.toughness !== undefined) {
         $("#detail-pt").textContent = `${card.power}/${card.toughness}`;
-        $("#detail-pt-row").style.display = "block";
+        $("#detail-pt-row").style.display = ""; // fall back to .detail-row's grid so P/T aligns with the other rows
       } else { $("#detail-pt-row").style.display = "none"; }
       const saveBtn = $("#detail-save-btn");
       saveBtn.textContent = isSaved ? "Saved" : "Save";
@@ -1780,9 +2488,18 @@
     });
 
     // ── Saves & folders ──────────────────────────────────────────────
-    function saveCardsStore() { localStorage.setItem("saved_cards", JSON.stringify(state.savedCards)); }
-    function saveFolders() { localStorage.setItem("card_folders", JSON.stringify(state.folders)); }
-    function saveMembership() { localStorage.setItem("card_membership", JSON.stringify(state.membership)); }
+    function saveCardsStore() {
+      localStorage.setItem("saved_cards", JSON.stringify(state.savedCards));
+      persistAppStateSoon();
+    }
+    function saveFolders() {
+      localStorage.setItem("card_folders", JSON.stringify(state.folders));
+      persistAppStateSoon();
+    }
+    function saveMembership() {
+      localStorage.setItem("card_membership", JSON.stringify(state.membership));
+      persistAppStateSoon();
+    }
 
     // Build membership for pre-folders saves: everything goes into the default collection.
     function migrateMembership() {
@@ -2093,9 +2810,14 @@
       if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = null; }
     }
 
-    // 3D tilt effect (rotateAmplitude: 12, scaleOnHover: 1)
+    // 3D tilt effect: intentionally subtle, matching the saved-card feel.
     const ROTATE_AMP = 1.5;
     const SCALE_HOVER = 1;
+    const TILT_EASE = 0.12;
+
+    function scheduleTiltInit(container) {
+      requestAnimationFrame(() => requestAnimationFrame(() => initTilt(container)));
+    }
 
     function initTilt(container) {
       container.querySelectorAll(".card-item").forEach((card) => {
@@ -2107,8 +2829,8 @@
         let currentRx = 0, currentRy = 0;
 
         function springTo() {
-          currentRx += (targetRx - currentRx) * 0.15;
-          currentRy += (targetRy - currentRy) * 0.15;
+          currentRx += (targetRx - currentRx) * TILT_EASE;
+          currentRy += (targetRy - currentRy) * TILT_EASE;
           card.style.transform = `perspective(800px) rotateX(${currentRx}deg) rotateY(${currentRy}deg) scale(${card._hovered ? SCALE_HOVER : 1})`;
           if (Math.abs(targetRx - currentRx) > 0.05 || Math.abs(targetRy - currentRy) > 0.05) {
             animId = requestAnimationFrame(springTo);
@@ -2122,42 +2844,52 @@
           if (!animId) animId = requestAnimationFrame(springTo);
         }
 
-        // Geometry captured once on enter (while the card is at rest), so the
+        // Geometry captured once per hover (while the card is at rest), so the
         // tilt target is never fed back the card's own live, already-tilted rect
         // — that feedback loop is what made the tilt erratic.
         let cx = 0, cy = 0, hw = 1, hh = 1;
+        let geomReady = false;
 
-        card.addEventListener("mouseenter", () => {
+        function captureGeom() {
           const rect = card.getBoundingClientRect();
           cx = rect.left + rect.width / 2;
           cy = rect.top + rect.height / 2;
           hw = rect.width / 2 || 1;
           hh = rect.height / 2 || 1;
+          geomReady = true;
+        }
+
+        const clamp1 = (v) => (v < -1 ? -1 : v > 1 ? 1 : v);
+
+        card.addEventListener("mouseenter", () => {
+          captureGeom();
           card._hovered = true;
           startAnim();
         });
 
         card.addEventListener("mousemove", (e) => {
-          targetRx = ((e.clientY - cy) / hh) * -ROTATE_AMP;
-          targetRy = ((e.clientX - cx) / hw) * ROTATE_AMP;
+          // mouseenter doesn't fire if the cursor was already over the card when
+          // these listeners attached (e.g. results rendered under the pointer).
+          // Capture geometry now — the card is still at rest — so we never run
+          // with the initial cx=0/hh=1 placeholders, which would whip the card
+          // around hundreds of degrees and look like it's flipping over.
+          if (!geomReady) { captureGeom(); card._hovered = true; }
+          // Clamp to the card's own bounds so the tilt can never exceed
+          // ±ROTATE_AMP, even if the captured geometry goes stale (e.g. scroll).
+          targetRx = clamp1((e.clientY - cy) / hh) * -ROTATE_AMP;
+          targetRy = clamp1((e.clientX - cx) / hw) * ROTATE_AMP;
           startAnim();
         });
 
         card.addEventListener("mouseleave", () => {
           card._hovered = false;
+          geomReady = false;
           targetRx = 0;
           targetRy = 0;
           startAnim();
         });
       });
     }
-
-    const tiltObserver = new MutationObserver(() => {
-      initTilt(resultsEl);
-      initTilt(savedGrid);
-    });
-    tiltObserver.observe(resultsEl, { childList: true });
-    tiltObserver.observe(savedGrid, { childList: true });
   </script>
 </body>
 </html>

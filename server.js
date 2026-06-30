@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import express from "express";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -7,6 +8,60 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, "public")));
+
+const DATA_DIR = process.env.DATA_DIR || join(__dirname, "data");
+const STATE_FILE = join(DATA_DIR, "state.json");
+const DEFAULT_APP_STATE = {
+  savedCards: [],
+  folders: [],
+  membership: null,
+  colorIdentity: [],
+  translateCache: {},
+  searchHistory: [],
+  apiKey: "",
+  forceAiSearch: false,
+};
+const COLOR_IDS = new Set(["w", "u", "b", "r", "g"]);
+
+function plainObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+
+function normalizeAppState(value = {}) {
+  const input = plainObject(value) || {};
+  return {
+    savedCards: Array.isArray(input.savedCards) ? input.savedCards : [],
+    folders: Array.isArray(input.folders) ? input.folders : [],
+    membership: plainObject(input.membership),
+    colorIdentity: Array.isArray(input.colorIdentity) ? input.colorIdentity.filter((c) => COLOR_IDS.has(c)) : [],
+    translateCache: plainObject(input.translateCache) || {},
+    searchHistory: Array.isArray(input.searchHistory) ? input.searchHistory : [],
+    apiKey: typeof input.apiKey === "string" ? input.apiKey : "",
+    forceAiSearch: Boolean(input.forceAiSearch),
+  };
+}
+
+function publicAppState(state) {
+  const { apiKey, ...rest } = state;
+  return rest;
+}
+
+async function readAppState() {
+  try {
+    const raw = await readFile(STATE_FILE, "utf8");
+    return normalizeAppState({ ...DEFAULT_APP_STATE, ...JSON.parse(raw) });
+  } catch (err) {
+    if (err.code === "ENOENT") return { ...DEFAULT_APP_STATE };
+    throw err;
+  }
+}
+
+async function writeAppState(nextState) {
+  await mkdir(DATA_DIR, { recursive: true });
+  const state = normalizeAppState({ ...DEFAULT_APP_STATE, ...nextState });
+  await writeFile(STATE_FILE, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+  return state;
+}
 
 const SCRYFALL_SYSTEM_PROMPT = `You are a Magic: The Gathering search assistant that translates natural language requests into Scryfall search queries.
 
@@ -198,8 +253,50 @@ function extractQuery(text) {
   return text;
 }
 
+app.get("/api/app-state", async (req, res) => {
+  try {
+    res.json(publicAppState(await readAppState()));
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to read app state" });
+  }
+});
+
+app.put("/api/app-state", async (req, res) => {
+  try {
+    const current = await readAppState();
+    const nextState = await writeAppState({ ...current, ...req.body, apiKey: current.apiKey });
+    res.json(publicAppState(nextState));
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to save app state" });
+  }
+});
+
+app.get("/api/settings", async (req, res) => {
+  try {
+    const state = await readAppState();
+    const hasApiKey = Boolean(process.env.ANTHROPIC_API_KEY || state.apiKey);
+    res.json({ hasApiKey, source: process.env.ANTHROPIC_API_KEY ? "environment" : (state.apiKey ? "appdata" : "none") });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to read settings" });
+  }
+});
+
+app.put("/api/settings", async (req, res) => {
+  try {
+    const apiKey = String(req.body?.apiKey || "").trim();
+    if (!apiKey) return res.status(400).json({ error: "Missing API key" });
+    const state = await readAppState();
+    await writeAppState({ ...state, apiKey });
+    res.json({ hasApiKey: true, source: process.env.ANTHROPIC_API_KEY ? "environment" : "appdata" });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to save settings" });
+  }
+});
+
 app.post("/api/translate", async (req, res) => {
-  const { query, apiKey, colorIdentity } = req.body;
+  const { query, colorIdentity, forceAiSearch } = req.body;
+  const appState = await readAppState();
+  const apiKey = process.env.ANTHROPIC_API_KEY || appState.apiKey || req.body.apiKey;
   if (!query || !apiKey) {
     return res.status(400).json({ error: "Missing query or API key" });
   }
@@ -207,6 +304,11 @@ app.post("/api/translate", async (req, res) => {
   let userMessage = query;
   if (colorIdentity) {
     userMessage = `[Commander color identity: ${colorIdentity}]\n${query}`;
+  }
+  if (forceAiSearch) {
+    userMessage = `[Force AI web search recommendations: true]
+Use the semantic recommendation path even if this could be translated into a Scryfall query. Use web_search first when it can improve accuracy, then call recommend_cards with specific real card names. Do not return a plain Scryfall query.
+${userMessage}`;
   }
 
   try {

@@ -1,0 +1,11 @@
+.git
+.claude
+.playwright-mcp
+node_modules
+data
+npm-debug.log*
+Dockerfile
+compose.yaml
+docker-compose.yml
+prototype-site-redesign.html
+scryfall-syntax-reference.txt
