@@ -8,70 +8,76 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
-      background: #F5F5F4;
-      color: #1a1a1a;
+      font-family: "Satoshi", "Geist", "Aptos", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle, rgba(24,23,21,0.13) 0 1px, transparent 1.35px),
+        #F7F6F1;
+      background-size: 22px 22px;
+      color: #181715;
       min-height: 100vh;
     }
 
     /* ── Header ── */
     header {
-      background: #fff;
-      border-bottom: 1px solid #e8e8e6;
+      background: rgba(247, 246, 241, 0.88);
+      border-bottom: 1px solid rgba(31,29,25,0.12);
       padding: 0 24px;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
-      height: 52px;
+      height: 64px;
       position: sticky;
       top: 0;
       z-index: 100;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
 
     header h1 {
-      font-size: 16px;
-      font-weight: 700;
-      color: #1a1a1a;
-      letter-spacing: -0.02em;
+      font-size: 24px;
+      font-weight: 850;
+      color: #181715;
+      letter-spacing: -0.045em;
     }
 
-    .header-actions { display: flex; gap: 2px; align-items: center; }
+    .header-actions { display: contents; }
 
     .nav-pills {
       display: flex;
-      gap: 2px;
-      background: #f0f0ee;
+      gap: 4px;
+      background: #ECEAE2;
       border-radius: 999px;
-      padding: 3px;
-      margin-right: 12px;
+      padding: 4px;
+      justify-self: center;
     }
 
     .tab-btn {
-      padding: 5px 14px;
+      padding: 8px 18px;
       border-radius: 999px;
       border: none;
       background: transparent;
       color: #888;
-      font: 13px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font: 13px/1 inherit;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s;
     }
 
     .tab-btn:hover { color: #555; }
-    .tab-btn.active { background: #fff; color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .tab-btn.active { background: #FFFEFA; color: #181715; box-shadow: 0 3px 10px rgba(31,29,25,0.08); }
 
     #settings-btn {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      border: 1px solid #e0e0de;
-      background: #fff;
+      border: 1px solid rgba(31,29,25,0.12);
+      background: #FFFEFA;
       color: #888;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      justify-self: end;
       transition: all 0.15s;
     }
 
@@ -80,7 +86,123 @@
     #settings-btn:hover { border-color: #ccc; color: #555; }
 
     /* ── Main ── */
-    main { max-width: 900px; margin: 0 auto; padding: 28px 24px; }
+    main {
+      width: min(100vw - 32px, 2040px);
+      margin: 0 auto;
+      padding: 20px 0 32px;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr) 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .side-menu,
+    .detail-panel,
+    .content-panel {
+      border: 1px solid rgba(31,29,25,0.12);
+      background: rgba(255,254,250,0.78);
+      box-shadow: 0 24px 60px -42px rgba(28,24,18,0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .side-menu {
+      position: sticky;
+      top: 84px;
+      border-radius: 16px;
+      padding: 14px;
+      max-height: calc(100dvh - 104px);
+      overflow: auto;
+    }
+
+    .content-panel {
+      min-width: 0;
+      border-radius: 22px;
+      padding: 18px;
+    }
+
+    .rail-section { margin-bottom: 18px; }
+    .rail-section:last-child { margin-bottom: 0; }
+    .side-menu.search-mode .workspace-section,
+    .side-menu.search-mode .folders-section,
+    .side-menu.search-mode .cache-section,
+    .side-menu.saved-mode .workspace-section,
+    .side-menu.saved-mode .history-section,
+    .side-menu.saved-mode .cache-section { display: none; }
+
+    .rail-label,
+    .folder-rail .rail-label {
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 0.075em;
+      text-transform: uppercase;
+      color: #9E9B92;
+      padding: 4px 10px 8px;
+    }
+
+    .rail-tab,
+    .history-btn,
+    .cache-btn {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      padding: 9px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      color: #5E5A51;
+      font: 13px/1.25 inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+    }
+
+    .rail-tab:hover,
+    .history-btn:hover,
+    .cache-btn:hover { background: #EFEEE7; color: #181715; }
+
+    .rail-tab:active,
+    .history-btn:active,
+    .cache-btn:active { transform: translateY(1px) scale(0.99); }
+
+    .rail-tab.active { background: #223126; color: #FFFEFA; }
+
+    .rail-count,
+    .history-meta,
+    .cache-meta {
+      color: #A8A49A;
+      font-size: 11px;
+      font-weight: 650;
+      flex-shrink: 0;
+    }
+
+    .rail-tab.active .rail-count { color: rgba(255,254,250,0.74); }
+    .rail-tab { align-items: center; }
+
+    .rail-empty {
+      padding: 8px 10px;
+      color: #A8A49A;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .history-list,
+    .cache-list { display: grid; gap: 3px; }
+
+    .history-btn span:first-child,
+    .cache-btn span:first-child {
+      min-width: 0;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
 
     /* ── Search Section ── */
     .search-section {
@@ -147,29 +269,62 @@
       white-space: nowrap;
     }
 
-    .color-toggles { display: flex; gap: 4px; }
+    .color-toggles { display: flex; gap: 6px; }
 
     .color-toggle {
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1.5px solid #e0e0de;
-      background: #fff;
-      color: #ccc;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border-radius: 50%;
+      border: 1.5px solid rgba(31,29,25,0.12);
+      background: #FFFEFA;
+      color: #B6B2A8;
       font: 13px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.15s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+      transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
     }
 
-    .color-toggle:hover { border-color: #ccc; color: #999; }
+    .color-toggle:hover { border-color: rgba(31,29,25,0.22); color: #6D685F; transform: translateY(-1px); }
+    .color-toggle:active { transform: translateY(1px) scale(0.98); }
 
-    .color-toggle[data-color="w"].active { background: #F9FAF4; border-color: #E0D6B5; color: #8B7D3C; }
-    .color-toggle[data-color="u"].active { background: #E8F1F8; border-color: #0E68AB; color: #0E68AB; }
-    .color-toggle[data-color="b"].active { background: #2a2a2a; border-color: #2a2a2a; color: #bbb; }
-    .color-toggle[data-color="r"].active { background: #FDECEA; border-color: #D3202A; color: #D3202A; }
-    .color-toggle[data-color="g"].active { background: #E8F5EE; border-color: #00733E; color: #00733E; }
+    .color-toggle[data-color="w"].active {
+      background: #F4E8B8;
+      border-color: #D8BF64;
+      color: #5C4A12;
+      box-shadow: 0 5px 14px -9px rgba(111,85,20,0.75), inset 0 1px 0 rgba(255,255,255,0.55);
+    }
+    .color-toggle[data-color="u"].active {
+      background: #B8D7EA;
+      border-color: #4A8EBA;
+      color: #174561;
+      box-shadow: 0 5px 14px -9px rgba(32,91,125,0.75), inset 0 1px 0 rgba(255,255,255,0.55);
+    }
+    .color-toggle[data-color="b"].active {
+      background: #C6C2B8;
+      border-color: #8D887F;
+      color: #34312B;
+      box-shadow: 0 5px 14px -9px rgba(80,76,70,0.75), inset 0 1px 0 rgba(255,255,255,0.38);
+    }
+    .color-toggle[data-color="r"].active {
+      background: #E2A06D;
+      border-color: #B65D37;
+      color: #552313;
+      box-shadow: 0 5px 14px -9px rgba(150,62,30,0.75), inset 0 1px 0 rgba(255,255,255,0.38);
+    }
+    .color-toggle[data-color="g"].active {
+      background: #A9C7A1;
+      border-color: #5D8B57;
+      color: #214722;
+      box-shadow: 0 5px 14px -9px rgba(48,98,43,0.75), inset 0 1px 0 rgba(255,255,255,0.45);
+    }
 
     .identity-display {
+      display: none;
       font: 11px/1 'SF Mono', 'Fira Code', 'Consolas', monospace;
       color: #aaa;
     }
@@ -246,15 +401,19 @@
     /* ── Results Grid (Card Collector style, Apple Sidebar size) ── */
     .results-grid {
       display: grid;
-      /* cards grow only up to ~the 4-across "to-scale" size (300px), then a new column appears */
-      grid-template-columns: repeat(auto-fill, minmax(228px, 300px));
+      /* Magic cards are 2.5in wide; at CSS's 96px/in baseline, 240px reads as real-life scale.
+         On ultra-wide screens the wider shell lets this center area fit four fixed-scale columns. */
+      grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
       justify-content: center;
       gap: 14px;
       perspective: 800px;
-      /* break out of the 900px main column, centered on the viewport so it lines up with the
-         search field. Positioned directly (no margin-left:50% + translate, which overflows right). */
-      width: min(100vw - 48px, 1800px);
-      margin-left: calc(50% - min(100vw - 48px, 1800px) / 2);
+      width: 100%;
+      margin-left: 0;
+    }
+
+    #results,
+    #saved-grid {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
     }
 
     .card-item {
@@ -475,49 +634,81 @@
     .modal-actions .btn-cancel { background: #f0f0ee; color: #555; }
     .modal-actions .btn-cancel:hover { background: #e8e8e6; }
 
-    /* ── Card Detail Modal ── */
-    .card-detail-modal .modal {
-      max-width: 680px;
-      display: flex;
-      gap: 24px;
+    /* ── Right-side card focus ── */
+    .detail-panel {
+      position: sticky;
+      top: 84px;
+      border-radius: 20px;
+      padding: 14px;
+      max-height: calc(100dvh - 104px);
+      overflow: auto;
+    }
+
+    .detail-panel.empty .detail-content { display: none; }
+    .detail-panel:not(.empty) .detail-empty { display: none; }
+
+    .detail-empty {
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: #928E84;
       padding: 24px;
     }
 
-    .card-detail-modal .modal img {
-      width: 220px;
-      border-radius: 10px;
-      flex-shrink: 0;
+    .detail-empty strong {
+      display: block;
+      color: #37342E;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
     }
 
-    .card-detail-modal .detail-info { flex: 1; }
-    .card-detail-modal .detail-info h3 { margin-bottom: 10px; font-size: 18px; font-weight: 700; }
-
-    .card-detail-modal .detail-info .detail-row {
-      margin-bottom: 5px;
+    .detail-empty span {
+      display: block;
       font-size: 13px;
-      color: #555;
+      line-height: 1.45;
+      max-width: 25ch;
     }
 
-    .card-detail-modal .detail-info .detail-label { color: #aaa; }
+    .detail-panel img { display: none; }
 
-    .card-detail-modal .detail-info .oracle-text {
+    .detail-info { padding: 14px 2px 0; }
+    .detail-info h3 { margin-bottom: 10px; font-size: 22px; line-height: 1; font-weight: 850; letter-spacing: -0.035em; }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 8px;
+      margin-bottom: 7px;
+      font-size: 13px;
+      color: #504B42;
+      line-height: 1.35;
+    }
+
+    .detail-label { color: #A19D93; }
+
+    .oracle-text {
       margin-top: 12px;
       padding: 12px;
-      background: #F5F5F4;
-      border-radius: 8px;
+      background: #F1EFE8;
+      border: 1px solid rgba(31,29,25,0.08);
+      border-radius: 12px;
       font-size: 13px;
       line-height: 1.55;
-      color: #333;
+      color: #37342E;
       white-space: pre-wrap;
     }
 
-    .card-detail-modal .card-actions {
-      margin-top: 16px;
+    .detail-panel .card-actions {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
     }
 
-    .card-detail-modal .card-actions button {
+    .detail-panel .card-actions button {
       font-size: 12px;
-      padding: 6px 14px;
+      padding: 8px 9px;
     }
 
     /* ── Sort bar ── */
@@ -635,30 +826,10 @@
     .empty-state small { font-size: 13px; }
 
     /* ── Saved folders (sidebar) ── */
-    .saved-layout {
-      display: flex;
-      gap: 22px;
-      align-items: flex-start;
-      width: min(100vw - 48px, 1800px);
-      margin-left: calc(50% - min(100vw - 48px, 1800px) / 2);
-    }
-
     .folder-rail {
-      flex: 0 0 210px;
-      position: sticky;
-      top: 16px;
       display: flex;
       flex-direction: column;
       gap: 2px;
-    }
-
-    .folder-rail .rail-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #b3b3b0;
-      padding: 4px 10px 8px;
     }
 
     .folder-btn {
@@ -678,8 +849,8 @@
       transition: background 0.15s, color 0.15s;
     }
 
-    .folder-btn:hover { background: #f0f0ee; color: #1a1a1a; }
-    .folder-btn.active { background: #1a1a1a; color: #fff; }
+    .folder-btn:hover { background: #EFEEE7; color: #181715; }
+    .folder-btn.active { background: #223126; color: #fff; }
 
     .folder-btn .folder-name {
       flex: 1;
@@ -719,7 +890,7 @@
     .folder-btn:hover .folder-edit { display: inline-flex; }
     .folder-btn .folder-edit:hover { opacity: 1; background: rgba(125,125,125,0.18); }
 
-    .folder-rail .rail-divider { height: 1px; background: #ececea; margin: 8px 6px; }
+    .folder-rail .rail-divider { height: 1px; background: #E7E4DA; margin: 8px 6px; }
 
     .folder-add {
       display: flex;
@@ -739,7 +910,7 @@
 
     .folder-add:hover { border-color: #b8b8b4; color: #555; }
 
-    .saved-main { flex: 1; min-width: 0; }
+    .saved-main { min-width: 0; }
     .saved-main .search-bar { margin-bottom: 16px; }
 
     /* the saved grid lives inside the sidebar column — undo the full-bleed break-out */
@@ -833,20 +1004,42 @@
       cursor: pointer;
     }
 
+    @media (max-width: 1100px) {
+      .app-shell {
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+
+      .detail-panel {
+        grid-column: 2;
+        position: static;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 860px) {
+      main { width: min(100vw - 24px, 720px); }
+      header { grid-template-columns: 1fr auto; height: auto; gap: 10px; padding: 12px 16px; }
+      .nav-pills { grid-column: 1 / -1; grid-row: 2; }
+      .app-shell { grid-template-columns: 1fr; }
+      .side-menu {
+        position: static;
+        max-height: none;
+      }
+      .detail-panel { grid-column: auto; }
+      .folder-rail { flex-direction: row; flex-wrap: wrap; }
+      .folder-rail .rail-label, .folder-rail .rail-divider { display: none; }
+      .folder-btn, .folder-add { width: auto; }
+    }
+
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .search-bar { flex-direction: column; padding: 12px; gap: 8px; }
       .search-bar input { padding: 12px 0; }
       .search-bar button { width: 100%; padding: 12px; }
-      .card-detail-modal .modal { flex-direction: column; }
-      .card-detail-modal .modal img { width: 100%; }
       /* one card per row on mobile — never shrink to two across */
       .results-grid { grid-template-columns: 1fr; gap: 10px; width: auto; margin-left: 0; }
       .nav-pills { margin-right: 8px; }
-      /* stack the saved folder rail above the grid on mobile */
-      .saved-layout { flex-direction: column; width: auto; margin-left: 0; gap: 14px; }
-      .folder-rail { flex: 0 0 auto; position: static; flex-direction: row; flex-wrap: wrap; }
-      .folder-rail .rail-label, .folder-rail .rail-divider { display: none; }
+      .detail-panel .card-actions { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -858,67 +1051,94 @@
         <button class="tab-btn active" data-tab="search">Search</button>
         <button class="tab-btn" data-tab="saved">Saved <span id="saved-count">0</span></button>
       </div>
-      <button id="settings-btn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg></button>
+      <button id="settings-btn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.36a1.7 1.7 0 0 0-1 .92l-.03.09a2 2 0 0 1-3.86 0l-.03-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-.92-1l-.09-.03a2 2 0 0 1 0-3.86l.09-.03A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1-.92l.03-.09a2 2 0 0 1 3.86 0l.03.09a1.7 1.7 0 0 0 1 .92 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.12.4.45.74.92 1l.09.03a2 2 0 0 1 0 3.86l-.09.03a1.7 1.7 0 0 0-.88 1.08Z"/></svg></button>
     </div>
   </header>
 
   <main>
-    <div class="search-content" id="search-content">
-      <div class="search-section">
-        <div class="search-bar">
-          <input type="text" id="search-input" placeholder="What kind of card are you looking for?" autofocus>
-          <button id="search-btn">Search</button>
+    <div class="app-shell">
+      <aside class="side-menu search-mode" id="side-menu" aria-label="Spellbook navigation">
+        <div class="rail-section workspace-section">
+          <div class="rail-label">Workspace</div>
+          <button class="rail-tab active" data-tab="search">
+            <span>Search</span>
+            <span class="rail-count">Live</span>
+          </button>
+          <button class="rail-tab" data-tab="saved">
+            <span>Saved</span>
+            <span class="rail-count" id="saved-count-rail">0</span>
+          </button>
         </div>
-        <div class="color-identity">
-          <label>Commander</label>
-          <div class="color-toggles">
-            <button class="color-toggle" data-color="w" title="White">W</button>
-            <button class="color-toggle" data-color="u" title="Blue">U</button>
-            <button class="color-toggle" data-color="b" title="Black">B</button>
-            <button class="color-toggle" data-color="r" title="Red">R</button>
-            <button class="color-toggle" data-color="g" title="Green">G</button>
+
+        <div class="rail-section folders-section">
+          <div class="folder-rail" id="folder-rail"></div>
+        </div>
+
+        <div class="rail-section history-section">
+          <div class="rail-label">Search history</div>
+          <div class="history-list" id="history-list"></div>
+        </div>
+
+        <div class="rail-section cache-section">
+          <div class="rail-label">Cached results</div>
+          <div class="cache-list" id="cache-list"></div>
+        </div>
+      </aside>
+
+      <section class="content-panel">
+        <div class="search-content" id="search-content">
+          <div class="search-section">
+            <div class="search-bar">
+              <input type="text" id="search-input" placeholder="What kind of card are you looking for?" autofocus>
+              <button id="search-btn">Search</button>
+            </div>
+            <div class="color-identity">
+              <div class="color-toggles">
+                <button class="color-toggle" data-color="w" title="White">W</button>
+                <button class="color-toggle" data-color="u" title="Blue">U</button>
+                <button class="color-toggle" data-color="b" title="Black">B</button>
+                <button class="color-toggle" data-color="r" title="Red">R</button>
+                <button class="color-toggle" data-color="g" title="Green">G</button>
+              </div>
+              <span class="identity-display" id="identity-display" aria-live="polite"></span>
+            </div>
+            <div class="query-display" id="query-display">
+              <code id="query-text"></code>
+              <button id="copy-query-btn">Copy</button>
+              <button id="open-scryfall-btn">Scryfall</button>
+            </div>
+            <div class="example-queries">
+              <button>cheap removal for any permanent</button>
+              <button>enchantments that make lands tap for extra mana</button>
+              <button>top budget upgrades for the Bello animated army precon</button>
+              <button>cards that combo with Kiki-Jiki, Mirror Breaker</button>
+            </div>
           </div>
-          <span class="identity-display" id="identity-display">no colors set</span>
-        </div>
-        <div class="query-display" id="query-display">
-          <code id="query-text"></code>
-          <button id="copy-query-btn">Copy</button>
-          <button id="open-scryfall-btn">Scryfall</button>
-        </div>
-        <div class="example-queries">
-          <button>cheap removal for any permanent</button>
-          <button>enchantments that make lands tap for extra mana</button>
-          <button>top budget upgrades for the Bello animated army precon</button>
-          <button>cards that combo with Kiki-Jiki, Mirror Breaker</button>
-        </div>
-      </div>
 
-      <div id="status" class="status" style="display:none"></div>
-      <div class="ai-summary" id="ai-summary" style="display:none">
-        <span class="ai-badge"><svg class="spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>AI picks</span>
-        <span class="ai-summary-text" id="ai-summary-text"></span>
-      </div>
-      <div class="sort-bar" id="sort-bar" style="display:none">
-        <span class="sort-label">Sort</span>
-        <select id="sort-field">
-          <option value="name">Name</option>
-          <option value="cmc" selected>Mana value</option>
-          <option value="power">Power</option>
-          <option value="toughness">Toughness</option>
-          <option value="eur">Price</option>
-        </select>
-        <button id="sort-dir" data-dir="asc" title="Toggle ascending / descending">&#8593; Asc</button>
-      </div>
-      <div id="results" class="results-grid"></div>
-      <div id="pagination" class="pagination" style="display:none">
-        <button id="load-more-btn">Load more</button>
-      </div>
-    </div>
+          <div id="status" class="status" style="display:none"></div>
+          <div class="ai-summary" id="ai-summary" style="display:none">
+            <span class="ai-badge"><svg class="spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>AI picks</span>
+            <span class="ai-summary-text" id="ai-summary-text"></span>
+          </div>
+          <div class="sort-bar" id="sort-bar" style="display:none">
+            <span class="sort-label">Sort</span>
+            <select id="sort-field">
+              <option value="name">Name</option>
+              <option value="cmc" selected>Mana value</option>
+              <option value="power">Power</option>
+              <option value="toughness">Toughness</option>
+              <option value="eur">Price</option>
+            </select>
+            <button id="sort-dir" data-dir="asc" title="Toggle ascending / descending">&#8593; Asc</button>
+          </div>
+          <div id="results" class="results-grid"></div>
+          <div id="pagination" class="pagination" style="display:none">
+            <button id="load-more-btn">Load more</button>
+          </div>
+        </div>
 
-    <div class="saved-section" id="saved-section">
-      <div class="saved-layout">
-        <aside class="folder-rail" id="folder-rail"></aside>
-        <div class="saved-main">
+        <div class="saved-section" id="saved-section">
+          <div class="saved-main">
           <div class="search-bar">
             <input type="text" id="saved-filter" placeholder="Filter saved cards...">
           </div>
@@ -927,8 +1147,38 @@
             <small>Search for cards and save them to build your list</small>
           </div>
           <div id="saved-grid" class="results-grid"></div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <aside class="detail-panel empty" id="detail-panel" aria-label="Card details">
+        <div class="detail-empty">
+          <div>
+            <strong>Card focus</strong>
+            <span>Select a card to inspect price, oracle text, set, and save actions here.</span>
+          </div>
+        </div>
+        <div class="detail-content">
+          <img id="detail-img" src="" alt="">
+          <div class="detail-info">
+            <h3 id="detail-name"></h3>
+            <div class="detail-reason" id="detail-reason" style="display:none"></div>
+            <div class="detail-row"><span class="detail-label">Type</span><span id="detail-type"></span></div>
+            <div class="detail-row"><span class="detail-label">Mana</span><span id="detail-mana"></span></div>
+            <div class="detail-row"><span class="detail-label">Set</span><span id="detail-set"></span></div>
+            <div class="detail-row"><span class="detail-label">Rarity</span><span id="detail-rarity"></span></div>
+            <div class="detail-row" id="detail-pt-row"><span class="detail-label">P/T</span><span id="detail-pt"></span></div>
+            <div class="detail-row"><span class="detail-label">Market</span><span id="detail-price"></span></div>
+            <div class="detail-row"><span class="detail-label">Foil</span><span id="detail-foil-price"></span></div>
+            <div id="detail-oracle" class="oracle-text"></div>
+            <div class="card-actions">
+              <button id="detail-save-btn">Save</button>
+              <button id="detail-cardmarket-btn">Cardmarket</button>
+              <button id="detail-scryfall-btn">Scryfall</button>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
   </main>
 
@@ -944,30 +1194,6 @@
       <div class="modal-actions">
         <button class="btn-cancel" id="settings-cancel">Cancel</button>
         <button class="btn-save" id="settings-save">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Card Detail Modal -->
-  <div class="modal-overlay card-detail-modal" id="detail-modal">
-    <div class="modal">
-      <img id="detail-img" src="" alt="">
-      <div class="detail-info">
-        <h3 id="detail-name"></h3>
-        <div class="detail-reason" id="detail-reason" style="display:none"></div>
-        <div class="detail-row"><span class="detail-label">Type: </span><span id="detail-type"></span></div>
-        <div class="detail-row"><span class="detail-label">Mana: </span><span id="detail-mana"></span></div>
-        <div class="detail-row"><span class="detail-label">Set: </span><span id="detail-set"></span></div>
-        <div class="detail-row"><span class="detail-label">Rarity: </span><span id="detail-rarity"></span></div>
-        <div class="detail-row" id="detail-pt-row"><span class="detail-label">P/T: </span><span id="detail-pt"></span></div>
-        <div class="detail-row"><span class="detail-label">Cardmarket: </span><span id="detail-price"></span></div>
-        <div class="detail-row"><span class="detail-label">Foil: </span><span id="detail-foil-price"></span></div>
-        <div id="detail-oracle" class="oracle-text"></div>
-        <div class="card-actions" style="margin-top: 16px;">
-          <button id="detail-save-btn">Save</button>
-          <button id="detail-cardmarket-btn">Cardmarket</button>
-          <button id="detail-scryfall-btn">Scryfall</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1020,10 +1246,14 @@
     const sortField = $("#sort-field");
     const sortDir = $("#sort-dir");
     const savedCountEl = $("#saved-count");
+    const savedCountRailEl = $("#saved-count-rail");
     const savedGrid = $("#saved-grid");
     const savedEmpty = $("#saved-empty");
     const savedFilter = $("#saved-filter");
+    const sideMenu = $("#side-menu");
     const folderRail = $("#folder-rail");
+    const historyList = $("#history-list");
+    const cacheList = $("#cache-list");
     const aiSummary = $("#ai-summary");
     const aiSummaryText = $("#ai-summary-text");
     const savePopover = $("#save-popover");
@@ -1034,6 +1264,7 @@
 
     migrateMembership();
     updateSavedCount();
+    renderFolderRail();
     if (!state.apiKey) showSettings();
 
     // Color identity
@@ -1041,7 +1272,7 @@
 
     function updateIdentityDisplay() {
       const id = state.colorIdentity.join("").toUpperCase();
-      identityDisplay.textContent = id || "no colors set";
+      identityDisplay.textContent = id;
       document.querySelectorAll(".color-toggle").forEach((btn) => {
         btn.classList.toggle("active", state.colorIdentity.includes(btn.dataset.color));
       });
@@ -1061,19 +1292,25 @@
     updateIdentityDisplay();
 
     // Tabs
-    document.querySelectorAll(".tab-btn").forEach((btn) => {
+    function setActiveTab(tab) {
+      state.activeTab = tab;
+      document.querySelectorAll("[data-tab]").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(`[data-tab="${tab}"]`).forEach((b) => b.classList.add("active"));
+      sideMenu.classList.remove("search-mode", "saved-mode");
+      sideMenu.classList.add(state.activeTab === "saved" ? "saved-mode" : "search-mode");
+      if (state.activeTab === "search") {
+        $("#search-content").classList.remove("hidden");
+        $("#saved-section").classList.remove("visible");
+      } else {
+        $("#search-content").classList.add("hidden");
+        $("#saved-section").classList.add("visible");
+        renderSavedCards();
+      }
+    }
+
+    document.querySelectorAll(".tab-btn, .rail-tab").forEach((btn) => {
       btn.addEventListener("click", () => {
-        state.activeTab = btn.dataset.tab;
-        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        if (state.activeTab === "search") {
-          $("#search-content").classList.remove("hidden");
-          $("#saved-section").classList.remove("visible");
-        } else {
-          $("#search-content").classList.add("hidden");
-          $("#saved-section").classList.add("visible");
-          renderSavedCards();
-        }
+        setActiveTab(btn.dataset.tab);
       });
     });
 
@@ -1097,12 +1334,27 @@
       btn.addEventListener("click", () => { searchInput.value = btn.textContent; doSearch(); });
     });
 
+    historyList.addEventListener("click", (e) => {
+      const btn = e.target.closest(".history-btn");
+      if (!btn) return;
+      runHistorySearch(btn.dataset.query || "", btn.dataset.ci || "");
+    });
+
+    cacheList.addEventListener("click", (e) => {
+      const btn = e.target.closest(".cache-btn");
+      if (!btn) return;
+      runHistorySearch(btn.dataset.query || "", btn.dataset.ci || "");
+    });
+
     // ── Cache the AI's /api/translate response (skips Claude + web search on repeat asks) ──
     const TRANSLATE_CACHE_KEY = "translate_cache_v1";
+    const SEARCH_HISTORY_KEY = "search_history_v1";
     const TRANSLATE_CACHE_MAX = 60;
+    const SEARCH_HISTORY_MAX = 10;
     const TRANSLATE_CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
     const translateCacheKey = (q, ci) => (ci || "") + "|" + q.trim().toLowerCase().replace(/\s+/g, " ");
     function readTranslateCache() { try { return JSON.parse(localStorage.getItem(TRANSLATE_CACHE_KEY) || "{}"); } catch { return {}; } }
+    function readSearchHistory() { try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]"); } catch { return []; } }
     function getCachedTranslate(q, ci) {
       const c = readTranslateCache(); const hit = c[translateCacheKey(q, ci)];
       return hit && (Date.now() - hit.ts) < TRANSLATE_CACHE_TTL ? hit.data : null;
@@ -1115,7 +1367,74 @@
         keys.sort((a, b) => c[a].ts - c[b].ts).slice(0, keys.length - TRANSLATE_CACHE_MAX).forEach((k) => delete c[k]);
       }
       try { localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(c)); } catch {}
+      renderCacheList();
     }
+    function rememberSearch(q, ci, data) {
+      const item = { q, ci: ci || "", type: data?.type || "query", ts: Date.now() };
+      const history = readSearchHistory().filter((h) => translateCacheKey(h.q || "", h.ci || "") !== translateCacheKey(q, ci));
+      history.unshift(item);
+      try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, SEARCH_HISTORY_MAX))); } catch {}
+      renderSearchHistory();
+    }
+    function runHistorySearch(q, ci) {
+      searchInput.value = q;
+      state.colorIdentity = (ci || "").split("").filter(Boolean);
+      localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
+      updateIdentityDisplay();
+      setActiveTab("search");
+      doSearch();
+    }
+    function cacheDisplayKey(key) {
+      const parts = key.split("|");
+      return { ci: parts[0], q: parts.slice(1).join("|") };
+    }
+    function renderSearchHistory() {
+      const cache = readTranslateCache();
+      const cacheItems = Object.entries(cache)
+        .filter(([, v]) => v && (Date.now() - v.ts) < TRANSLATE_CACHE_TTL)
+        .map(([key, v]) => ({ ...cacheDisplayKey(key), ts: v.ts, cached: true }));
+      const seen = new Set();
+      const items = [...readSearchHistory().map((h) => ({ ...h, cached: !!cache[translateCacheKey(h.q || "", h.ci || "")] })), ...cacheItems]
+        .filter((h) => {
+          const key = translateCacheKey(h.q || "", h.ci || "");
+          if (!h.q || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+        .slice(0, SEARCH_HISTORY_MAX);
+      if (!items.length) {
+        historyList.innerHTML = `<div class="rail-empty">Recent searches appear here. Cached searches are marked after they run once.</div>`;
+        return;
+      }
+      historyList.innerHTML = items.map((h) => `
+        <button class="history-btn" data-query="${esc(h.q || "")}" data-ci="${esc(h.ci || "")}">
+          <span>${esc(h.q || "")}</span>
+          <span class="history-meta">${h.cached ? "cached" : esc((h.ci || "any").toUpperCase())}</span>
+        </button>`).join("");
+    }
+    function renderCacheList() {
+      const cache = readTranslateCache();
+      const entries = Object.entries(cache)
+        .filter(([, v]) => v && (Date.now() - v.ts) < TRANSLATE_CACHE_TTL)
+        .sort((a, b) => b[1].ts - a[1].ts)
+        .slice(0, 8);
+      if (!entries.length) {
+        cacheList.innerHTML = `<div class="rail-empty">Cached translations will show up here.</div>`;
+        return;
+      }
+      cacheList.innerHTML = entries.map(([key, v]) => {
+        const d = cacheDisplayKey(key);
+        const label = d.q || "cached search";
+        const type = v.data?.type === "cards" ? "AI picks" : "query";
+        return `<button class="cache-btn" data-query="${esc(label)}" data-ci="${esc(d.ci || "")}">
+          <span>${esc(label)}</span>
+          <span class="cache-meta">${type}</span>
+        </button>`;
+      }).join("");
+    }
+    renderSearchHistory();
+    renderCacheList();
 
     async function doSearch() {
       const query = searchInput.value.trim();
@@ -1146,6 +1465,7 @@
           data = await res.json();
           putCachedTranslate(query, ci, data);
         }
+        rememberSearch(query, ci, data);
 
         if (data.type === "cards") {
           // Recommendation path — AI returned a curated list of card names.
@@ -1247,7 +1567,7 @@
       if (mode === "recommend") {
         if (!aiOpt) {
           const o = document.createElement("option");
-          o.value = "ai"; o.textContent = "✨ Recommended";
+          o.value = "ai"; o.textContent = "Recommended";
           sortField.insertBefore(o, sortField.firstChild);
         }
         state.sortField = "ai"; sortField.value = "ai";
@@ -1434,10 +1754,8 @@
       const saveBtn = $("#detail-save-btn");
       saveBtn.textContent = isSaved ? "Saved" : "Save";
       saveBtn.className = isSaved ? "saved" : "";
-      $("#detail-modal").classList.add("visible");
+      $("#detail-panel").classList.remove("empty");
     }
-
-    $("#detail-modal").addEventListener("click", (e) => { if (e.target === $("#detail-modal")) $("#detail-modal").classList.remove("visible"); });
 
     $("#detail-save-btn").addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1457,7 +1775,7 @@
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         if (savePopover.classList.contains("visible")) { closeSavePopover(); return; }
-        hideSettings(); $("#detail-modal").classList.remove("visible");
+        hideSettings();
       }
     });
 
@@ -1688,7 +2006,10 @@
       });
     }
 
-    function updateSavedCount() { savedCountEl.textContent = state.savedCards.length; }
+    function updateSavedCount() {
+      savedCountEl.textContent = state.savedCards.length;
+      savedCountRailEl.textContent = state.savedCards.length;
+    }
 
     // Helpers
     function getCardImage(card) {
