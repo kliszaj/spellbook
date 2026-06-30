@@ -132,8 +132,62 @@ If no color identity is provided, do NOT add an id<= filter — just use f:comma
 11. When the user asks for "budget" cards, use eur<=5.
 12. Prefer specificity: use keyword:flying over o:"flying" when the user means the keyword.
 
-CRITICAL: Your entire response must be a single Scryfall query string and nothing else. No explanation, no reasoning, no markdown, no quotes, no backticks, no commentary. If you are unsure about the best query, just output your best attempt. Example response format:
-t:creature keyword:trample f:commander id<=rg game:paper`;
+## Two kinds of request — choose the right response
+
+EVERY request arrives here. You decide how to answer:
+
+A) ATTRIBUTE SEARCH — the user wants to find/browse cards by properties Scryfall can filter
+   (color, type, mana value, power/toughness, keywords, oracle text, price, set, rarity, etc.).
+   Examples: "blue counterspells under €2", "creatures with flying and trample",
+   "red removal that exiles", "artifacts that tap for mana".
+   → Respond with a SINGLE Scryfall query string and nothing else — no explanation, no markdown,
+     no quotes, no backticks. Do NOT use any tools. Example: t:creature keyword:trample f:commander id<=rg game:paper
+
+B) RECOMMENDATION / SEMANTIC — the user wants a curated, ranked, or deck/commander-specific set,
+   or something that depends on knowledge Scryfall cannot filter: precon upgrade lists, "best/top
+   cards for <commander/archetype>", combos ("cards that combo with X"), budget alternatives or
+   replacements for a named card, "what should I add/cut", staples for a deck, meta/tier questions.
+   Examples: "top upgrades for the Bello animated army precon", "best cards for an Atraxa
+   superfriends deck", "cards that combo with Kiki-Jiki Mirror Breaker", "cheaper alternatives to
+   Mana Drain", "good board wipes for my Edgar Markov deck".
+   → Use the web_search tool when it would improve accuracy (precon contents, current meta), then
+     call the recommend_cards tool with up to ~30 SPECIFIC, REAL Magic card names, each with a
+     one-line reason, plus a short summary. Respect the commander color identity if provided, or
+     infer it from a named precon/commander. Do NOT also emit a query string in this case.
+
+GREY ZONE: if it's a plain attribute filter, prefer the query (A). If it asks for a curated/ranked
+or deck-specific recommendation, use recommend_cards (B). When in doubt for "best <attribute>"
+phrasing, lean to a query unless a specific deck/commander/precon is named.`;
+
+const RECOMMEND_TOOL = {
+  name: "recommend_cards",
+  description:
+    "Provide a curated list of specific, real Magic: The Gathering cards in response to a recommendation, deckbuilding, or semantic request (e.g. precon upgrades, best cards for a commander/archetype, combos, budget alternatives). Use this INSTEAD of a Scryfall query for those requests.",
+  input_schema: {
+    type: "object",
+    properties: {
+      summary: {
+        type: "string",
+        description: "One or two sentences framing the recommendations for the user.",
+      },
+      cards: {
+        type: "array",
+        description: "Recommended cards in ranked order (most recommended first), up to 30.",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Exact Magic card name as printed (used to look the card up on Scryfall)." },
+            reason: { type: "string", description: "One short line on why this card is recommended." },
+          },
+          required: ["name", "reason"],
+        },
+      },
+    },
+    required: ["summary", "cards"],
+  },
+};
+
+const WEB_SEARCH_TOOL = { type: "web_search_20250305", name: "web_search", max_uses: 5 };
 
 const SCRYFALL_OPERATORS = /\b(f:|t:|o:|c:|id[<>=]|keyword:|kw:|m:|mv[<>=]|pow[<>=]|tou[<>=]|r:|s:|e:|game:|is:|not:|order:|eur[<>=]|has:|produces:)/;
 
@@ -158,18 +212,28 @@ app.post("/api/translate", async (req, res) => {
   try {
     const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      model: "claude-sonnet-4-6", // bump to an Opus model for stronger deckbuilding recommendations
+      max_tokens: 8192,
       thinking: { type: "adaptive" },
       system: SCRYFALL_SYSTEM_PROMPT,
+      tools: [RECOMMEND_TOOL, WEB_SEARCH_TOOL],
+      tool_choice: { type: "auto" },
       messages: [{ role: "user", content: userMessage }],
     });
 
-    const textBlock = message.content.find((b) => b.type === "text");
-    const rawText = (textBlock?.text || "").trim();
+    // Recommendation path: the model called recommend_cards with a curated list.
+    const rec = message.content.find((b) => b.type === "tool_use" && b.name === "recommend_cards");
+    if (rec) {
+      const cards = Array.isArray(rec.input?.cards)
+        ? rec.input.cards.filter((c) => c && c.name).map((c) => ({ name: String(c.name), reason: String(c.reason || "") }))
+        : [];
+      return res.json({ type: "cards", summary: String(rec.input?.summary || ""), cards });
+    }
 
-    const scryfallQuery = extractQuery(rawText);
-    res.json({ scryfallQuery });
+    // Search path: the model returned a Scryfall query string as text.
+    const textBlock = message.content.find((b) => b.type === "text");
+    const scryfallQuery = extractQuery((textBlock?.text || "").trim());
+    res.json({ type: "query", query: scryfallQuery, scryfallQuery });
   } catch (err) {
     const status = err.status || 500;
     let errorMsg = "Failed to translate query";

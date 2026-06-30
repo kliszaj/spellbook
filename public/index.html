@@ -233,6 +233,16 @@
 
     .status.error { color: #D3202A; }
 
+    .status.loading { color: #777; font-size: 15px; }
+    .status .load-text { font-weight: 500; }
+    .status .load-cursor {
+      display: inline-block;
+      margin-left: 1px;
+      color: #bbb;
+      animation: load-blink 1s step-end infinite;
+    }
+    @keyframes load-blink { 50% { opacity: 0; } }
+
     /* ── Results Grid (Card Collector style, Apple Sidebar size) ── */
     .results-grid {
       display: grid;
@@ -539,6 +549,77 @@
 
     .sort-bar #sort-dir { font-weight: 600; min-width: 74px; }
 
+    /* ── AI recommendations summary ── */
+    .ai-summary {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 2px 0 16px;
+      padding: 12px 14px;
+      background: #f6f5f2;
+      border: 1px solid #ececea;
+      border-radius: 10px;
+    }
+
+    .ai-summary .ai-badge {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #fff;
+      background: #1a1a1a;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .ai-summary .ai-summary-text { font-size: 14px; line-height: 1.5; color: #444; }
+    .ai-summary .ai-not-found { color: #999; }
+
+    .detail-reason {
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      background: #f6f5f2;
+      border-left: 3px solid #1a1a1a;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #444;
+    }
+    .detail-reason .reason-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 3px;
+    }
+    .detail-reason .reason-label svg { width: 13px; height: 13px; color: #c79a2e; }
+
+    /* AI sparkle marks */
+    .ai-badge .spark { width: 13px; height: 13px; margin-right: 5px; vertical-align: -2px; color: #ffd66b; }
+
+    .ai-mark {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      background: rgba(20,20,20,0.55);
+      color: #ffd66b;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 2;
+    }
+    .ai-mark svg { width: 14px; height: 14px; display: block; }
+
     /* ── Saved / Empty ── */
     .saved-section { display: none; }
     .saved-section.visible { display: block; }
@@ -777,7 +858,7 @@
         <button class="tab-btn active" data-tab="search">Search</button>
         <button class="tab-btn" data-tab="saved">Saved <span id="saved-count">0</span></button>
       </div>
-      <button id="settings-btn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16.5 6.5 3 3"/><path d="m13.5 9.5 3 3"/></svg></button>
+      <button id="settings-btn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg></button>
     </div>
   </header>
 
@@ -805,14 +886,18 @@
           <button id="open-scryfall-btn">Scryfall</button>
         </div>
         <div class="example-queries">
-          <button>creatures that give all my creatures trample</button>
-          <button>enchantments that make lands tap for extra mana</button>
-          <button>artifacts that draw cards when creatures enter</button>
           <button>cheap removal for any permanent</button>
+          <button>enchantments that make lands tap for extra mana</button>
+          <button>top budget upgrades for the Bello animated army precon</button>
+          <button>cards that combo with Kiki-Jiki, Mirror Breaker</button>
         </div>
       </div>
 
       <div id="status" class="status" style="display:none"></div>
+      <div class="ai-summary" id="ai-summary" style="display:none">
+        <span class="ai-badge"><svg class="spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>AI picks</span>
+        <span class="ai-summary-text" id="ai-summary-text"></span>
+      </div>
       <div class="sort-bar" id="sort-bar" style="display:none">
         <span class="sort-label">Sort</span>
         <select id="sort-field">
@@ -820,6 +905,7 @@
           <option value="cmc" selected>Mana value</option>
           <option value="power">Power</option>
           <option value="toughness">Toughness</option>
+          <option value="eur">Price</option>
         </select>
         <button id="sort-dir" data-dir="asc" title="Toggle ascending / descending">&#8593; Asc</button>
       </div>
@@ -868,6 +954,7 @@
       <img id="detail-img" src="" alt="">
       <div class="detail-info">
         <h3 id="detail-name"></h3>
+        <div class="detail-reason" id="detail-reason" style="display:none"></div>
         <div class="detail-row"><span class="detail-label">Type: </span><span id="detail-type"></span></div>
         <div class="detail-row"><span class="detail-label">Mana: </span><span id="detail-mana"></span></div>
         <div class="detail-row"><span class="detail-label">Set: </span><span id="detail-set"></span></div>
@@ -913,6 +1000,8 @@
       membership: JSON.parse(localStorage.getItem("card_membership") || "null"),
       activeFolder: "all",
       popoverCard: null,
+      mode: "search",
+      recommendOrder: [],
     };
 
     const DEFAULT_FOLDER = "default";
@@ -935,6 +1024,8 @@
     const savedEmpty = $("#saved-empty");
     const savedFilter = $("#saved-filter");
     const folderRail = $("#folder-rail");
+    const aiSummary = $("#ai-summary");
+    const aiSummaryText = $("#ai-summary-text");
     const savePopover = $("#save-popover");
     const popList = $("#pop-list");
     const popAddBtn = $("#pop-add-btn");
@@ -1006,6 +1097,26 @@
       btn.addEventListener("click", () => { searchInput.value = btn.textContent; doSearch(); });
     });
 
+    // ── Cache the AI's /api/translate response (skips Claude + web search on repeat asks) ──
+    const TRANSLATE_CACHE_KEY = "translate_cache_v1";
+    const TRANSLATE_CACHE_MAX = 60;
+    const TRANSLATE_CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
+    const translateCacheKey = (q, ci) => (ci || "") + "|" + q.trim().toLowerCase().replace(/\s+/g, " ");
+    function readTranslateCache() { try { return JSON.parse(localStorage.getItem(TRANSLATE_CACHE_KEY) || "{}"); } catch { return {}; } }
+    function getCachedTranslate(q, ci) {
+      const c = readTranslateCache(); const hit = c[translateCacheKey(q, ci)];
+      return hit && (Date.now() - hit.ts) < TRANSLATE_CACHE_TTL ? hit.data : null;
+    }
+    function putCachedTranslate(q, ci, data) {
+      const c = readTranslateCache();
+      c[translateCacheKey(q, ci)] = { ts: Date.now(), data };
+      const keys = Object.keys(c);
+      if (keys.length > TRANSLATE_CACHE_MAX) {
+        keys.sort((a, b) => c[a].ts - c[b].ts).slice(0, keys.length - TRANSLATE_CACHE_MAX).forEach((k) => delete c[k]);
+      }
+      try { localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(c)); } catch {}
+    }
+
     async function doSearch() {
       const query = searchInput.value.trim();
       if (!query) return;
@@ -1013,33 +1124,95 @@
 
       searchBtn.disabled = true;
       searchBtn.textContent = "Searching...";
-      showStatus("Translating your request...");
+      startLoadingAnimation();
       queryDisplay.classList.remove("visible");
+      aiSummary.style.display = "none";
       resultsEl.innerHTML = "";
       paginationEl.style.display = "none";
       sortBar.style.display = "none";
       state.results = [];
       state.nextPage = null;
 
+      const ci = state.colorIdentity.join("") || null;
       try {
-        const res = await fetch("/api/translate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, apiKey: state.apiKey, colorIdentity: state.colorIdentity.join("") || null }),
-        });
-        if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Translation failed"); }
-        const { scryfallQuery } = await res.json();
-        state.currentQuery = scryfallQuery;
-        queryText.textContent = scryfallQuery;
-        queryDisplay.classList.add("visible");
-        showStatus("Fetching cards...");
-        await searchScryfall(scryfallQuery);
+        let data = getCachedTranslate(query, ci);
+        if (!data) {
+          const res = await fetch("/api/translate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query, apiKey: state.apiKey, colorIdentity: ci }),
+          });
+          if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Translation failed"); }
+          data = await res.json();
+          putCachedTranslate(query, ci, data);
+        }
+
+        if (data.type === "cards") {
+          // Recommendation path — AI returned a curated list of card names.
+          state.mode = "recommend";
+          state.currentQuery = "";
+          await resolveRecommendations(data.cards || [], data.summary || "");
+        } else {
+          // Search path — AI returned a Scryfall query string.
+          state.mode = "search";
+          setSortMode("search");
+          const scryfallQuery = data.query || data.scryfallQuery || "";
+          state.currentQuery = scryfallQuery;
+          queryText.textContent = scryfallQuery;
+          queryDisplay.classList.add("visible");
+          await searchScryfall(scryfallQuery);
+        }
       } catch (err) {
         showStatus(err.message, true);
       } finally {
         searchBtn.disabled = false;
         searchBtn.textContent = "Search";
       }
+    }
+
+    // Resolve AI-recommended card names to full Scryfall cards (batch), preserving AI ranking.
+    async function resolveRecommendations(entries, summary) {
+      const list = (entries || []).filter((e) => e && e.name).slice(0, 75);
+      if (!list.length) { showStatus("No recommendations came back — try rephrasing.", true); return; }
+      try {
+        const res = await fetch("https://api.scryfall.com/cards/collection", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifiers: list.map((e) => ({ name: e.name })) }),
+        });
+        if (!res.ok) { const err = await res.json(); throw new Error(err.details || "Couldn't look up the recommended cards"); }
+        const data = await res.json();
+
+        // Reorder Scryfall results to match the AI's ranking, and attach each reason.
+        const norm = (s) => (s || "").toLowerCase().split("//")[0].trim();
+        const found = data.data || [];
+        const used = new Set();
+        const ordered = [];
+        list.forEach((entry) => {
+          const want = norm(entry.name);
+          const idx = found.findIndex((c, i) => !used.has(i) && (norm(c.name) === want || norm(c.name).startsWith(want)));
+          if (idx >= 0) {
+            used.add(idx);
+            const card = found[idx];
+            card._reason = entry.reason || "";
+            ordered.push(card);
+          }
+        });
+        found.forEach((c, i) => { if (!used.has(i)) ordered.push(c); }); // any unmatched extras
+
+        state.recommendOrder = ordered.slice(); // preserve AI ranking for "Recommended" sort
+        state.results = ordered;
+        hideStatus();
+        renderResults(ordered, false);
+        paginationEl.style.display = "none";
+        setSortMode("recommend"); // client-side sorting; defaults to the AI's order
+        sortBar.style.display = ordered.length ? "flex" : "none";
+
+        const notFound = (data.not_found || []).length;
+        aiSummaryText.innerHTML = esc(summary) + (notFound ? ` <span class="ai-not-found">(${notFound} suggestion${notFound === 1 ? "" : "s"} couldn't be matched on Scryfall)</span>` : "");
+        aiSummary.style.display = ordered.length || summary ? "flex" : "none";
+        if (!ordered.length) showStatus("None of the recommended cards could be found on Scryfall.", true);
+      } catch (err) { showStatus(err.message, true); }
     }
 
     async function searchScryfall(query, pageUrl) {
@@ -1068,12 +1241,70 @@
       searchScryfall(state.currentQuery);
     }
 
-    sortField.addEventListener("change", () => { state.sortField = sortField.value; applySort(); });
+    // Add/remove the "Recommended" (AI order) option depending on the active mode.
+    function setSortMode(mode) {
+      const aiOpt = sortField.querySelector('option[value="ai"]');
+      if (mode === "recommend") {
+        if (!aiOpt) {
+          const o = document.createElement("option");
+          o.value = "ai"; o.textContent = "✨ Recommended";
+          sortField.insertBefore(o, sortField.firstChild);
+        }
+        state.sortField = "ai"; sortField.value = "ai";
+        state.sortDir = "asc"; sortDir.dataset.dir = "asc"; sortDir.innerHTML = "&#8593; Asc";
+      } else {
+        if (aiOpt) aiOpt.remove();
+        if (state.sortField === "ai") { state.sortField = "cmc"; sortField.value = "cmc"; }
+      }
+    }
+
+    const statVal = (s) => {
+      if (s === undefined || s === null || s === "") return -Infinity;
+      const n = parseFloat(s);
+      return isNaN(n) ? -Infinity : n; // "*"/"X" sort to the bottom (asc)
+    };
+    const priceNum = (c) => {
+      const p = c.prices?.eur ?? c.prices?.eur_foil;
+      const n = p != null ? parseFloat(p) : NaN;
+      return isNaN(n) ? null : n;
+    };
+
+    // Sort the recommendation results in-place on the client (no Scryfall re-query).
+    function clientSortCards() {
+      let cards = (state.recommendOrder || state.results).slice();
+      const f = state.sortField, mul = state.sortDir === "desc" ? -1 : 1;
+      if (f === "ai") {
+        if (state.sortDir === "desc") cards.reverse();
+      } else {
+        cards.sort((a, b) => {
+          if (f === "eur") {
+            const av = priceNum(a), bv = priceNum(b); // cards with no price always sink to the bottom
+            if (av == null && bv == null) return 0;
+            if (av == null) return 1;
+            if (bv == null) return -1;
+            return (av - bv) * mul;
+          }
+          let cmp = 0;
+          if (f === "name") cmp = (a.name || "").localeCompare(b.name || "");
+          else if (f === "cmc") cmp = (a.cmc ?? 0) - (b.cmc ?? 0);
+          else if (f === "power") cmp = statVal(a.power) - statVal(b.power);
+          else if (f === "toughness") cmp = statVal(a.toughness) - statVal(b.toughness);
+          return cmp * mul;
+        });
+      }
+      state.results = cards;
+      renderResults(cards, false);
+    }
+
+    sortField.addEventListener("change", () => {
+      state.sortField = sortField.value;
+      if (state.mode === "recommend") clientSortCards(); else applySort();
+    });
     sortDir.addEventListener("click", () => {
       state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
       sortDir.dataset.dir = state.sortDir;
       sortDir.innerHTML = state.sortDir === "asc" ? "&#8593; Asc" : "&#8595; Desc";
-      applySort();
+      if (state.mode === "recommend") clientSortCards(); else applySort();
     });
 
     loadMoreBtn.addEventListener("click", () => { if (state.nextPage) searchScryfall(null, state.nextPage); });
@@ -1093,6 +1324,12 @@
     function bookmarkIcon(filled) {
       return `<svg viewBox="0 0 24 24" fill="${filled ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
     }
+    // Sparkles icon (Lucide, ISC-licensed) — marks anything the AI produced
+    const ICON_SPARKLE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>`;
+    // Corner badge shown on cards the AI recommended (those carrying a reason)
+    function aiMark(card) {
+      return card._reason ? `<span class="ai-mark" title="AI recommendation">${ICON_SPARKLE}</span>` : "";
+    }
 
     // Render results
     function renderResults(cards, append) {
@@ -1106,6 +1343,7 @@
 
         el.innerHTML = `
           <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
+          ${aiMark(card)}
           <div class="card-info">
             <div class="card-text">
               <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
@@ -1147,6 +1385,7 @@
         const price = getPrice(card);
         el.innerHTML = `
           <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
+          ${aiMark(card)}
           <div class="card-info">
             <div class="card-text">
               <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
@@ -1175,6 +1414,12 @@
       const isSaved = state.savedCards.some((s) => s.id === card.id);
       $("#detail-img").src = imgUrl;
       $("#detail-name").textContent = card.name;
+      const reasonEl = $("#detail-reason");
+      if (card._reason) {
+        reasonEl.innerHTML = `<div class="reason-label">${ICON_SPARKLE}Why this card</div><div class="reason-text"></div>`;
+        reasonEl.querySelector(".reason-text").textContent = card._reason;
+        reasonEl.style.display = "block";
+      } else { reasonEl.style.display = "none"; }
       $("#detail-type").textContent = card.type_line || "Unknown";
       $("#detail-mana").textContent = card.mana_cost || "None";
       $("#detail-set").textContent = `${card.set_name || "Unknown"} (${(card.set || "").toUpperCase()})`;
@@ -1468,12 +1713,64 @@
     function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
 
     function showStatus(msg, isError) {
+      stopLoadingAnimation();
       statusEl.textContent = msg;
       statusEl.className = `status${isError ? " error" : ""}`;
       statusEl.style.display = "block";
     }
 
-    function hideStatus() { statusEl.style.display = "none"; }
+    function hideStatus() { stopLoadingAnimation(); statusEl.style.display = "none"; }
+
+    // ── Animated "spellcasting" loader: Magic-flavoured words that type in, hold, erase, change ──
+    const LOADING_WORDS = [
+      "Untapping", "Shuffling the library", "Consulting the Oracle", "Channeling mana",
+      "Scrying", "Drawing cards", "Searching your library", "Resolving the stack",
+      "Tapping for mana", "Summoning", "Cracking a fetchland", "Brewing",
+      "Casting Demonic Tutor", "Flipping through the binder", "Reading the Gatherer",
+      "Divining", "Untapping permanents", "Paying the mana cost", "Milling",
+      "Counting devotion", "Goldfishing", "Mulliganing", "Sacrificing for value",
+    ];
+    let loadingTimer = null;
+    function shuffled(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+    function startLoadingAnimation() {
+      stopLoadingAnimation();
+      statusEl.className = "status loading";
+      statusEl.style.display = "block";
+      statusEl.innerHTML = '<span class="load-text"></span><span class="load-cursor">▍</span>';
+      const textEl = statusEl.querySelector(".load-text");
+      let pool = shuffled(LOADING_WORDS);
+      let wi = 0, ci = 0, phase = "typing", word = pool[0];
+      function tick() {
+        if (phase === "typing") {
+          ci++;
+          textEl.textContent = word.slice(0, ci) + "…";
+          if (ci >= word.length) { phase = "holding"; loadingTimer = setTimeout(tick, 1000); return; }
+          loadingTimer = setTimeout(tick, 42 + Math.random() * 45);
+        } else if (phase === "holding") {
+          phase = "deleting";
+          loadingTimer = setTimeout(tick, 30);
+        } else {
+          ci--;
+          textEl.textContent = word.slice(0, Math.max(0, ci)) + (ci > 0 ? "…" : "");
+          if (ci <= 0) {
+            wi++;
+            if (wi >= pool.length) { pool = shuffled(LOADING_WORDS); wi = 0; }
+            word = pool[wi]; phase = "typing";
+            loadingTimer = setTimeout(tick, 200);
+            return;
+          }
+          loadingTimer = setTimeout(tick, 22);
+        }
+      }
+      tick();
+    }
+    function stopLoadingAnimation() {
+      if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = null; }
+    }
 
     // 3D tilt effect (rotateAmplitude: 12, scaleOnHover: 1)
     const ROTATE_AMP = 1.5;
