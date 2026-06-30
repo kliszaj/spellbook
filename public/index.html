@@ -235,12 +235,19 @@
     /* ── Results Grid (Card Collector style, Apple Sidebar size) ── */
     .results-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      /* cards grow only up to ~the 4-across "to-scale" size (300px), then a new column appears */
+      grid-template-columns: repeat(auto-fill, minmax(228px, 300px));
+      justify-content: center;
       gap: 14px;
       perspective: 800px;
+      /* break out of the 900px main column so more cards fit as the window grows */
+      width: min(100vw - 48px, 1800px);
+      margin-left: 50%;
+      transform: translateX(-50%);
     }
 
     .card-item {
+      position: relative;
       background: #fff;
       border-radius: 12px;
       overflow: hidden;
@@ -257,38 +264,77 @@
     .card-item img {
       width: 100%;
       display: block;
+      /* Reserve the card's height before the image loads — prevents the grid
+         reflow/jump that destabilises the tilt while search images stream in. */
+      aspect-ratio: 488 / 680;
     }
 
+    /* Info overlays the card on hover — no persistent chin */
     .card-info {
-      padding: 10px 12px;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 26px 11px 11px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.62) 42%, rgba(0,0,0,0) 100%);
+      pointer-events: none;
     }
+
+    .card-text { min-width: 0; }
 
     .card-name {
       font-weight: 600;
       font-size: 13px;
-      color: #1a1a1a;
+      color: #fff;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    .card-type {
-      font-size: 11px;
-      color: #aaa;
-      margin-top: 1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     }
 
     .card-price {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
-      color: #2d8a4e;
-      margin-top: 6px;
+      color: #6ee7a0;
+      margin-top: 2px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
     }
 
-    .card-price.no-price { color: #ccc; font-weight: 400; }
+    .card-price.no-price { color: rgba(255,255,255,0.55); font-weight: 400; }
+
+    .card-tools {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      pointer-events: auto;
+    }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    .icon-btn:hover { background: rgba(255,255,255,0.34); transform: translateY(-1px); }
+
+    .icon-btn.saved { background: #fff; color: #1a1a1a; }
+
+    .icon-btn svg { width: 17px; height: 17px; display: block; }
 
     .card-actions {
       display: flex;
@@ -463,6 +509,35 @@
       padding: 6px 14px;
     }
 
+    /* ── Sort bar ── */
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 2px 0 14px;
+      font-size: 13px;
+    }
+
+    .sort-bar .sort-label { font-weight: 600; color: #666; }
+
+    .sort-bar select,
+    .sort-bar #sort-dir {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 6px 10px;
+      border: 1px solid #e8e8e6;
+      border-radius: 8px;
+      background: #fff;
+      color: #444;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .sort-bar select:hover,
+    .sort-bar #sort-dir:hover { border-color: #ccc; }
+
+    .sort-bar #sort-dir { font-weight: 600; min-width: 74px; }
+
     /* ── Saved / Empty ── */
     .saved-section { display: none; }
     .saved-section.visible { display: block; }
@@ -484,7 +559,7 @@
       .search-bar button { width: 100%; padding: 12px; }
       .card-detail-modal .modal { flex-direction: column; }
       .card-detail-modal .modal img { width: 100%; }
-      .results-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+      .results-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
       .nav-pills { margin-right: 8px; }
     }
   </style>
@@ -533,6 +608,16 @@
       </div>
 
       <div id="status" class="status" style="display:none"></div>
+      <div class="sort-bar" id="sort-bar" style="display:none">
+        <span class="sort-label">Sort</span>
+        <select id="sort-field">
+          <option value="name">Name</option>
+          <option value="cmc" selected>Mana value</option>
+          <option value="power">Power</option>
+          <option value="toughness">Toughness</option>
+        </select>
+        <button id="sort-dir" data-dir="asc" title="Toggle ascending / descending">&#8593; Asc</button>
+      </div>
       <div id="results" class="results-grid"></div>
       <div id="pagination" class="pagination" style="display:none">
         <button id="load-more-btn">Load more</button>
@@ -602,6 +687,8 @@
       activeTab: "search",
       detailCard: null,
       colorIdentity: JSON.parse(localStorage.getItem("color_identity") || "[]"),
+      sortField: "cmc",
+      sortDir: "asc",
     };
 
     const $ = (sel) => document.querySelector(sel);
@@ -613,6 +700,9 @@
     const resultsEl = $("#results");
     const paginationEl = $("#pagination");
     const loadMoreBtn = $("#load-more-btn");
+    const sortBar = $("#sort-bar");
+    const sortField = $("#sort-field");
+    const sortDir = $("#sort-dir");
     const savedCountEl = $("#saved-count");
     const savedGrid = $("#saved-grid");
     const savedEmpty = $("#saved-empty");
@@ -693,6 +783,7 @@
       queryDisplay.classList.remove("visible");
       resultsEl.innerHTML = "";
       paginationEl.style.display = "none";
+      sortBar.style.display = "none";
       state.results = [];
       state.nextPage = null;
 
@@ -719,7 +810,7 @@
 
     async function searchScryfall(query, pageUrl) {
       try {
-        const url = pageUrl || `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=cards`;
+        const url = pageUrl || `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=cards&order=${state.sortField}&dir=${state.sortDir}`;
         const res = await fetch(url);
         if (!res.ok) { const err = await res.json(); throw new Error(err.details || "No cards found — try rephrasing"); }
         const data = await res.json();
@@ -728,8 +819,28 @@
         hideStatus();
         renderResults(data.data, !!pageUrl);
         paginationEl.style.display = state.nextPage ? "flex" : "none";
+        sortBar.style.display = state.results.length ? "flex" : "none";
       } catch (err) { showStatus(err.message, true); }
     }
+
+    // Re-run the current (already-translated) query with the chosen Scryfall ordering
+    function applySort() {
+      if (!state.currentQuery) return;
+      resultsEl.innerHTML = "";
+      state.results = [];
+      state.nextPage = null;
+      paginationEl.style.display = "none";
+      showStatus("Sorting...");
+      searchScryfall(state.currentQuery);
+    }
+
+    sortField.addEventListener("change", () => { state.sortField = sortField.value; applySort(); });
+    sortDir.addEventListener("click", () => {
+      state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+      sortDir.dataset.dir = state.sortDir;
+      sortDir.innerHTML = state.sortDir === "asc" ? "&#8593; Asc" : "&#8595; Desc";
+      applySort();
+    });
 
     loadMoreBtn.addEventListener("click", () => { if (state.nextPage) searchScryfall(null, state.nextPage); });
 
@@ -742,6 +853,12 @@
     $("#open-scryfall-btn").addEventListener("click", () => {
       window.open(`https://scryfall.com/search?q=${encodeURIComponent(state.currentQuery)}`, "_blank");
     });
+
+    // Inline icons for the card hover overlay
+    const ICON_DOTS = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>`;
+    function bookmarkIcon(filled) {
+      return `<svg viewBox="0 0 24 24" fill="${filled ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+    }
 
     // Render results
     function renderResults(cards, append) {
@@ -756,12 +873,13 @@
         el.innerHTML = `
           <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
           <div class="card-info">
-            <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
-            <div class="card-type">${esc(card.type_line || "")}</div>
-            <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
-            <div class="card-actions">
-              <button class="save-btn ${isSaved ? "saved" : ""}" data-id="${card.id}">${isSaved ? "Saved" : "Save"}</button>
-              <button class="detail-btn" data-id="${card.id}">Details</button>
+            <div class="card-text">
+              <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
+              <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
+            </div>
+            <div class="card-tools">
+              <button class="icon-btn save-btn ${isSaved ? "saved" : ""}" data-id="${card.id}" title="${isSaved ? "Saved" : "Save"}" aria-label="${isSaved ? "Remove from saved" : "Save"}">${bookmarkIcon(isSaved)}</button>
+              <button class="icon-btn detail-btn" data-id="${card.id}" title="Details" aria-label="Details">${ICON_DOTS}</button>
             </div>
           </div>`;
 
@@ -770,8 +888,10 @@
           toggleSave(card);
           const btn = el.querySelector(".save-btn");
           const nowSaved = state.savedCards.some((s) => s.id === card.id);
-          btn.textContent = nowSaved ? "Saved" : "Save";
+          btn.innerHTML = bookmarkIcon(nowSaved);
           btn.classList.toggle("saved", nowSaved);
+          btn.title = nowSaved ? "Saved" : "Save";
+          btn.setAttribute("aria-label", nowSaved ? "Remove from saved" : "Save");
         });
         el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
         el.querySelector("img").addEventListener("click", () => showDetail(card));
@@ -792,12 +912,13 @@
         el.innerHTML = `
           <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
           <div class="card-info">
-            <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
-            <div class="card-type">${esc(card.type_line || "")}</div>
-            <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
-            <div class="card-actions">
-              <button class="remove-btn" data-id="${card.id}">Remove</button>
-              <button class="detail-btn" data-id="${card.id}">Details</button>
+            <div class="card-text">
+              <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
+              <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
+            </div>
+            <div class="card-tools">
+              <button class="icon-btn saved remove-btn" data-id="${card.id}" title="Remove" aria-label="Remove from saved">${bookmarkIcon(true)}</button>
+              <button class="icon-btn detail-btn" data-id="${card.id}" title="Details" aria-label="Details">${ICON_DOTS}</button>
             </div>
           </div>`;
         el.querySelector(".remove-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleSave(card); renderSavedCards(); });
@@ -872,8 +993,10 @@
       resultsEl.querySelectorAll(".save-btn").forEach((btn) => {
         const id = btn.dataset.id;
         const isSaved = state.savedCards.some((s) => s.id === id);
-        btn.textContent = isSaved ? "Saved" : "Save";
+        btn.innerHTML = bookmarkIcon(isSaved);
         btn.classList.toggle("saved", isSaved);
+        btn.title = isSaved ? "Saved" : "Save";
+        btn.setAttribute("aria-label", isSaved ? "Remove from saved" : "Save");
       });
     }
 
@@ -910,7 +1033,7 @@
     function hideStatus() { statusEl.style.display = "none"; }
 
     // 3D tilt effect (rotateAmplitude: 12, scaleOnHover: 1)
-    const ROTATE_AMP = 3;
+    const ROTATE_AMP = 1.5;
     const SCALE_HOVER = 1;
 
     function initTilt(container) {
@@ -938,17 +1061,24 @@
           if (!animId) animId = requestAnimationFrame(springTo);
         }
 
-        card.addEventListener("mousemove", (e) => {
+        // Geometry captured once on enter (while the card is at rest), so the
+        // tilt target is never fed back the card's own live, already-tilted rect
+        // — that feedback loop is what made the tilt erratic.
+        let cx = 0, cy = 0, hw = 1, hh = 1;
+
+        card.addEventListener("mouseenter", () => {
           const rect = card.getBoundingClientRect();
-          const offsetX = e.clientX - rect.left - rect.width / 2;
-          const offsetY = e.clientY - rect.top - rect.height / 2;
-          targetRx = (offsetY / (rect.height / 2)) * -ROTATE_AMP;
-          targetRy = (offsetX / (rect.width / 2)) * ROTATE_AMP;
+          cx = rect.left + rect.width / 2;
+          cy = rect.top + rect.height / 2;
+          hw = rect.width / 2 || 1;
+          hh = rect.height / 2 || 1;
+          card._hovered = true;
           startAnim();
         });
 
-        card.addEventListener("mouseenter", () => {
-          card._hovered = true;
+        card.addEventListener("mousemove", (e) => {
+          targetRx = ((e.clientY - cy) / hh) * -ROTATE_AMP;
+          targetRy = ((e.clientX - cx) / hw) * ROTATE_AMP;
           startAnim();
         });
 
