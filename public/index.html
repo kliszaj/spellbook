@@ -62,19 +62,20 @@
     .tab-btn.active { background: #fff; color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
     #settings-btn {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       border: 1px solid #e0e0de;
       background: #fff;
       color: #888;
       cursor: pointer;
-      font-size: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.15s;
     }
+
+    #settings-btn svg { width: 20px; height: 20px; display: block; }
 
     #settings-btn:hover { border-color: #ccc; color: #555; }
 
@@ -240,10 +241,10 @@
       justify-content: center;
       gap: 14px;
       perspective: 800px;
-      /* break out of the 900px main column so more cards fit as the window grows */
+      /* break out of the 900px main column, centered on the viewport so it lines up with the
+         search field. Positioned directly (no margin-left:50% + translate, which overflows right). */
       width: min(100vw - 48px, 1800px);
-      margin-left: 50%;
-      transform: translateX(-50%);
+      margin-left: calc(50% - min(100vw - 48px, 1800px) / 2);
     }
 
     .card-item {
@@ -552,6 +553,205 @@
     .empty-state p { font-size: 16px; margin-bottom: 6px; color: #999; }
     .empty-state small { font-size: 13px; }
 
+    /* ── Saved folders (sidebar) ── */
+    .saved-layout {
+      display: flex;
+      gap: 22px;
+      align-items: flex-start;
+      width: min(100vw - 48px, 1800px);
+      margin-left: calc(50% - min(100vw - 48px, 1800px) / 2);
+    }
+
+    .folder-rail {
+      flex: 0 0 210px;
+      position: sticky;
+      top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .folder-rail .rail-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #b3b3b0;
+      padding: 4px 10px 8px;
+    }
+
+    .folder-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      color: #555;
+      font: 13px/1.2 inherit;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .folder-btn:hover { background: #f0f0ee; color: #1a1a1a; }
+    .folder-btn.active { background: #1a1a1a; color: #fff; }
+
+    .folder-btn .folder-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .folder-btn .folder-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: #aaa;
+      flex-shrink: 0;
+    }
+
+    .folder-btn.active .folder-count { color: rgba(255,255,255,0.7); }
+
+    .folder-btn .folder-edit {
+      flex-shrink: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border: none;
+      background: transparent;
+      color: inherit;
+      opacity: 0.6;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .folder-btn:hover .folder-edit { display: inline-flex; }
+    .folder-btn .folder-edit:hover { opacity: 1; background: rgba(125,125,125,0.18); }
+
+    .folder-rail .rail-divider { height: 1px; background: #ececea; margin: 8px 6px; }
+
+    .folder-add {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px dashed #d8d8d4;
+      background: transparent;
+      border-radius: 9px;
+      color: #888;
+      font: 13px/1.2 inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .folder-add:hover { border-color: #b8b8b4; color: #555; }
+
+    .saved-main { flex: 1; min-width: 0; }
+    .saved-main .search-bar { margin-bottom: 16px; }
+
+    /* the saved grid lives inside the sidebar column — undo the full-bleed break-out */
+    .saved-main .results-grid {
+      width: auto;
+      margin-left: 0;
+    }
+
+    /* ── Save-to-folder popover ── */
+    .save-popover {
+      position: fixed;
+      z-index: 300;
+      width: 230px;
+      background: #fff;
+      border: 1px solid #ececea;
+      border-radius: 12px;
+      box-shadow: 0 16px 44px rgba(0,0,0,0.18);
+      padding: 8px;
+      display: none;
+      font-size: 13px;
+    }
+
+    .save-popover.visible { display: block; }
+
+    .save-popover .pop-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #b3b3b0;
+      padding: 4px 8px 6px;
+    }
+
+    .pop-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .pop-row:hover { background: #f4f4f2; }
+    .pop-row input { width: 15px; height: 15px; accent-color: #1a1a1a; cursor: pointer; flex-shrink: 0; }
+    .pop-row .pop-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .save-popover .pop-divider { height: 1px; background: #ececea; margin: 6px 4px; }
+
+    .pop-add-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      color: #1a1a1a;
+      font: 13px/1.2 inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .pop-add-btn:hover { background: #f4f4f2; }
+
+    .pop-add-form { display: none; gap: 6px; padding: 6px 4px 4px; }
+    .pop-add-form.visible { display: flex; }
+
+    .pop-add-form input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #e0e0de;
+      border-radius: 7px;
+      padding: 7px 9px;
+      font: 13px/1.2 inherit;
+      color: #1a1a1a;
+      outline: none;
+    }
+
+    .pop-add-form input:focus { border-color: #bbb; }
+
+    .pop-add-form button {
+      border: none;
+      background: #1a1a1a;
+      color: #fff;
+      border-radius: 7px;
+      padding: 0 12px;
+      font: 13px/1 inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .search-bar { flex-direction: column; padding: 12px; gap: 8px; }
@@ -559,8 +759,13 @@
       .search-bar button { width: 100%; padding: 12px; }
       .card-detail-modal .modal { flex-direction: column; }
       .card-detail-modal .modal img { width: 100%; }
-      .results-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+      /* one card per row on mobile — never shrink to two across */
+      .results-grid { grid-template-columns: 1fr; gap: 10px; width: auto; margin-left: 0; }
       .nav-pills { margin-right: 8px; }
+      /* stack the saved folder rail above the grid on mobile */
+      .saved-layout { flex-direction: column; width: auto; margin-left: 0; gap: 14px; }
+      .folder-rail { flex: 0 0 auto; position: static; flex-direction: row; flex-wrap: wrap; }
+      .folder-rail .rail-label, .folder-rail .rail-divider { display: none; }
     }
   </style>
 </head>
@@ -572,7 +777,7 @@
         <button class="tab-btn active" data-tab="search">Search</button>
         <button class="tab-btn" data-tab="saved">Saved <span id="saved-count">0</span></button>
       </div>
-      <button id="settings-btn">&#9881;</button>
+      <button id="settings-btn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16.5 6.5 3 3"/><path d="m13.5 9.5 3 3"/></svg></button>
     </div>
   </header>
 
@@ -625,16 +830,19 @@
     </div>
 
     <div class="saved-section" id="saved-section">
-      <div class="search-section">
-        <div class="search-bar">
-          <input type="text" id="saved-filter" placeholder="Filter saved cards...">
+      <div class="saved-layout">
+        <aside class="folder-rail" id="folder-rail"></aside>
+        <div class="saved-main">
+          <div class="search-bar">
+            <input type="text" id="saved-filter" placeholder="Filter saved cards...">
+          </div>
+          <div id="saved-empty" class="empty-state">
+            <p>No saved cards yet</p>
+            <small>Search for cards and save them to build your list</small>
+          </div>
+          <div id="saved-grid" class="results-grid"></div>
         </div>
       </div>
-      <div id="saved-empty" class="empty-state">
-        <p>No saved cards yet</p>
-        <small>Search for cards and save them to build your list</small>
-      </div>
-      <div id="saved-grid" class="results-grid"></div>
     </div>
   </main>
 
@@ -677,6 +885,18 @@
     </div>
   </div>
 
+  <!-- Save-to-folder popover -->
+  <div class="save-popover" id="save-popover">
+    <div class="pop-title">Save to</div>
+    <div id="pop-list"></div>
+    <div class="pop-divider"></div>
+    <button class="pop-add-btn" id="pop-add-btn">+ New folder</button>
+    <form class="pop-add-form" id="pop-add-form">
+      <input type="text" id="pop-add-input" placeholder="Folder name" maxlength="40" autocomplete="off">
+      <button type="submit">Add</button>
+    </form>
+  </div>
+
   <script>
     const state = {
       apiKey: localStorage.getItem("claude_api_key") || "",
@@ -689,7 +909,14 @@
       colorIdentity: JSON.parse(localStorage.getItem("color_identity") || "[]"),
       sortField: "cmc",
       sortDir: "asc",
+      folders: JSON.parse(localStorage.getItem("card_folders") || "[]"),
+      membership: JSON.parse(localStorage.getItem("card_membership") || "null"),
+      activeFolder: "all",
+      popoverCard: null,
     };
+
+    const DEFAULT_FOLDER = "default";
+    const DEFAULT_FOLDER_NAME = "Unsorted";
 
     const $ = (sel) => document.querySelector(sel);
     const searchInput = $("#search-input");
@@ -707,7 +934,14 @@
     const savedGrid = $("#saved-grid");
     const savedEmpty = $("#saved-empty");
     const savedFilter = $("#saved-filter");
+    const folderRail = $("#folder-rail");
+    const savePopover = $("#save-popover");
+    const popList = $("#pop-list");
+    const popAddBtn = $("#pop-add-btn");
+    const popAddForm = $("#pop-add-form");
+    const popAddInput = $("#pop-add-input");
 
+    migrateMembership();
     updateSavedCount();
     if (!state.apiKey) showSettings();
 
@@ -885,13 +1119,7 @@
 
         el.querySelector(".save-btn").addEventListener("click", (e) => {
           e.stopPropagation();
-          toggleSave(card);
-          const btn = el.querySelector(".save-btn");
-          const nowSaved = state.savedCards.some((s) => s.id === card.id);
-          btn.innerHTML = bookmarkIcon(nowSaved);
-          btn.classList.toggle("saved", nowSaved);
-          btn.title = nowSaved ? "Saved" : "Save";
-          btn.setAttribute("aria-label", nowSaved ? "Remove from saved" : "Save");
+          openSavePopover(card, e.currentTarget);
         });
         el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
         el.querySelector("img").addEventListener("click", () => showDetail(card));
@@ -900,9 +1128,17 @@
     }
 
     function renderSavedCards() {
+      renderFolderRail();
       const filter = savedFilter.value.toLowerCase();
-      const cards = state.savedCards.filter((c) => !filter || c.name.toLowerCase().includes(filter) || (c.type_line || "").toLowerCase().includes(filter));
-      savedEmpty.style.display = cards.length ? "none" : "block";
+      const cards = getFolderCards(state.activeFolder).filter((c) => !filter || c.name.toLowerCase().includes(filter) || (c.type_line || "").toLowerCase().includes(filter));
+      if (!cards.length) {
+        savedEmpty.style.display = "block";
+        const anySaved = state.savedCards.length > 0;
+        savedEmpty.querySelector("p").textContent = anySaved ? "Nothing in this folder" : "No saved cards yet";
+        savedEmpty.querySelector("small").textContent = anySaved ? "Bookmark cards into this folder to see them here" : "Search for cards and save them to build your list";
+      } else {
+        savedEmpty.style.display = "none";
+      }
       savedGrid.innerHTML = "";
       cards.forEach((card) => {
         const el = document.createElement("div");
@@ -917,11 +1153,11 @@
               <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
             </div>
             <div class="card-tools">
-              <button class="icon-btn saved remove-btn" data-id="${card.id}" title="Remove" aria-label="Remove from saved">${bookmarkIcon(true)}</button>
+              <button class="icon-btn saved save-btn" data-id="${card.id}" title="Saved" aria-label="Edit folders">${bookmarkIcon(true)}</button>
               <button class="icon-btn detail-btn" data-id="${card.id}" title="Details" aria-label="Details">${ICON_DOTS}</button>
             </div>
           </div>`;
-        el.querySelector(".remove-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleSave(card); renderSavedCards(); });
+        el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
         el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
         el.querySelector("img").addEventListener("click", () => showDetail(card));
         savedGrid.appendChild(el);
@@ -958,13 +1194,10 @@
 
     $("#detail-modal").addEventListener("click", (e) => { if (e.target === $("#detail-modal")) $("#detail-modal").classList.remove("visible"); });
 
-    $("#detail-save-btn").addEventListener("click", () => {
+    $("#detail-save-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
       if (!state.detailCard) return;
-      toggleSave(state.detailCard);
-      const isSaved = state.savedCards.some((s) => s.id === state.detailCard.id);
-      $("#detail-save-btn").textContent = isSaved ? "Saved" : "Save";
-      $("#detail-save-btn").className = isSaved ? "saved" : "";
-      refreshResultsSaveState();
+      openSavePopover(state.detailCard, e.currentTarget);
     });
 
     $("#detail-cardmarket-btn").addEventListener("click", () => {
@@ -977,26 +1210,236 @@
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { hideSettings(); $("#detail-modal").classList.remove("visible"); }
+      if (e.key === "Escape") {
+        if (savePopover.classList.contains("visible")) { closeSavePopover(); return; }
+        hideSettings(); $("#detail-modal").classList.remove("visible");
+      }
     });
 
-    // Save/unsave
-    function toggleSave(card) {
-      const idx = state.savedCards.findIndex((s) => s.id === card.id);
-      if (idx >= 0) state.savedCards.splice(idx, 1);
-      else state.savedCards.push(card);
-      localStorage.setItem("saved_cards", JSON.stringify(state.savedCards));
+    // ── Saves & folders ──────────────────────────────────────────────
+    function saveCardsStore() { localStorage.setItem("saved_cards", JSON.stringify(state.savedCards)); }
+    function saveFolders() { localStorage.setItem("card_folders", JSON.stringify(state.folders)); }
+    function saveMembership() { localStorage.setItem("card_membership", JSON.stringify(state.membership)); }
+
+    // Build membership for pre-folders saves: everything goes into the default collection.
+    function migrateMembership() {
+      if (!state.membership || typeof state.membership !== "object") {
+        state.membership = {};
+        state.savedCards.forEach((c) => { state.membership[c.id] = [DEFAULT_FOLDER]; });
+        saveMembership();
+      }
+    }
+
+    function isCardSaved(id) { return state.savedCards.some((s) => s.id === id); }
+    function cardFolders(id) { return state.membership[id] || []; }
+    function getFolderCards(folderId) {
+      if (folderId === "all") return state.savedCards.slice();
+      return state.savedCards.filter((c) => cardFolders(c.id).includes(folderId));
+    }
+    function folderCount(folderId) {
+      if (folderId === "all") return state.savedCards.length;
+      return state.savedCards.reduce((n, c) => n + (cardFolders(c.id).includes(folderId) ? 1 : 0), 0);
+    }
+
+    // Add/remove a card to/from one collection. Auto-saves the card on first add;
+    // fully unsaves it (and drops membership) when it ends up in no collection.
+    function setCardFolder(card, folderId, on) {
+      let mem = state.membership[card.id] ? state.membership[card.id].slice() : [];
+      if (on) {
+        if (!isCardSaved(card.id)) state.savedCards.push(card);
+        if (!mem.includes(folderId)) mem.push(folderId);
+        state.membership[card.id] = mem;
+      } else {
+        mem = mem.filter((f) => f !== folderId);
+        if (mem.length === 0) {
+          delete state.membership[card.id];
+          const idx = state.savedCards.findIndex((s) => s.id === card.id);
+          if (idx >= 0) state.savedCards.splice(idx, 1);
+        } else {
+          state.membership[card.id] = mem;
+        }
+      }
+      saveCardsStore();
+      saveMembership();
+    }
+
+    function newFolderId() {
+      return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : "f" + Date.now() + Math.floor(Math.random() * 1e6);
+    }
+    function createFolder(name) {
+      const n = (name || "").trim();
+      if (!n) return null;
+      const folder = { id: newFolderId(), name: n };
+      state.folders.push(folder);
+      saveFolders();
+      return folder;
+    }
+    function renameFolder(id, name) {
+      const f = state.folders.find((x) => x.id === id);
+      const n = (name || "").trim();
+      if (f && n) { f.name = n; saveFolders(); }
+    }
+    function deleteFolder(id) {
+      state.folders = state.folders.filter((f) => f.id !== id);
+      Object.keys(state.membership).forEach((cid) => {
+        let mem = state.membership[cid].filter((f) => f !== id);
+        if (mem.length === 0) mem = [DEFAULT_FOLDER]; // orphans fall back to Unsorted, never lost
+        state.membership[cid] = mem;
+      });
+      saveFolders();
+      saveMembership();
+      if (state.activeFolder === id) state.activeFolder = "all";
+    }
+
+    // ── Folder sidebar ──
+    function renderFolderRail() {
+      const items = [{ id: "all", name: "All" }, { id: DEFAULT_FOLDER, name: DEFAULT_FOLDER_NAME }, ...state.folders];
+      let html = `<div class="rail-label">Folders</div>`;
+      items.forEach((f) => {
+        const custom = f.id !== "all" && f.id !== DEFAULT_FOLDER;
+        html += `<button class="folder-btn ${state.activeFolder === f.id ? "active" : ""}" data-folder="${f.id}">
+            <span class="folder-name">${esc(f.name)}</span>
+            <span class="folder-count">${folderCount(f.id)}</span>
+            ${custom ? `<span class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename">&#9998;</span><span class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete">&#10005;</span>` : ""}
+          </button>`;
+      });
+      html += `<div class="rail-divider"></div><button class="folder-add" id="folder-add-btn">+ New folder</button>`;
+      folderRail.innerHTML = html;
+    }
+
+    folderRail.addEventListener("click", (e) => {
+      const act = e.target.closest("[data-act]");
+      if (act) {
+        e.stopPropagation();
+        const fid = act.dataset.folder;
+        const f = state.folders.find((x) => x.id === fid);
+        if (act.dataset.act === "rename") {
+          const name = prompt("Rename folder:", f ? f.name : "");
+          if (name && name.trim()) { renameFolder(fid, name); renderSavedCards(); }
+        } else {
+          if (confirm(`Delete folder "${f ? f.name : ""}"? Cards stay saved (moved to ${DEFAULT_FOLDER_NAME}).`)) {
+            deleteFolder(fid); renderSavedCards();
+          }
+        }
+        return;
+      }
+      if (e.target.closest("#folder-add-btn")) {
+        const name = prompt("New folder name:");
+        if (name && name.trim()) { const f = createFolder(name); if (f) { state.activeFolder = f.id; renderSavedCards(); } }
+        return;
+      }
+      const btn = e.target.closest(".folder-btn");
+      if (btn) { state.activeFolder = btn.dataset.folder; renderSavedCards(); }
+    });
+
+    // ── Save-to-folder popover ──
+    let popoverAnchor = null;
+
+    function openSavePopover(card, anchorEl) {
+      state.popoverCard = card;
+      popoverAnchor = anchorEl;
+      if (!isCardSaved(card.id)) setCardFolder(card, DEFAULT_FOLDER, true); // first save → Unsorted
+      popAddForm.classList.remove("visible");
+      popAddBtn.style.display = "";
+      renderPopoverList();
+      savePopover.classList.add("visible");
+      positionPopover(anchorEl);
+      syncSaveUI();
+    }
+
+    function renderPopoverList() {
+      const card = state.popoverCard;
+      if (!card) return;
+      const mem = cardFolders(card.id);
+      const collections = [{ id: DEFAULT_FOLDER, name: DEFAULT_FOLDER_NAME }, ...state.folders];
+      popList.innerHTML = collections.map((f) => `
+        <label class="pop-row">
+          <input type="checkbox" data-folder="${f.id}" ${mem.includes(f.id) ? "checked" : ""}>
+          <span class="pop-name">${esc(f.name)}</span>
+        </label>`).join("");
+    }
+
+    function positionPopover(anchorEl) {
+      if (!anchorEl) return;
+      const r = anchorEl.getBoundingClientRect();
+      const pw = savePopover.offsetWidth || 230;
+      const ph = savePopover.offsetHeight || 200;
+      const vw = document.documentElement.clientWidth;
+      const vh = document.documentElement.clientHeight;
+      let left = Math.min(r.right - pw, vw - pw - 8);
+      left = Math.max(8, left);
+      let top = r.bottom + 6;
+      if (top + ph + 8 > vh) top = Math.max(8, r.top - ph - 6);
+      savePopover.style.left = left + "px";
+      savePopover.style.top = top + "px";
+    }
+
+    function closeSavePopover() {
+      if (!savePopover.classList.contains("visible")) return;
+      savePopover.classList.remove("visible");
+      popAddForm.classList.remove("visible");
+      popAddBtn.style.display = "";
+      state.popoverCard = null;
+      popoverAnchor = null;
+      if (state.activeTab === "saved") renderSavedCards();
+    }
+
+    popList.addEventListener("change", (e) => {
+      const cb = e.target.closest("input[type=checkbox]");
+      if (!cb || !state.popoverCard) return;
+      setCardFolder(state.popoverCard, cb.dataset.folder, cb.checked);
+      syncSaveUI();
+      if (!isCardSaved(state.popoverCard.id)) closeSavePopover();
+    });
+
+    popAddBtn.addEventListener("click", () => {
+      popAddBtn.style.display = "none";
+      popAddForm.classList.add("visible");
+      popAddInput.value = "";
+      popAddInput.focus();
+    });
+
+    popAddForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const f = createFolder(popAddInput.value);
+      if (f && state.popoverCard) {
+        setCardFolder(state.popoverCard, f.id, true);
+        renderPopoverList();
+        syncSaveUI();
+      }
+      popAddForm.classList.remove("visible");
+      popAddBtn.style.display = "";
+      positionPopover(popoverAnchor);
+    });
+
+    // close on outside click (the bookmark/detail buttons stopPropagation, so they won't self-close)
+    document.addEventListener("click", (e) => {
+      if (!savePopover.classList.contains("visible")) return;
+      if (savePopover.contains(e.target)) return;
+      closeSavePopover();
+    });
+
+    // Reflect save state everywhere after a membership change.
+    function syncSaveUI() {
+      refreshResultsSaveState();
       updateSavedCount();
+      renderFolderRail();
+      if (state.detailCard) {
+        const dSaved = isCardSaved(state.detailCard.id);
+        const sb = $("#detail-save-btn");
+        sb.textContent = dSaved ? "Saved" : "Save";
+        sb.className = dSaved ? "saved" : "";
+      }
     }
 
     function refreshResultsSaveState() {
       resultsEl.querySelectorAll(".save-btn").forEach((btn) => {
         const id = btn.dataset.id;
-        const isSaved = state.savedCards.some((s) => s.id === id);
-        btn.innerHTML = bookmarkIcon(isSaved);
-        btn.classList.toggle("saved", isSaved);
-        btn.title = isSaved ? "Saved" : "Save";
-        btn.setAttribute("aria-label", isSaved ? "Remove from saved" : "Save");
+        const saved = isCardSaved(id);
+        btn.innerHTML = bookmarkIcon(saved);
+        btn.classList.toggle("saved", saved);
+        btn.title = saved ? "Saved" : "Save";
+        btn.setAttribute("aria-label", saved ? "Edit folders" : "Save");
       });
     }
 
