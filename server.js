@@ -499,6 +499,48 @@ ${userMessage}`;
   }
 });
 
+// ── Commander Spellbook combos proxy ──────────────────────────────
+// Public API (no auth). Cached in memory since combo data changes slowly.
+const COMBO_CACHE_TTL = 1000 * 60 * 60 * 24; // 24h
+const comboCache = new Map(); // normalized commander name -> { ts, data }
+
+function trimCombo(variant) {
+  return {
+    id: variant.id,
+    url: `https://commanderspellbook.com/combo/${variant.id}/`,
+    popularity: typeof variant.popularity === "number" ? variant.popularity : 0,
+    cards: (Array.isArray(variant.uses) ? variant.uses : [])
+      .map((u) => (u && u.card ? { name: String(u.card.name || ""), oracleId: u.card.oracleId || null } : null))
+      .filter((c) => c && c.name),
+    produces: (Array.isArray(variant.produces) ? variant.produces : [])
+      .map((p) => (p && p.feature ? String(p.feature.name || "") : ""))
+      .filter(Boolean),
+  };
+}
+
+app.get("/api/combos", async (req, res) => {
+  const commander = String(req.query.commander || "").trim();
+  if (!commander) return res.status(400).json({ error: "Missing commander" });
+  const key = commander.toLowerCase();
+
+  const cached = comboCache.get(key);
+  if (cached && Date.now() - cached.ts < COMBO_CACHE_TTL) return res.json(cached.data);
+
+  try {
+    const q = `commander:"${commander}"`;
+    const url = `https://backend.commanderspellbook.com/variants/?q=${encodeURIComponent(q)}&ordering=-popularity&limit=5`;
+    const upstream = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
+    const json = await upstream.json();
+    const combos = (Array.isArray(json.results) ? json.results : []).slice(0, 5).map(trimCombo);
+    const data = { commander, combos };
+    comboCache.set(key, { ts: Date.now(), data }); // cache successes only
+    res.json(data);
+  } catch (err) {
+    res.status(502).json({ error: "Couldn't reach Commander Spellbook" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

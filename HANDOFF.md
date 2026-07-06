@@ -4,11 +4,25 @@ Notes for the next agent picking up work on Spellbook (Scryfall natural-language
 search + saved-card manager, Node/Express in `server.js`, single-page UI in
 `public/index.html`, deployed as a Docker container on Unraid).
 
-## Next task under consideration: Commander combos
+## Commander combos — IMPLEMENTED (2026-07-06)
 
-The user wants to surface **common combos for a specific commander** and is still
-thinking about how to present it in the app. Nothing has been built yet — this is
-research only.
+Shipped. Focus a **legendary creature** → a **Combos** button appears in the Focus
+panel; tapping it loads the top 5 combos (by popularity) into the main view as
+"combo panels" (Option 1): the piece cards in a row (each clickable → Focus panel,
+enriched to full Scryfall cards for real art + detail), a "Produces" chip summary
+with "+N more", deck count, and a "View on Spellbook" link. A context header with
+"Back to search" restores the prior results. Loading / empty / error states handled.
+
+- Spec: `docs/superpowers/specs/2026-07-06-commander-combos-panel-design.md`
+- Server: `GET /api/combos?commander=<name>` in `server.js` (trims to
+  `{id,url,popularity,cards,produces}`, 24h in-memory cache).
+- Client: `loadCombos` / `enrichComboCards` / `buildComboPanel` in `public/index.html`.
+- **Gotcha:** Scryfall's `cards/collection` endpoint returns **400 without a
+  `User-Agent`**. Browsers send one automatically (so the client is fine); if you
+  ever move enrichment server-side, set a `User-Agent` header.
+
+Possible follow-ups (out of scope for v1): save a whole combo as a unit; a `card:`
+mode for combos where it isn't the commander; partner/background commanders.
 
 ### Data source: Commander Spellbook API
 
@@ -44,20 +58,6 @@ data behind https://commanderspellbook.com/.
 - Swagger / OpenAPI: https://backend.commanderspellbook.com/schema/swagger/
 - API root (lists all endpoints — `variants`, `cards`, `features`, …): https://backend.commanderspellbook.com/
 - Source: https://github.com/SpaceCowMedia/commander-spellbook-backend
-
-### Recommended integration approach (not yet decided by user)
-- Call it **server-side** in `server.js` (avoids browser CORS issues), add a route
-  like `GET /api/combos?commander=...` that proxies `variants/?q=commander:"..."`.
-- **Cache** responses on the server (mirror the existing translate-cache pattern) to
-  be polite to their backend; combo data changes slowly.
-- Natural UI trigger: the app already tracks a Commander **color identity**; a
-  "Combos for this commander" panel could fetch when a commander is set. Exact
-  placement/UX is the open question the user is mulling.
-
-### Open questions for the user
-- Where does this live in the UI (saved tab? a new tab? the detail/focus panel)?
-- Keyed off what — a chosen commander card, or the color-identity filter?
-- How many combos to show, and sorted by popularity by default?
 
 ## Project context / continuity
 
