@@ -6,7 +6,9 @@ import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
-app.use(express.json());
+// Saved-card snapshots (full Scryfall card objects + translate cache) easily
+// exceed body-parser's 100 KB default, so raise the JSON body limit.
+app.use(express.json({ limit: "25mb" }));
 app.use(express.static(join(__dirname, "public")));
 
 const DATA_DIR = process.env.DATA_DIR || join(__dirname, "data");
