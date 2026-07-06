@@ -1633,7 +1633,7 @@
       nextPage: null,
       activeTab: "search",
       detailCard: null,
-      colorIdentity: JSON.parse(localStorage.getItem("color_identity") || "[]"),
+      colorIdentity: [], // session-only: always starts deselected on a fresh page load
       sortField: "cmc",
       sortDir: "asc",
       savedSortField: "cmc",
@@ -1751,9 +1751,7 @@
         const idx = state.colorIdentity.indexOf(c);
         if (idx >= 0) state.colorIdentity.splice(idx, 1);
         else state.colorIdentity.push(c);
-        localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
-        updateIdentityDisplay();
-        queueOp({ type: "setSettings", colorIdentity: state.colorIdentity });
+        updateIdentityDisplay(); // colour identity is session-only — not persisted or synced
       });
     });
 
@@ -1967,10 +1965,9 @@
       state.forceAiSearch = !!forceAi;
       localStorage.setItem("force_ai_search", JSON.stringify(state.forceAiSearch));
       updateAiSearchToggle();
-      state.colorIdentity = (ci || "").split("").filter(Boolean);
-      localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
+      state.colorIdentity = (ci || "").split("").filter(Boolean); // session-only, not persisted
       updateIdentityDisplay();
-      queueOp({ type: "setSettings", colorIdentity: state.colorIdentity, forceAiSearch: state.forceAiSearch });
+      queueOp({ type: "setSettings", forceAiSearch: state.forceAiSearch });
       setActiveTab("search");
       doSearch();
     }
@@ -2069,10 +2066,7 @@
         state.membership = data.membership;
         localStorage.setItem("card_membership", JSON.stringify(state.membership));
       }
-      if (Array.isArray(data.colorIdentity)) {
-        state.colorIdentity = data.colorIdentity;
-        localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
-      }
+      // colorIdentity is intentionally NOT restored here — it stays session-only.
       if (typeof data.forceAiSearch === "boolean") {
         state.forceAiSearch = data.forceAiSearch;
         localStorage.setItem("force_ai_search", JSON.stringify(state.forceAiSearch));
