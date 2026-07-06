@@ -1170,7 +1170,7 @@
       transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
     }
     .combo-card img, .combo-card-ph {
-      width: 100%; display: block; aspect-ratio: 63 / 88; border-radius: 10px;
+      width: 100%; display: block; aspect-ratio: 488 / 680; border-radius: 10px;
       border: 1px solid rgba(31,29,25,0.22); box-shadow: -7px 5px 16px rgba(31,29,25,0.3);
     }
     .combo-card img { height: auto; object-fit: cover; background: #efeae1; }
@@ -2964,7 +2964,8 @@
       panel.className = "combo-panel";
 
       // ── fanned card stack: front card fully shown, the rest peek out to the right ──
-      const CARD_W = 240, PEEK = 56, RATIO = 88 / 63;
+      // Card width matches the search-results cards (grid max of 300px, 488/680 ratio).
+      const CARD_W = 300, PEEK = 70, RATIO = 680 / 488;
       const n = combo.cards.length;
       const stack = document.createElement("div");
       stack.className = "combo-stack";
