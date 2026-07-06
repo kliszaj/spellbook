@@ -1084,6 +1084,29 @@
       display: block;
     }
 
+    /* Export-to-clipboard button, right-aligned in the saved sort bar */
+    .export-btn {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border: 1px solid rgba(31,29,25,0.1);
+      border-radius: 8px;
+      background: #FFFEFA;
+      color: #504B42;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.12s;
+    }
+    .export-btn:hover:not(:disabled) { border-color: rgba(31,29,25,0.18); background: #EFEEE7; color: #181715; }
+    .export-btn:active:not(:disabled) { transform: translateY(1px); }
+    .export-btn:disabled { opacity: 0.4; cursor: default; }
+    .export-btn.copied { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+    .export-btn svg { width: 15px; height: 15px; display: block; }
+
     /* ── AI recommendations summary ── */
     .ai-summary {
       display: flex;
@@ -1523,6 +1546,10 @@
               <option value="eur">Price</option>
             </select>
             <button class="sort-dir-btn" id="saved-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
+            <button class="export-btn" id="saved-export-btn" title="Copy the visible cards as a Cardmarket import list" aria-label="Copy list to clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="export-label">Export</span>
+            </button>
           </div>
           <div class="type-filter" id="saved-type-filter" style="display:none" aria-label="Filter by card type"></div>
           <div id="saved-empty" class="empty-state">
@@ -1622,8 +1649,7 @@
 
     const DEFAULT_FOLDER = "default";
     const DEFAULT_FOLDER_NAME = "Unsorted";
-    let serverStateReady = false;
-    let appStateSaveTimer = null;
+    let syncReady = false;
     let activeSearchRun = 0;
     let activeSearchController = null;
     let searchGlowFrame = null;
@@ -1649,6 +1675,7 @@
     const savedGrid = $("#saved-grid");
     const savedEmpty = $("#saved-empty");
     const savedFilter = $("#saved-filter");
+    const savedExportBtn = $("#saved-export-btn");
     const typeFilterEl = $("#type-filter");
     const savedTypeFilterEl = $("#saved-type-filter");
     const sideMenu = $("#side-menu");
@@ -1726,7 +1753,7 @@
         else state.colorIdentity.push(c);
         localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
         updateIdentityDisplay();
-        persistAppStateSoon();
+        queueOp({ type: "setSettings", colorIdentity: state.colorIdentity });
       });
     });
 
@@ -1820,7 +1847,7 @@
       state.forceAiSearch = !state.forceAiSearch;
       localStorage.setItem("force_ai_search", JSON.stringify(state.forceAiSearch));
       updateAiSearchToggle();
-      persistAppStateSoon();
+      queueOp({ type: "setSettings", forceAiSearch: state.forceAiSearch });
     });
     autoSizeSearchInput();
 
@@ -1913,7 +1940,7 @@
       }
       try { localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(c)); } catch {}
       renderCacheList();
-      persistAppStateSoon();
+      queueOp({ type: "setCaches", translateCache: readTranslateCache() });
     }
     function rememberSearch(q, ci, forceAi, data) {
       const item = { q, ci: ci || "", forceAi: !!forceAi, type: data?.type || "query", ts: Date.now() };
@@ -1921,7 +1948,7 @@
       history.unshift(item);
       try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, SEARCH_HISTORY_MAX))); } catch {}
       renderSearchHistory();
-      persistAppStateSoon();
+      queueOp({ type: "setCaches", searchHistory: readSearchHistory() });
     }
     function removeSearch(q, ci, forceAi) {
       const key = translateCacheKey(q, ci, forceAi);
@@ -1932,7 +1959,7 @@
       try { localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(cache)); } catch {}
       renderSearchHistory();
       renderCacheList();
-      persistAppStateSoon();
+      queueOp({ type: "setCaches", searchHistory: readSearchHistory(), translateCache: readTranslateCache() });
     }
     function runHistorySearch(q, ci, forceAi) {
       searchInput.value = q;
@@ -1943,7 +1970,7 @@
       state.colorIdentity = (ci || "").split("").filter(Boolean);
       localStorage.setItem("color_identity", JSON.stringify(state.colorIdentity));
       updateIdentityDisplay();
-      persistAppStateSoon();
+      queueOp({ type: "setSettings", colorIdentity: state.colorIdentity, forceAiSearch: state.forceAiSearch });
       setActiveTab("search");
       doSearch();
     }
@@ -2126,33 +2153,107 @@
         const res = await fetch("/api/app-state");
         if (!res.ok) throw new Error("Could not load saved app state");
         const serverState = await res.json();
+        // Union this device's local copy with the shared server copy, show it, then
+        // push the union up ONCE (server merges) so nothing is lost migrating to sync.
         const mergedState = mergeAppState(currentAppStatePayload(), serverState);
         applyAppState(mergedState);
-        serverStateReady = true;
-        persistAppStateSoon();
-      } catch (err) {
-        console.warn(err);
-      } finally {
-        serverStateReady = true;
-      }
-    }
-
-    function persistAppStateSoon() {
-      if (!serverStateReady) return;
-      clearTimeout(appStateSaveTimer);
-      appStateSaveTimer = setTimeout(persistAppState, 300);
-    }
-
-    async function persistAppState() {
-      try {
-        await fetch("/api/app-state", {
+        const putRes = await fetch("/api/app-state", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(currentAppStatePayload()),
         });
+        if (putRes.ok) {
+          const synced = await putRes.json();
+          lastSyncedSig = JSON.stringify([
+            synced.savedCards, synced.folders, synced.membership,
+            synced.colorIdentity, synced.forceAiSearch,
+            synced.searchHistory, synced.translateCache,
+          ]);
+        }
       } catch (err) {
         console.warn(err);
+      } finally {
+        syncReady = true;
+        startStateSync();
       }
+    }
+
+    // ── Authoritative sync engine ─────────────────────────────────────
+    // The server owns state.json. We send precise ops (never full snapshots) so
+    // deletes win and two devices can't clobber each other, and we re-pull the
+    // authoritative copy on focus / visibility / online + light polling.
+    const SYNC_POLL_MS = 15000;
+    let pendingOps = [];
+    let flushTimer = null;
+    let flushing = false;
+    let pollTimer = null;
+    let lastSyncedSig = "";
+
+    // Adopt the server's authoritative copy, but skip the re-render when it hasn't
+    // actually changed (avoids the saved grid flickering on every poll).
+    function adoptServerState(serverState) {
+      if (!serverState || typeof serverState !== "object") return;
+      const sig = JSON.stringify([
+        serverState.savedCards, serverState.folders, serverState.membership,
+        serverState.colorIdentity, serverState.forceAiSearch,
+        serverState.searchHistory, serverState.translateCache,
+      ]);
+      if (sig === lastSyncedSig) return;
+      lastSyncedSig = sig;
+      applyAppState(serverState);
+    }
+
+    function queueOp(op) {
+      if (!syncReady || !op) return;
+      pendingOps.push(op);
+      clearTimeout(flushTimer);
+      flushTimer = setTimeout(flushOps, 250);
+    }
+
+    async function flushOps() {
+      if (flushing || !pendingOps.length) return;
+      flushing = true;
+      const batch = pendingOps;
+      pendingOps = [];
+      try {
+        const res = await fetch("/api/app-state/ops", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ops: batch }),
+        });
+        if (!res.ok) throw new Error("sync failed");
+        const serverState = await res.json();
+        // Adopt the authoritative result only if nothing newer is waiting locally.
+        if (!pendingOps.length) adoptServerState(serverState);
+      } catch (err) {
+        console.warn("op sync failed, will retry", err);
+        pendingOps = batch.concat(pendingOps); // requeue for the next attempt
+        flushing = false;
+        clearTimeout(flushTimer);
+        flushTimer = setTimeout(flushOps, 3000);
+        return;
+      }
+      flushing = false;
+      if (pendingOps.length) { clearTimeout(flushTimer); flushTimer = setTimeout(flushOps, 250); }
+    }
+
+    async function refreshFromServer() {
+      // Never overwrite un-synced local edits — wait until the queue is drained.
+      if (!syncReady || flushing || pendingOps.length) return;
+      try {
+        const res = await fetch("/api/app-state");
+        if (!res.ok) return;
+        const serverState = await res.json();
+        if (!flushing && !pendingOps.length) adoptServerState(serverState);
+      } catch (err) { /* offline — try again next tick */ }
+    }
+
+    function startStateSync() {
+      if (pollTimer) return;
+      pollTimer = setInterval(refreshFromServer, SYNC_POLL_MS);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshFromServer(); });
+      window.addEventListener("focus", refreshFromServer);
+      window.addEventListener("online", refreshFromServer);
     }
 
     function startSearchRun() {
@@ -2419,6 +2520,51 @@
       renderSavedCards();
     });
 
+    // ── Export visible saved cards as a Cardmarket import list ──
+    // Cardmarket matches double-faced/split cards by their front-face name, so we
+    // take the part before " // ". Every saved card is a singleton → quantity 1.
+    function cardmarketLine(card) {
+      const name = String(card.name || "").split(" // ")[0].trim();
+      return `1 ${name}`;
+    }
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch { ok = false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+    let exportFlashTimer = null;
+    async function exportSavedList() {
+      const cards = state.savedVisible || [];
+      if (!cards.length) return;
+      const text = cards.map(cardmarketLine).join("\n");
+      const ok = await copyText(text);
+      const label = savedExportBtn.querySelector(".export-label");
+      clearTimeout(exportFlashTimer);
+      if (ok) {
+        savedExportBtn.classList.add("copied");
+        label.textContent = `Copied ${cards.length}`;
+      } else {
+        label.textContent = "Copy failed";
+      }
+      exportFlashTimer = setTimeout(() => {
+        savedExportBtn.classList.remove("copied");
+        label.textContent = "Export";
+      }, 1600);
+    }
+    savedExportBtn.addEventListener("click", exportSavedList);
+
     loadMoreBtn.addEventListener("click", () => { if (state.nextPage) searchScryfall(null, state.nextPage); });
 
     $("#copy-query-btn").addEventListener("click", () => {
@@ -2562,6 +2708,8 @@
       pruneToPresent(savedTypeFilter, cards);
       renderTypeChips(savedTypeFilterEl, cards, savedTypeFilter, (t) => { toggleSet(savedTypeFilter, t); renderSavedCards(); });
       const visible = filterByTypes(cards, savedTypeFilter);
+      state.savedVisible = visible; // exact on-screen set, used by the export button
+      if (savedExportBtn) savedExportBtn.disabled = visible.length === 0;
       savedGrid.innerHTML = "";
       visible.forEach((card) => {
         const el = document.createElement("div");
@@ -2646,17 +2794,16 @@
     });
 
     // ── Saves & folders ──────────────────────────────────────────────
+    // These mirror state into localStorage as a local cache. Syncing to the server
+    // happens via precise queueOp() calls at each mutation site (see below).
     function saveCardsStore() {
       localStorage.setItem("saved_cards", JSON.stringify(state.savedCards));
-      persistAppStateSoon();
     }
     function saveFolders() {
       localStorage.setItem("card_folders", JSON.stringify(state.folders));
-      persistAppStateSoon();
     }
     function saveMembership() {
       localStorage.setItem("card_membership", JSON.stringify(state.membership));
-      persistAppStateSoon();
     }
 
     // Build membership for pre-folders saves: everything goes into the default collection.
@@ -2699,6 +2846,8 @@
       }
       saveCardsStore();
       saveMembership();
+      // Empty membership => the card was fully unsaved; server drops it everywhere.
+      queueOp({ type: "moveCard", id: card.id, card, folders: state.membership[card.id] || [] });
     }
 
     function newFolderId() {
@@ -2710,12 +2859,13 @@
       const folder = { id: newFolderId(), name: n };
       state.folders.push(folder);
       saveFolders();
+      queueOp({ type: "setFolders", folders: state.folders });
       return folder;
     }
     function renameFolder(id, name) {
       const f = state.folders.find((x) => x.id === id);
       const n = (name || "").trim();
-      if (f && n) { f.name = n; saveFolders(); }
+      if (f && n) { f.name = n; saveFolders(); queueOp({ type: "setFolders", folders: state.folders }); }
     }
     function deleteFolder(id) {
       state.folders = state.folders.filter((f) => f.id !== id);
@@ -2726,6 +2876,8 @@
       });
       saveFolders();
       saveMembership();
+      queueOp({ type: "setFolders", folders: state.folders });
+      queueOp({ type: "replaceMembership", membership: state.membership });
       if (state.activeFolder === id) state.activeFolder = "all";
     }
 

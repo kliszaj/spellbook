@@ -63,6 +63,124 @@ async function writeAppState(nextState) {
   return state;
 }
 
+// Serialize all state mutations so concurrent requests from multiple devices
+// can't interleave read-modify-write and lose each other's updates.
+let stateWriteChain = Promise.resolve();
+function withStateLock(fn) {
+  const run = stateWriteChain.then(fn, fn);
+  stateWriteChain = run.then(() => {}, () => {});
+  return run;
+}
+
+const DEFAULT_FOLDER = "default";
+
+// ── Server-side merge (union) — used only for the one-time client migration push ──
+function mergeById(a = [], b = []) {
+  const m = new Map();
+  [...(a || []), ...(b || [])].forEach((it) => {
+    if (it && it.id) m.set(it.id, { ...m.get(it.id), ...it });
+  });
+  return [...m.values()];
+}
+
+function mergeMembership(a, b) {
+  const merged = {};
+  [a, b].forEach((src) => {
+    if (!src || typeof src !== "object") return;
+    for (const [cid, folders] of Object.entries(src)) {
+      const next = new Set(merged[cid] || []);
+      (Array.isArray(folders) ? folders : []).forEach((f) => next.add(f));
+      merged[cid] = [...next];
+    }
+  });
+  return Object.keys(merged).length ? merged : null;
+}
+
+function mergeTranslateCache(a = {}, b = {}) {
+  const merged = { ...(a || {}) };
+  for (const [k, v] of Object.entries(b || {})) {
+    if (!merged[k] || (v?.ts || 0) > (merged[k]?.ts || 0)) merged[k] = v;
+  }
+  return merged;
+}
+
+function mergeSearchHistory(a = [], b = []) {
+  const m = new Map();
+  [...(a || []), ...(b || [])].forEach((it) => {
+    if (!it || !it.q) return;
+    const key = `${it.forceAi ? "ai" : "query"}|${it.ci || ""}|${String(it.q).trim().toLowerCase()}`;
+    if (!m.has(key) || (it.ts || 0) > (m.get(key).ts || 0)) m.set(key, it);
+  });
+  return [...m.values()].sort((x, y) => (y.ts || 0) - (x.ts || 0));
+}
+
+function mergeStates(base, incoming) {
+  return normalizeAppState({
+    savedCards: mergeById(base.savedCards, incoming.savedCards),
+    folders: mergeById(base.folders, incoming.folders),
+    membership: mergeMembership(base.membership, incoming.membership),
+    colorIdentity: Array.isArray(incoming.colorIdentity) && incoming.colorIdentity.length ? incoming.colorIdentity : base.colorIdentity,
+    translateCache: mergeTranslateCache(base.translateCache, incoming.translateCache),
+    searchHistory: mergeSearchHistory(base.searchHistory, incoming.searchHistory),
+    forceAiSearch: typeof incoming.forceAiSearch === "boolean" ? incoming.forceAiSearch : base.forceAiSearch,
+    apiKey: base.apiKey,
+  });
+}
+
+// ── Authoritative op reducer — the server is the single source of truth ──
+// Clients send precise ops (never full snapshots) so deletes win and concurrent
+// edits from different devices don't clobber each other.
+function applyOps(state, ops) {
+  state.membership = state.membership && typeof state.membership === "object" ? state.membership : {};
+  for (const op of Array.isArray(ops) ? ops : []) {
+    switch (op?.type) {
+      case "moveCard": {
+        // folders empty/absent => unsave the card everywhere; otherwise upsert + set membership.
+        const id = op.id;
+        if (!id) break;
+        const folders = Array.isArray(op.folders) ? op.folders.filter(Boolean) : [];
+        if (!folders.length) {
+          state.savedCards = state.savedCards.filter((c) => c.id !== id);
+          delete state.membership[id];
+        } else {
+          const card = op.card && op.card.id === id ? op.card : null;
+          const idx = state.savedCards.findIndex((c) => c.id === id);
+          if (idx >= 0) { if (card) state.savedCards[idx] = card; }
+          else if (card) state.savedCards.push(card);
+          state.membership[id] = folders;
+        }
+        break;
+      }
+      case "unsaveCard": {
+        if (!op.id) break;
+        state.savedCards = state.savedCards.filter((c) => c.id !== op.id);
+        delete state.membership[op.id];
+        break;
+      }
+      case "setFolders":
+        if (Array.isArray(op.folders)) state.folders = op.folders;
+        break;
+      case "replaceMembership":
+        if (op.membership && typeof op.membership === "object") state.membership = op.membership;
+        break;
+      case "setSettings":
+        if (Array.isArray(op.colorIdentity)) state.colorIdentity = op.colorIdentity.filter((c) => COLOR_IDS.has(c));
+        if (typeof op.forceAiSearch === "boolean") state.forceAiSearch = op.forceAiSearch;
+        break;
+      case "setCaches":
+        if (op.translateCache && typeof op.translateCache === "object") state.translateCache = op.translateCache;
+        if (Array.isArray(op.searchHistory)) state.searchHistory = op.searchHistory;
+        break;
+      case "mergeSnapshot":
+        // One-time migration: fold a device's pre-existing local state into the shared doc.
+        if (op.state && typeof op.state === "object") state = mergeStates(state, op.state);
+        break;
+    }
+  }
+  return state;
+}
+
+
 const SCRYFALL_SYSTEM_PROMPT = `You are a Magic: The Gathering search assistant that translates natural language requests into Scryfall search queries.
 
 ## Scryfall Search Syntax Reference
@@ -273,13 +391,33 @@ app.get("/api/app-state", async (req, res) => {
   }
 });
 
+// Legacy snapshot endpoint — now a server-side union merge (never a blind
+// overwrite) so a stale device can't clobber another's saves. The client only
+// calls this once, to migrate its local-only data up on first load.
 app.put("/api/app-state", async (req, res) => {
   try {
-    const current = await readAppState();
-    const nextState = await writeAppState({ ...current, ...req.body, apiKey: current.apiKey });
+    const nextState = await withStateLock(async () => {
+      const current = await readAppState();
+      const merged = mergeStates(current, normalizeAppState(req.body || {}));
+      return writeAppState(merged);
+    });
     res.json(publicAppState(nextState));
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to save app state" });
+  }
+});
+
+// Authoritative mutation channel: apply precise ops to the shared state.json.
+app.post("/api/app-state/ops", async (req, res) => {
+  try {
+    const nextState = await withStateLock(async () => {
+      const current = await readAppState();
+      const updated = applyOps(current, req.body?.ops);
+      return writeAppState({ ...updated, apiKey: current.apiKey });
+    });
+    res.json(publicAppState(nextState));
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to apply ops" });
   }
 });
 
