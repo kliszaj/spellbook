@@ -1154,42 +1154,38 @@
     }
     .combo-back-btn:hover { border-color: rgba(31,29,25,0.22); background: #EFEEE7; color: #181715; }
 
-    .combo-list { display: flex; flex-direction: column; gap: 14px; }
+    /* #results is a multi-column grid; combos and their status messages span it fully. */
+    .combo-list { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; }
+    .combo-msg { grid-column: 1 / -1; }
     .combo-panel {
       background: #FFFEFA; border: 1px solid rgba(31,29,25,0.12); border-radius: 14px;
-      padding: 15px 16px; box-shadow: 0 1px 3px rgba(31,29,25,0.05);
-      display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center;
+      padding: 16px; box-shadow: 0 1px 3px rgba(31,29,25,0.05);
+      display: flex; flex-direction: column; gap: 14px;
     }
-    .combo-pieces { display: flex; gap: 8px; flex-wrap: wrap; }
-    .combo-mini {
-      position: relative; flex: none; width: 62px; border: none; padding: 0;
-      background: none; cursor: pointer; text-align: left;
-      display: flex; flex-direction: column; gap: 4px;
+    /* A fanned stack of real-scale cards; click any to slide it to the front + focus it. */
+    .combo-stack { position: relative; align-self: center; }
+    .combo-card {
+      position: absolute; top: 0; left: 0; padding: 0; border: none; background: none;
+      cursor: pointer; will-change: transform;
+      transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
     }
-    .combo-mini img {
-      width: 62px; height: 86px; object-fit: cover; border-radius: 6px;
-      border: 1px solid rgba(31,29,25,0.18); box-shadow: 0 1px 2px rgba(31,29,25,0.08);
-      background: #efeae1; transition: transform 0.12s ease, box-shadow 0.12s ease;
+    .combo-card img, .combo-card-ph {
+      width: 100%; display: block; aspect-ratio: 63 / 88; border-radius: 10px;
+      border: 1px solid rgba(31,29,25,0.22); box-shadow: -7px 5px 16px rgba(31,29,25,0.3);
     }
-    .combo-mini:hover img { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(31,29,25,0.16); }
-    .combo-mini:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; border-radius: 6px; }
-    .combo-mini .combo-mini-name {
-      font-size: 9px; font-weight: 620; line-height: 1.15; color: #57524A;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .combo-mini-ph {
-      display: block; width: 62px; height: 86px; border-radius: 6px;
-      border: 1px dashed rgba(31,29,25,0.28);
-      background: linear-gradient(160deg, #FFFEFA, #F0EBE1);
-    }
+    .combo-card img { height: auto; object-fit: cover; background: #efeae1; }
+    .combo-card-ph { border-style: dashed; border-color: rgba(31,29,25,0.3); background: linear-gradient(160deg, #FFFEFA, #F0EBE1); }
+    .combo-card:hover img { filter: brightness(1.05); }
+    .combo-card:focus-visible { outline: 2px solid #B9892A; outline-offset: 3px; border-radius: 10px; }
+    @media (prefers-reduced-motion: reduce) { .combo-card { transition: none; } }
 
     .combo-body { min-width: 0; }
     .combo-topline {
       display: flex; align-items: baseline; justify-content: space-between;
       gap: 12px; margin-bottom: 10px;
     }
-    .combo-title { font-size: 13px; font-weight: 650; color: #2A2721; }
-    .combo-title span { color: #9E9B92; font-weight: 500; }
+    .combo-title { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 650; color: #2A2721; line-height: 1.45; }
+    .combo-title .plus { color: #B9A98A; font-weight: 500; margin: 0 2px; }
     .combo-pop {
       flex: none; font-size: 12px; color: #9E9B92; font-variant-numeric: tabular-nums;
     }
@@ -1213,10 +1209,15 @@
       font-size: 12.5px; font-weight: 600; color: #B9892A; text-decoration: none;
     }
     .combo-link:hover { text-decoration: underline; }
-
-    @media (max-width: 560px) {
-      .combo-panel { grid-template-columns: 1fr; gap: 14px; }
+    .combo-more-btn {
+      margin: 4px auto 0; display: block;
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      padding: 9px 18px; border: 1px solid rgba(31,29,25,0.14); border-radius: 10px;
+      background: #FFFEFA; color: #504B42; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
     }
+    .combo-more-btn:hover:not(:disabled) { border-color: rgba(31,29,25,0.24); background: #EFEEE7; color: #181715; }
+    .combo-more-btn:disabled { opacity: 0.5; cursor: default; }
 
     .detail-reason {
       margin: 0 0 14px;
@@ -1746,6 +1747,8 @@
     let activeSearchController = null;
     let searchGlowFrame = null;
     let comboRun = 0; // cancels stale combo loads when a newer action supersedes them
+    let comboListEl = null; // the .combo-list currently in the results area
+    let comboMoreBtn = null; // the "Load more combos" button, if shown
 
     const $ = (sel) => document.querySelector(sel);
     const appShell = $("#app-shell");
@@ -2362,6 +2365,11 @@
     // stale, persisted translateCache entry — left them out. Color identity is the
     // one that matters most: without it Scryfall returns every color. Idempotent,
     // so it never duplicates a clause the query already has.
+    // A query with no Scryfall operator characters is treated as a plain card name.
+    function isBareNameQuery(q) {
+      return !/[:<>=]/.test(q || "");
+    }
+
     function withCommanderFilters(query) {
       let q = (query || "").trim();
       if (!/\bf(?:ormat)?:commander\b/i.test(q)) q += " f:commander";
@@ -2396,6 +2404,34 @@
       const ci = state.colorIdentity.join("") || null;
       const forceAiSearch = state.forceAiSearch;
       try {
+        // Fast path: a plain card name (no Scryfall syntax) → look it up directly,
+        // no AI and no commander filters. Tries an exact name match first (so
+        // "Sol Ring" shows Sol Ring, not every card containing those words), then a
+        // looser contains-search, and only falls back to AI if nothing matches.
+        if (!forceAiSearch && isBareNameQuery(query)) {
+          state.mode = "search";
+          setSortMode("search");
+          const exactQuery = `!"${query.replace(/"/g, "")}"`;
+          let usedQuery = exactQuery;
+          let found = await searchScryfall(exactQuery, null, searchRun.run, searchRun.signal, { silent: true });
+          if (!isActiveSearch(searchRun.run)) return;
+          if (!found) {
+            usedQuery = query;
+            found = await searchScryfall(query, null, searchRun.run, searchRun.signal, { silent: true });
+            if (!isActiveSearch(searchRun.run)) return;
+          }
+          if (found > 0) {
+            state.currentQuery = usedQuery; // lets sort/pagination re-run the same lookup
+            queryText.textContent = query;
+            queryDisplay.classList.add("visible");
+            rememberSearch(query, ci, forceAiSearch, { type: "query" });
+            return;
+          }
+          state.results = []; // no name match — reset and let the AI take a crack
+          state.nextPage = null;
+          resultsEl.innerHTML = "";
+        }
+
         let data = getCachedTranslate(query, ci, forceAiSearch);
         if (!data) {
           const res = await fetch("/api/translate", {
@@ -2501,23 +2537,31 @@
         .trim();
     }
 
-    async function searchScryfall(query, pageUrl, run = activeSearchRun, signal = activeSearchController?.signal) {
+    // Returns the number of cards added. With opts.silent, an error/empty result
+    // stays quiet and returns 0 so the caller can fall back (e.g. to AI search).
+    async function searchScryfall(query, pageUrl, run = activeSearchRun, signal = activeSearchController?.signal, opts = {}) {
       try {
         const url = pageUrl || `https://api.scryfall.com/cards/search?q=${encodeURIComponent(stripInlineOrder(query))}&unique=cards&order=${state.sortField}&dir=${state.sortDir}`;
         const res = await fetch(url, { signal });
-        if (!isActiveSearch(run)) return;
-        if (!res.ok) { const err = await res.json(); throw new Error(err.details || "No cards found — try rephrasing"); }
+        if (!isActiveSearch(run)) return 0;
+        if (!res.ok) {
+          if (opts.silent) return 0;
+          const err = await res.json(); throw new Error(err.details || "No cards found — try rephrasing");
+        }
         const data = await res.json();
-        if (!isActiveSearch(run)) return;
+        if (!isActiveSearch(run)) return 0;
         state.results.push(...data.data);
         state.nextPage = data.has_more ? data.next_page : null;
         hideStatus();
         renderSearchView();
         paginationEl.style.display = state.nextPage ? "flex" : "none";
         sortBar.style.display = state.results.length ? "flex" : "none";
+        return data.data.length;
       } catch (err) {
-        if (err.name === "AbortError" || !isActiveSearch(run)) return;
+        if (err.name === "AbortError" || !isActiveSearch(run)) return 0;
+        if (opts.silent) return 0;
         showStatus(err.message, true);
+        return 0;
       }
     }
 
@@ -2785,6 +2829,7 @@
     const comboNorm = (s) => (s || "").toLowerCase().split("//")[0].trim();
 
     async function loadCombos(commander) {
+      const prevScrollY = window.scrollY; // remember where we were for "Back to search"
       setActiveTab("search");
       // Snapshot the current view so "Back to search" can restore it.
       state.preCombo = {
@@ -2792,8 +2837,10 @@
         aiVisible: aiSummary.style.display !== "none",
         sortVisible: sortBar.style.display !== "none",
         queryVisible: queryDisplay.classList.contains("visible"),
+        scrollY: prevScrollY,
       };
       state.mode = "combos";
+      state.comboContext = { commander, offset: 0 };
       const runToken = ++comboRun;
 
       aiSummary.style.display = "none";
@@ -2802,34 +2849,71 @@
       typeFilterEl.style.display = "none";
       queryDisplay.classList.remove("visible");
       resultsEl.innerHTML = "";
+      comboListEl = null;
+      comboMoreBtn = null;
       comboHeaderTitle.textContent = `Combos for ${commander}`;
       comboHeader.style.display = "flex";
+      window.scrollTo(0, 0); // combos are a fresh view — start at the header
       showStatus("Loading combos…");
 
       try {
-        const res = await fetch(`/api/combos?commander=${encodeURIComponent(commander)}`);
+        const { combos, hasMore } = await fetchCombosPage(commander, 0);
         if (runToken !== comboRun) return;
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || "Couldn't load combos");
-        }
-        const data = await res.json();
-        if (runToken !== comboRun) return;
-        const combos = data.combos || [];
         if (!combos.length) {
           hideStatus();
-          resultsEl.innerHTML = `<div class="empty-state" style="display:block"><p>No combos found</p><small>Commander Spellbook lists no combos for ${esc(commander)} as the commander.</small></div>`;
+          resultsEl.innerHTML = `<div class="empty-state combo-msg" style="display:block"><p>No combos found</p><small>Commander Spellbook lists no combos for ${esc(commander)}.</small></div>`;
           return;
         }
         const cardMap = await enrichComboCards(combos);
         if (runToken !== comboRun) return;
         hideStatus();
-        renderComboPanels(combos, cardMap);
+        renderComboPanels(combos, cardMap, false);
+        state.comboContext.offset = combos.length;
+        setComboMore(hasMore, runToken);
       } catch (err) {
         if (runToken !== comboRun) return;
         hideStatus();
-        resultsEl.innerHTML = `<div class="empty-state" style="display:block"><p>Couldn't load combos</p><small>${esc(err.message || "Please try again.")}</small></div>`;
+        resultsEl.innerHTML = `<div class="empty-state combo-msg" style="display:block"><p>Couldn't load combos</p><small>${esc(err.message || "Please try again.")}</small></div>`;
       }
+    }
+
+    async function fetchCombosPage(commander, offset) {
+      const res = await fetch(`/api/combos?commander=${encodeURIComponent(commander)}&offset=${offset}`);
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Couldn't load combos"); }
+      const data = await res.json();
+      return { combos: data.combos || [], hasMore: Boolean(data.hasMore) };
+    }
+
+    async function loadMoreCombos(runToken) {
+      if (runToken !== comboRun || !state.comboContext) return;
+      const btn = comboMoreBtn;
+      if (btn) { btn.disabled = true; btn.textContent = "Loading…"; }
+      try {
+        const { commander, offset } = state.comboContext;
+        const { combos, hasMore } = await fetchCombosPage(commander, offset);
+        if (runToken !== comboRun) return;
+        if (combos.length) {
+          const cardMap = await enrichComboCards(combos);
+          if (runToken !== comboRun) return;
+          renderComboPanels(combos, cardMap, true);
+          state.comboContext.offset += combos.length;
+        }
+        setComboMore(hasMore && combos.length > 0, runToken);
+      } catch (err) {
+        if (runToken !== comboRun) return;
+        if (btn) { btn.disabled = false; btn.textContent = "Try again"; }
+      }
+    }
+
+    // The "Load more combos" button lives after the list; rebuilt each page.
+    function setComboMore(hasMore, runToken) {
+      if (comboMoreBtn) { comboMoreBtn.remove(); comboMoreBtn = null; }
+      if (!hasMore) return;
+      comboMoreBtn = document.createElement("button");
+      comboMoreBtn.className = "combo-more-btn combo-msg";
+      comboMoreBtn.textContent = "Load more combos";
+      comboMoreBtn.addEventListener("click", () => loadMoreCombos(runToken));
+      resultsEl.appendChild(comboMoreBtn);
     }
 
     // Resolve combo pieces to full Scryfall cards so they open the Focus panel and show real art.
@@ -2851,44 +2935,66 @@
       return map;
     }
 
-    function renderComboPanels(combos, cardMap) {
-      resultsEl.innerHTML = "";
-      const list = document.createElement("div");
-      list.className = "combo-list";
-      combos.forEach((combo) => list.appendChild(buildComboPanel(combo, cardMap)));
-      resultsEl.appendChild(list);
+    function renderComboPanels(combos, cardMap, append) {
+      if (!append || !comboListEl) {
+        resultsEl.innerHTML = "";
+        comboListEl = document.createElement("div");
+        comboListEl.className = "combo-list";
+        resultsEl.appendChild(comboListEl);
+      }
+      combos.forEach((combo) => comboListEl.appendChild(buildComboPanel(combo, cardMap)));
     }
 
     function buildComboPanel(combo, cardMap) {
       const panel = document.createElement("div");
       panel.className = "combo-panel";
 
-      const pieces = document.createElement("div");
-      pieces.className = "combo-pieces";
-      combo.cards.forEach((piece) => {
+      // ── fanned card stack: front card fully shown, the rest peek out to the right ──
+      const CARD_W = 190, PEEK = 44, RATIO = 88 / 63;
+      const n = combo.cards.length;
+      const stack = document.createElement("div");
+      stack.className = "combo-stack";
+      stack.style.width = `${CARD_W + (n - 1) * PEEK}px`;
+      stack.style.height = `${Math.round(CARD_W * RATIO)}px`;
+
+      const nodes = combo.cards.map((piece) => {
         const full = cardMap.get(comboNorm(piece.name));
         const btn = document.createElement("button");
-        btn.className = "combo-mini" + (full ? "" : " unresolved");
+        btn.className = "combo-card" + (full ? "" : " unresolved");
         btn.title = piece.name;
+        btn.style.width = `${CARD_W}px`;
         const img = full ? getCardImage(full) : "";
-        btn.innerHTML = (img
+        btn.innerHTML = img
           ? `<img src="${img}" alt="${esc(piece.name)}" loading="lazy">`
-          : `<span class="combo-mini-ph"></span>`) +
-          `<span class="combo-mini-name">${esc(piece.name)}</span>`;
-        if (full) {
-          btn.addEventListener("click", () => showDetail(full));
-        } else {
-          btn.addEventListener("click", () => window.open(`https://scryfall.com/search?q=${encodeURIComponent(`!"${piece.name}"`)}`, "_blank"));
-        }
-        pieces.appendChild(btn);
+          : `<span class="combo-card-ph"></span>`;
+        stack.appendChild(btn);
+        return { btn, full, piece };
       });
 
+      let order = nodes.map((_, i) => i); // stack order, front to back
+      const layout = () => order.forEach((idx, pos) => {
+        nodes[idx].btn.style.transform = `translateX(${pos * PEEK}px)`;
+        nodes[idx].btn.style.zIndex = String(n - pos);
+      });
+      layout();
+
+      nodes.forEach((node, i) => {
+        node.btn.addEventListener("click", () => {
+          order = [i, ...order.filter((x) => x !== i)]; // one click: promote to front…
+          layout();
+          if (node.full) showDetail(node.full);          // …and focus it
+          else window.open(`https://scryfall.com/search?q=${encodeURIComponent(`!"${node.piece.name}"`)}`, "_blank");
+        });
+      });
+
+      // ── body ──
       const body = document.createElement("div");
       body.className = "combo-body";
+      const names = combo.cards.map((c) => esc(c.name)).join('<span class="plus">+</span>');
       const pop = combo.popularity > 0 ? `<span class="combo-pop"><b>${combo.popularity.toLocaleString()}</b> decks</span>` : "";
       body.innerHTML = `
         <div class="combo-topline">
-          <span class="combo-title">${combo.cards.length}-card combo</span>
+          <span class="combo-title">${names}</span>
           ${pop}
         </div>
         <div class="produces-label">Produces</div>
@@ -2896,7 +3002,7 @@
         <div class="combo-foot"><a class="combo-link" href="${esc(combo.url)}" target="_blank" rel="noopener">View on Spellbook &rarr;</a></div>`;
       renderProduces(body.querySelector(".combo-chips"), combo.produces);
 
-      panel.appendChild(pieces);
+      panel.appendChild(stack);
       panel.appendChild(body);
       return panel;
     }
@@ -2930,6 +3036,9 @@
       sortBar.style.display = (pre.sortVisible && state.results.length) ? "flex" : "none";
       aiSummary.style.display = pre.aiVisible ? "flex" : "none";
       if (pre.queryVisible) queryDisplay.classList.add("visible");
+      // Restore scroll after the results DOM is rebuilt, so the page is tall enough.
+      const y = pre.scrollY || 0;
+      requestAnimationFrame(() => window.scrollTo(0, y));
     }
 
     function renderSavedCards() {

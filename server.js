@@ -518,23 +518,29 @@ function trimCombo(variant) {
   };
 }
 
+const COMBO_PAGE = 5;
+
 app.get("/api/combos", async (req, res) => {
   const commander = String(req.query.commander || "").trim();
   if (!commander) return res.status(400).json({ error: "Missing commander" });
-  const key = commander.toLowerCase();
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+  const key = `${commander.toLowerCase()}|${offset}`;
 
   const cached = comboCache.get(key);
   if (cached && Date.now() - cached.ts < COMBO_CACHE_TTL) return res.json(cached.data);
 
   try {
-    const q = `commander:"${commander}"`;
-    const url = `https://backend.commanderspellbook.com/variants/?q=${encodeURIComponent(q)}&ordering=-popularity&limit=5`;
+    // `card:` (not `commander:`) — the latter only matches combos that require the
+    // card in the command zone, which is empty for most commanders. `card:` returns
+    // every combo the card takes part in, which is what "combos for my commander" means.
+    const q = `card:"${commander}"`;
+    const url = `https://backend.commanderspellbook.com/variants/?q=${encodeURIComponent(q)}&ordering=-popularity&limit=${COMBO_PAGE}&offset=${offset}`;
     const upstream = await fetch(url, { headers: { Accept: "application/json" } });
     if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
     const json = await upstream.json();
-    const combos = (Array.isArray(json.results) ? json.results : []).slice(0, 5).map(trimCombo);
-    const data = { commander, combos };
-    comboCache.set(key, { ts: Date.now(), data }); // cache successes only
+    const combos = (Array.isArray(json.results) ? json.results : []).slice(0, COMBO_PAGE).map(trimCombo);
+    const data = { commander, combos, hasMore: Boolean(json.next) };
+    if (combos.length) comboCache.set(key, { ts: Date.now(), data }); // don't cache empty answers
     res.json(data);
   } catch (err) {
     res.status(502).json({ error: "Couldn't reach Commander Spellbook" });
