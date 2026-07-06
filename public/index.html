@@ -1160,10 +1160,10 @@
     .combo-panel {
       background: #FFFEFA; border: 1px solid rgba(31,29,25,0.12); border-radius: 14px;
       padding: 16px; box-shadow: 0 1px 3px rgba(31,29,25,0.05);
-      display: flex; flex-direction: column; gap: 14px;
+      display: flex; flex-direction: row; align-items: flex-start; gap: 22px;
     }
-    /* A fanned stack of real-scale cards; click any to slide it to the front + focus it. */
-    .combo-stack { position: relative; align-self: center; }
+    /* A fanned stack of real-scale cards on the left; click any to slide it to the front + focus it. */
+    .combo-stack { position: relative; flex: none; }
     .combo-card {
       position: absolute; top: 0; left: 0; padding: 0; border: none; background: none;
       cursor: pointer; will-change: transform;
@@ -1179,7 +1179,7 @@
     .combo-card:focus-visible { outline: 2px solid #B9892A; outline-offset: 3px; border-radius: 10px; }
     @media (prefers-reduced-motion: reduce) { .combo-card { transition: none; } }
 
-    .combo-body { min-width: 0; }
+    .combo-body { flex: 1; min-width: 0; }
     .combo-topline {
       display: flex; align-items: baseline; justify-content: space-between;
       gap: 12px; margin-bottom: 10px;
@@ -1193,6 +1193,15 @@
     .produces-label {
       font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       color: #9E9B92; margin-bottom: 7px;
+    }
+    .steps-label { margin-top: 13px; }
+    .combo-steps {
+      margin: 7px 0 0; padding-left: 20px;
+      font-size: 12.5px; line-height: 1.5; color: #57524A;
+    }
+    .combo-steps li { margin: 3px 0; padding-left: 2px; }
+    .combo-notes {
+      margin-top: 11px; font-size: 12px; line-height: 1.5; color: #6D685F; font-style: italic;
     }
     .combo-chips { display: flex; flex-wrap: wrap; gap: 5px; }
     .combo-chip {
@@ -1218,6 +1227,10 @@
     }
     .combo-more-btn:hover:not(:disabled) { border-color: rgba(31,29,25,0.24); background: #EFEEE7; color: #181715; }
     .combo-more-btn:disabled { opacity: 0.5; cursor: default; }
+    @media (max-width: 620px) {
+      .combo-panel { flex-direction: column; align-items: stretch; gap: 14px; }
+      .combo-stack { align-self: center; }
+    }
 
     .detail-reason {
       margin: 0 0 14px;
@@ -1935,7 +1948,8 @@
 
     searchInput.addEventListener("input", autoSizeSearchInput);
     searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      // Enter submits; Shift+Enter (or Ctrl/Cmd+Enter) adds a newline.
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         doSearch();
       }
@@ -2950,7 +2964,7 @@
       panel.className = "combo-panel";
 
       // ── fanned card stack: front card fully shown, the rest peek out to the right ──
-      const CARD_W = 190, PEEK = 44, RATIO = 88 / 63;
+      const CARD_W = 240, PEEK = 56, RATIO = 88 / 63;
       const n = combo.cards.length;
       const stack = document.createElement("div");
       stack.className = "combo-stack";
@@ -2992,6 +3006,10 @@
       body.className = "combo-body";
       const names = combo.cards.map((c) => esc(c.name)).join('<span class="plus">+</span>');
       const pop = combo.popularity > 0 ? `<span class="combo-pop"><b>${combo.popularity.toLocaleString()}</b> decks</span>` : "";
+      const stepsHtml = (combo.steps && combo.steps.length)
+        ? `<div class="produces-label steps-label">Steps</div><ol class="combo-steps">${combo.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`
+        : "";
+      const notesHtml = combo.notes ? `<div class="combo-notes">${esc(combo.notes)}</div>` : "";
       body.innerHTML = `
         <div class="combo-topline">
           <span class="combo-title">${names}</span>
@@ -2999,6 +3017,8 @@
         </div>
         <div class="produces-label">Produces</div>
         <div class="combo-chips"></div>
+        ${stepsHtml}
+        ${notesHtml}
         <div class="combo-foot"><a class="combo-link" href="${esc(combo.url)}" target="_blank" rel="noopener">View on Spellbook &rarr;</a></div>`;
       renderProduces(body.querySelector(".combo-chips"), combo.produces);
 
@@ -3121,14 +3141,17 @@
       const saveBtn = $("#detail-save-btn");
       saveBtn.textContent = isSaved ? "Saved" : "Save";
       saveBtn.className = isSaved ? "saved" : "";
-      detailCombosBtn.style.display = isLegendaryCreature(card) ? "" : "none";
+      detailCombosBtn.style.display = cardShowsCombos(card) ? "" : "none";
       $("#detail-panel").classList.remove("empty");
     }
 
-    // Only legendary creatures (i.e. valid commanders) get a Combos button.
-    function isLegendaryCreature(card) {
+    // Show the Combos button for any card that could take part in a combo — i.e.
+    // every card except basic lands and tokens, which never do.
+    function cardShowsCombos(card) {
       const t = (card.type_line || "").toLowerCase();
-      return t.includes("legendary") && t.includes("creature");
+      if (t.includes("basic") && t.includes("land")) return false;
+      if (card.layout === "token" || t.includes("token")) return false;
+      return true;
     }
     // Commander Spellbook / Cardmarket list DFCs under the front-face name.
     function frontFaceName(name) {

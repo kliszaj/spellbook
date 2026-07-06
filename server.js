@@ -515,6 +515,8 @@ function trimCombo(variant) {
     produces: (Array.isArray(variant.produces) ? variant.produces : [])
       .map((p) => (p && p.feature ? String(p.feature.name || "") : ""))
       .filter(Boolean),
+    steps: String(variant.description || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
+    notes: String(variant.notes || "").trim(),
   };
 }
 
