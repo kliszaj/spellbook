@@ -499,6 +499,55 @@ ${userMessage}`;
   }
 });
 
+const DECK_REVIEW_PROMPT = `You are a Magic: The Gathering Commander (EDH) deck reviewer. You will be given a deck's cards (name, type, mana value, oracle text). Count how many cards fill each role, judging by function (not just keywords); a card may count in more than one role.
+
+Roles and healthy Commander targets (context only):
+- ramp: mana acceleration, mana rocks/dorks, extra lands (target 8-12)
+- draw: repeatable or net-positive card advantage (target 10+)
+- removal: single-target removal — destroy/exile/bounce/-X/fight (target 6-10)
+- wipes: board wipes / mass removal (target 3-5)
+- tutors: search library for a specific card (target 2-8)
+- interaction: instant-speed interaction incl. counterspells (target 8+)
+- graveyardHate: graveyard exile/disruption (target 1+)
+- protection: protect your board/commander — hexproof, indestructible, counters, protective equipment (target 3+)
+
+Respond with ONLY minified JSON, no prose or code fences:
+{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"notes":["...","..."]}
+Notes: 2-4 brief, specific suggestions comparing the deck to the targets (e.g. "Light on ramp (6 vs 8-10) — add a couple of 2-mana rocks."). Each under 120 chars.`;
+
+app.post("/api/deck-review", async (req, res) => {
+  const appState = await readAppState();
+  const apiKey = process.env.ANTHROPIC_API_KEY || appState.apiKey || req.body?.apiKey;
+  const cards = Array.isArray(req.body?.cards) ? req.body.cards.slice(0, 130) : [];
+  if (!cards.length || !apiKey) return res.status(400).json({ error: "Missing cards or API key" });
+  try {
+    const list = cards
+      .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${String(c.oracle_text || "").replace(/\s+/g, " ").slice(0, 240)}`)
+      .join("\n");
+    const client = new Anthropic({ apiKey });
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      system: DECK_REVIEW_PROMPT,
+      messages: [{ role: "user", content: `Classify this Commander deck and return the JSON.\n\n${list}` }],
+    });
+    const text = message.content.find((b) => b.type === "text")?.text || "";
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    const parsed = start >= 0 && end > start ? JSON.parse(text.slice(start, end + 1)) : {};
+    res.json({
+      counts: parsed.counts && typeof parsed.counts === "object" ? parsed.counts : {},
+      notes: Array.isArray(parsed.notes) ? parsed.notes.slice(0, 4).map(String) : [],
+    });
+  } catch (err) {
+    const status = err.status || 500;
+    let msg = err.message || "Deck review failed";
+    if (err.status === 401) msg = "Invalid API key. Check your key in Settings.";
+    else if (err.status === 429) msg = "Rate limited. Wait a moment and try again.";
+    res.status(status).json({ error: msg });
+  }
+});
+
 // ── Commander Spellbook combos proxy ──────────────────────────────
 // Public API (no auth). Cached in memory since combo data changes slowly.
 const COMBO_CACHE_TTL = 1000 * 60 * 60 * 24; // 24h
