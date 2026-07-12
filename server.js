@@ -17,6 +17,7 @@ const DEFAULT_APP_STATE = {
   savedCards: [],
   folders: [],
   membership: null,
+  quantities: {}, // { [folderId]: { [cardId]: count } } — per-deck basic-land counts
   colorIdentity: [],
   translateCache: {},
   searchHistory: [],
@@ -35,6 +36,7 @@ function normalizeAppState(value = {}) {
     savedCards: Array.isArray(input.savedCards) ? input.savedCards : [],
     folders: Array.isArray(input.folders) ? input.folders : [],
     membership: plainObject(input.membership),
+    quantities: plainObject(input.quantities) || {},
     colorIdentity: Array.isArray(input.colorIdentity) ? input.colorIdentity.filter((c) => COLOR_IDS.has(c)) : [],
     translateCache: plainObject(input.translateCache) || {},
     searchHistory: Array.isArray(input.searchHistory) ? input.searchHistory : [],
@@ -98,6 +100,19 @@ function mergeMembership(a, b) {
   return Object.keys(merged).length ? merged : null;
 }
 
+// Per-folder basic-land counts. Union folders; within a folder, incoming wins.
+function mergeQuantities(a, b) {
+  const merged = {};
+  [a, b].forEach((src) => {
+    if (!src || typeof src !== "object") return;
+    for (const [folderId, counts] of Object.entries(src)) {
+      if (!counts || typeof counts !== "object") continue;
+      merged[folderId] = { ...(merged[folderId] || {}), ...counts };
+    }
+  });
+  return merged;
+}
+
 function mergeTranslateCache(a = {}, b = {}) {
   const merged = { ...(a || {}) };
   for (const [k, v] of Object.entries(b || {})) {
@@ -121,6 +136,7 @@ function mergeStates(base, incoming) {
     savedCards: mergeById(base.savedCards, incoming.savedCards),
     folders: mergeById(base.folders, incoming.folders),
     membership: mergeMembership(base.membership, incoming.membership),
+    quantities: mergeQuantities(base.quantities, incoming.quantities),
     colorIdentity: Array.isArray(incoming.colorIdentity) && incoming.colorIdentity.length ? incoming.colorIdentity : base.colorIdentity,
     translateCache: mergeTranslateCache(base.translateCache, incoming.translateCache),
     searchHistory: mergeSearchHistory(base.searchHistory, incoming.searchHistory),
@@ -164,6 +180,9 @@ function applyOps(state, ops) {
         break;
       case "replaceMembership":
         if (op.membership && typeof op.membership === "object") state.membership = op.membership;
+        break;
+      case "setQuantities":
+        if (op.quantities && typeof op.quantities === "object") state.quantities = op.quantities;
         break;
       case "setSettings":
         if (Array.isArray(op.colorIdentity)) state.colorIdentity = op.colorIdentity.filter((c) => COLOR_IDS.has(c));
@@ -512,8 +531,10 @@ Roles and healthy Commander targets (context only):
 - protection: protect your board/commander — hexproof, indestructible, counters, protective equipment (target 3+)
 
 Respond with ONLY minified JSON, no prose or code fences:
-{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"notes":["...","..."]}
-Notes: 2-4 brief, specific suggestions comparing the deck to the targets (e.g. "Light on ramp (6 vs 8-10) — add a couple of 2-mana rocks."). Each under 120 chars.`;
+{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"verdict":"...","trim":["...","..."],"notes":["...","..."]}
+- verdict: ONE sentence (under 140 chars) — the deck's overall standing and its biggest weakness.
+- trim: 2-4 concrete cut suggestions to make room for upgrades (Commander decks stay at 100). Prefer specific card names from the list when a card is clearly the weakest of its role, else a category (e.g. "-2 highest-MV cards with no payoff"). Each under 60 chars, start with a minus sign.
+- notes: 2-4 brief, specific suggestions comparing the deck to the targets (e.g. "Light on ramp (6 vs 8-10) — add a couple of 2-mana rocks."). Each under 120 chars.`;
 
 app.post("/api/deck-review", async (req, res) => {
   const appState = await readAppState();
@@ -537,6 +558,8 @@ app.post("/api/deck-review", async (req, res) => {
     const parsed = start >= 0 && end > start ? JSON.parse(text.slice(start, end + 1)) : {};
     res.json({
       counts: parsed.counts && typeof parsed.counts === "object" ? parsed.counts : {},
+      verdict: typeof parsed.verdict === "string" ? parsed.verdict.slice(0, 200) : "",
+      trim: Array.isArray(parsed.trim) ? parsed.trim.slice(0, 4).map(String) : [],
       notes: Array.isArray(parsed.notes) ? parsed.notes.slice(0, 4).map(String) : [],
     });
   } catch (err) {
@@ -545,6 +568,33 @@ app.post("/api/deck-review", async (req, res) => {
     if (err.status === 401) msg = "Invalid API key. Check your key in Settings.";
     else if (err.status === 429) msg = "Rate limited. Wait a moment and try again.";
     res.status(status).json({ error: msg });
+  }
+});
+
+// ── Game Changers list (for Commander bracket) ────────────────────
+// Scryfall's `is:gamechanger` is the official Game Changers list. Cached 24h;
+// the list changes only when WotC revises it.
+let gameChangersCache = null; // { ts, names }
+const GC_TTL = 1000 * 60 * 60 * 24;
+
+app.get("/api/game-changers", async (req, res) => {
+  if (gameChangersCache && Date.now() - gameChangersCache.ts < GC_TTL) {
+    return res.json({ names: gameChangersCache.names });
+  }
+  try {
+    const names = [];
+    let url = "https://api.scryfall.com/cards/search?q=is%3Agamechanger&unique=cards";
+    for (let i = 0; i < 5 && url; i++) {
+      const r = await fetch(url, { headers: { "User-Agent": "SpellbookApp/0.1", Accept: "application/json" } });
+      if (!r.ok) break;
+      const d = await r.json();
+      (Array.isArray(d.data) ? d.data : []).forEach((c) => { if (c && c.name) names.push(String(c.name)); });
+      url = d.has_more ? d.next_page : null;
+    }
+    if (names.length) gameChangersCache = { ts: Date.now(), names };
+    res.json({ names: gameChangersCache ? gameChangersCache.names : names });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load Game Changers" });
   }
 });
 

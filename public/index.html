@@ -765,6 +765,52 @@
 
     .icon-btn svg { width: 17px; height: 17px; display: block; }
 
+    /* Basic-land stack count — editable badge in the card's top-right corner */
+    .count-badge {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      z-index: 5;
+      min-width: 30px;
+      height: 28px;
+      padding: 0 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #223126;
+      color: #fff;
+      font: 700 14px/1 inherit;
+      font-variant-numeric: tabular-nums;
+      border: 1.5px solid rgba(255,255,255,0.85);
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+
+    .count-badge:hover { transform: translateY(-1px); background: #2c4132; }
+
+    .count-edit {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      z-index: 6;
+      width: 54px;
+      height: 28px;
+      padding: 0 8px;
+      border: 1.5px solid #223126;
+      border-radius: 999px;
+      background: #fff;
+      color: #181715;
+      font: 700 14px/1 inherit;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+
+    .count-edit:focus { outline: none; box-shadow: 0 0 0 3px rgba(34,49,38,0.28); }
+    .count-edit::-webkit-outer-spin-button,
+    .count-edit::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
     .card-actions {
       display: flex;
       gap: 6px;
@@ -1352,6 +1398,63 @@
       .da-grid { grid-template-columns: 1fr; gap: 14px; }
     }
 
+    /* ── Deck Analysis 2.0 (Command Table) ── */
+    .da2-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; padding-bottom: 13px; border-bottom: 1px solid rgba(31,29,25,0.10); flex-wrap: wrap; }
+    .da2-id { font-size: 13px; font-weight: 700; color: #57524A; display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+    .da2-id small { font-weight: 500; color: #9E9B92; }
+    .da2-pips { display: inline-flex; gap: 3px; margin: 0 6px; vertical-align: middle; }
+    .da2-pip { width: 15px; height: 15px; display: inline-flex; color: #2A2721; }
+    .da2-pip svg { width: 100%; height: 100%; }
+    .da2-bracket { display: inline-flex; align-items: center; gap: 8px; }
+    .da2-bracket .segs { display: inline-flex; gap: 3px; }
+    .da2-bracket .seg { width: 20px; height: 6px; border-radius: 3px; background: #E7E1D3; }
+    .da2-bracket .seg.on { background: #B9892A; }
+    .da2-bracket .lbl { font-size: 11px; font-weight: 700; color: #57524A; }
+
+    .da2-score { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; padding: 14px 15px; background: #FAF8F2; border: 1px solid #ECE7DB; border-radius: 12px; margin-bottom: 14px; }
+    .da2-badge { width: 58px; height: 58px; border-radius: 14px; display: grid; place-items: center; align-self: center; background: #F1F4EF; border: 1px solid #DCE4D8; }
+    .da2-badge b { font-size: 21px; font-weight: 780; color: #5E8A5E; line-height: 1; font-variant-numeric: tabular-nums; }
+    .da2-badge span { font-size: 8px; font-weight: 700; letter-spacing: 0.08em; color: #7d8a78; text-transform: uppercase; margin-top: 3px; }
+    .da2-vrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .da2-vhead { font-size: 14.5px; font-weight: 720; margin-bottom: 3px; letter-spacing: -0.01em; color: #2A2721; }
+    .da2-vsub { font-size: 12px; color: #9E9B92; line-height: 1.5; }
+    .da2-fix { display: flex; align-items: baseline; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .da2-fixlbl { font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; width: 32px; flex: none; padding-top: 4px; }
+    .da2-fixlbl.add { color: #6E8A69; } .da2-fixlbl.trim { color: #C0704E; }
+    .da2-chip { font: 700 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 5px 9px; border-radius: 7px; background: #fff; }
+    .da2-chip.add { border: 1px solid #DCE6D6; color: #4d6b48; }
+    .da2-chip.trim { border: 1px solid #E9D6CC; color: #A45636; }
+    .da2-chip.muted { border: 1px dashed #DDD8CC; color: #9E9B92; font-weight: 600; }
+    .da2-chip.muted.cta { cursor: pointer; }
+    .da2-chip.muted.cta:hover { border-color: #B9892A; color: #8a6a20; }
+
+    .da2-cols { display: grid; grid-template-columns: 1fr 290px; gap: 14px; margin-bottom: 14px; }
+    .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
+    .da2-radar-card .radar-wrap { grid-template-columns: 1fr; gap: 6px; }
+    .da2-radar-card .radar-fig { max-width: 440px; margin: 0 auto; width: 100%; }
+    .da2-radar-card .rad-legend { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 2px 0 0; }
+    .rad-lbl-v { font-size: 8px; font-weight: 600; fill: #A39E93; }
+    .da2-approx { font-size: 9.5px; font-weight: 600; color: #B0A99E; letter-spacing: 0; text-transform: none; }
+
+    .da2-src { display: grid; grid-template-columns: auto 1fr auto; gap: 11px; align-items: center; padding: 6px 0; }
+    .da2-srcpip { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none; }
+    .da2-srcpip svg { width: 13px; height: 13px; }
+    .da2-srctrack { position: relative; height: 9px; border-radius: 999px; overflow: hidden; background: #EDE9E0; }
+    .da2-srcfill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; }
+    .da2-srctick { position: absolute; top: -3px; bottom: -3px; width: 2px; border-radius: 2px; background: #2A2721; }
+    .da2-srcmeta { font: 600 12px/1.2 ui-monospace, Menlo, monospace; text-align: right; white-space: nowrap; color: #2A2721; }
+    .da2-srcmeta small { display: block; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; }
+    .da2-sb-w { background: #C9A24B; } .da2-sb-u { background: #5F86B0; } .da2-sb-b { background: #6E675A; } .da2-sb-r { background: #C0704E; } .da2-sb-g { background: #7FA07A; }
+
+    .da2-wc { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
+    .da2-wc-head { display: flex; align-items: baseline; justify-content: space-between; }
+    .da2-wc-n { font-size: 19px; font-weight: 750; color: #2A2721; font-variant-numeric: tabular-nums; }
+    .da2-wtag { display: inline-block; font: 600 12px/1.4 inherit; background: #F2EFEA; color: #6a5a3c; border: 1px solid #E7E0D2; padding: 5px 9px; border-radius: 7px; margin: 8px 5px 0 0; }
+    .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
+    #da2-notes .da-notes { margin-top: 14px; }
+
+    @media (max-width: 620px) { .da2-cols { grid-template-columns: 1fr; } }
+
     .detail-reason {
       margin: 0 0 14px;
       padding: 10px 12px;
@@ -1467,7 +1570,7 @@
 
     .folder-btn .folder-edit {
       flex-shrink: 0;
-      display: none;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       width: 20px;
@@ -1476,6 +1579,7 @@
       background: transparent;
       color: inherit;
       opacity: 0.6;
+      visibility: hidden;
       border-radius: 5px;
       cursor: pointer;
       font-size: 13px;
@@ -1483,7 +1587,7 @@
       padding: 0;
     }
 
-    .folder-btn:hover .folder-edit { display: inline-flex; }
+    .folder-btn:hover .folder-edit { visibility: visible; }
     .folder-btn .folder-edit:hover { opacity: 1; background: rgba(125,125,125,0.18); }
 
     .folder-rail .rail-divider { height: 1px; background: #E7E4DA; margin: 8px 6px; }
@@ -1900,6 +2004,7 @@
       savedSortDir: "asc",
       folders: JSON.parse(localStorage.getItem("card_folders") || "[]"),
       membership: JSON.parse(localStorage.getItem("card_membership") || "null"),
+      quantities: JSON.parse(localStorage.getItem("card_quantities") || "{}"),
       activeFolder: "all",
       popoverCard: null,
       mode: "search",
@@ -2302,6 +2407,7 @@
         savedCards: state.savedCards,
         folders: state.folders,
         membership: state.membership,
+        quantities: state.quantities,
         colorIdentity: state.colorIdentity,
         translateCache: readTranslateCache(),
         searchHistory: readSearchHistory(),
@@ -2314,6 +2420,7 @@
         (Array.isArray(data.savedCards) && data.savedCards.length) ||
         (Array.isArray(data.folders) && data.folders.length) ||
         (data.membership && typeof data.membership === "object" && Object.keys(data.membership).length) ||
+        (data.quantities && typeof data.quantities === "object" && Object.keys(data.quantities).length) ||
         (Array.isArray(data.colorIdentity) && data.colorIdentity.length) ||
         data.forceAiSearch ||
         (data.translateCache && typeof data.translateCache === "object" && Object.keys(data.translateCache).length) ||
@@ -2334,6 +2441,10 @@
       if (data.membership && typeof data.membership === "object") {
         state.membership = data.membership;
         localStorage.setItem("card_membership", JSON.stringify(state.membership));
+      }
+      if (data.quantities && typeof data.quantities === "object") {
+        state.quantities = data.quantities;
+        localStorage.setItem("card_quantities", JSON.stringify(state.quantities));
       }
       // colorIdentity is intentionally NOT restored here — it stays session-only.
       if (typeof data.forceAiSearch === "boolean") {
@@ -2377,6 +2488,19 @@
       return Object.keys(merged).length ? merged : null;
     }
 
+    // Per-folder basic-land counts. Union folders; within a folder, b (local) wins.
+    function mergeQuantities(a, b) {
+      const merged = {};
+      [a, b].forEach((source) => {
+        if (!source || typeof source !== "object") return;
+        Object.entries(source).forEach(([folderId, counts]) => {
+          if (!counts || typeof counts !== "object") return;
+          merged[folderId] = { ...(merged[folderId] || {}), ...counts };
+        });
+      });
+      return merged;
+    }
+
     function mergeTranslateCache(a = {}, b = {}) {
       const merged = { ...a };
       Object.entries(b || {}).forEach(([key, value]) => {
@@ -2402,6 +2526,7 @@
         savedCards: mergeById(serverState.savedCards, localState.savedCards),
         folders: mergeById(serverState.folders, localState.folders),
         membership: mergeMembership(serverState.membership, localState.membership),
+        quantities: mergeQuantities(serverState.quantities, localState.quantities),
         colorIdentity: Array.isArray(localState.colorIdentity) && localState.colorIdentity.length
           ? localState.colorIdentity
           : (serverState.colorIdentity || []),
@@ -2428,7 +2553,7 @@
         if (putRes.ok) {
           const synced = await putRes.json();
           lastSyncedSig = JSON.stringify([
-            synced.savedCards, synced.folders, synced.membership,
+            synced.savedCards, synced.folders, synced.membership, synced.quantities,
             synced.colorIdentity, synced.forceAiSearch,
             synced.searchHistory, synced.translateCache,
           ]);
@@ -2457,7 +2582,7 @@
     function adoptServerState(serverState) {
       if (!serverState || typeof serverState !== "object") return;
       const sig = JSON.stringify([
-        serverState.savedCards, serverState.folders, serverState.membership,
+        serverState.savedCards, serverState.folders, serverState.membership, serverState.quantities,
         serverState.colorIdentity, serverState.forceAiSearch,
         serverState.searchHistory, serverState.translateCache,
       ]);
@@ -2828,10 +2953,10 @@
 
     // ── Export visible saved cards as a Cardmarket import list ──
     // Cardmarket matches double-faced/split cards by their front-face name, so we
-    // take the part before " // ". Every saved card is a singleton → quantity 1.
-    function cardmarketLine(card) {
+    // take the part before " // ". Non-basics are singletons; basics use their count.
+    function cardmarketLine(card, qty) {
       const name = String(card.name || "").split(" // ")[0].trim();
-      return `1 ${name}`;
+      return `${Math.max(1, qty || 1)} ${name}`;
     }
     async function copyText(text) {
       try {
@@ -2854,7 +2979,7 @@
     async function exportSavedList() {
       const cards = state.savedVisible || [];
       if (!cards.length) return;
-      const text = cards.map(cardmarketLine).join("\n");
+      const text = cards.map((c) => cardmarketLine(c, cardQty(state.activeFolder, c.id))).join("\n");
       const ok = await copyText(text);
       const label = savedExportBtn.querySelector(".export-label");
       clearTimeout(exportFlashTimer);
@@ -2883,24 +3008,33 @@
     importModal.addEventListener("click", (e) => { if (e.target === importModal) hideImport(); });
 
     // Accepts "1 Sol Ring", "1x Sol Ring", "Sol Ring (CMR) 314", bare names, etc.
+    // Returns [{ name, qty }] deduped by name (leading counts summed).
     function parseImportList(text) {
-      const names = [];
+      const byName = new Map();
       (text || "").split(/\r?\n/).forEach((raw) => {
         let line = raw.trim();
         if (!line || line.startsWith("//") || line.startsWith("#")) return;
+        const m = line.match(/^(\d+)\s*[xX]?\s+/);
+        const qty = m ? Math.max(1, parseInt(m[1], 10) || 1) : 1;
         line = line.replace(/^\d+\s*[xX]?\s+/, "");          // leading quantity
         line = line.replace(/\s*\([^)]*\)\s*\d*\s*$/, "");    // trailing "(SET) 123"
         line = line.replace(/\s+\d+\s*$/, "");                // trailing collector number
         line = line.split("//")[0].trim();                    // front face of a DFC
-        if (line) names.push(line);
+        if (!line) return;
+        const key = line.toLowerCase();
+        const prev = byName.get(key);
+        if (prev) prev.qty += qty;
+        else byName.set(key, { name: line, qty });
       });
-      return [...new Set(names)];
+      return [...byName.values()];
     }
 
     importRunBtn.addEventListener("click", runImport);
     async function runImport() {
-      const names = parseImportList(importInput.value);
-      if (!names.length) { importStatus.textContent = "No card names found."; return; }
+      const parsed = parseImportList(importInput.value);
+      if (!parsed.length) { importStatus.textContent = "No card names found."; return; }
+      const names = parsed.map((p) => p.name);
+      const qtyByName = new Map(parsed.map((p) => [p.name.toLowerCase(), p.qty]));
       const target = state.activeFolder === "all" ? DEFAULT_FOLDER : state.activeFolder;
       importRunBtn.disabled = true; importRunBtn.textContent = "Importing…";
       importStatus.textContent = `Looking up ${names.length} cards…`;
@@ -2916,7 +3050,13 @@
         let added = 0;
         found.forEach((card) => {
           if (!isCardSaved(card.id) || !cardFolders(card.id).includes(target)) { setCardFolder(card, target, true); added++; }
+          // Only basic lands carry a stacked count; everything else stays a singleton.
+          if (isBasicLand(card)) {
+            const q = qtyByName.get(String(card.name).toLowerCase());
+            if (q && q > 1) setCardQty(target, card.id, q);
+          }
         });
+        renderFolderRail();
         renderSavedCards();
         const missing = names.length - found.length;
         importStatus.textContent = `Added ${added} card${added === 1 ? "" : "s"}${missing > 0 ? `, ${missing} not found` : ""}.`;
@@ -3320,9 +3460,14 @@
         const crownBtn = (deck && isLegendaryCreature(card))
           ? `<button class="icon-btn crown-btn ${isCommander ? "is-commander" : ""}" data-id="${card.id}" title="${isCommander ? "Commander (click to unset)" : "Set as commander"}" aria-label="${isCommander ? "Unset commander" : "Set as commander"}">${ICON_CROWN}</button>`
           : "";
+        // Basic lands in a real deck carry an editable per-deck count.
+        const countBadge = (state.activeFolder !== "all" && isBasicLand(card))
+          ? `<button class="count-badge" title="Click to edit quantity" aria-label="Edit quantity">×${cardQty(state.activeFolder, card.id)}</button>`
+          : "";
         el.innerHTML = `
           <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
           ${aiMark(card)}
+          ${countBadge}
           ${isCommander ? `<span class="commander-badge">${ICON_CROWN}Commander</span>` : ""}
           <div class="card-info">
             <div class="card-text">
@@ -3336,12 +3481,40 @@
             </div>
           </div>`;
         el.querySelector(".crown-btn")?.addEventListener("click", (e) => { e.stopPropagation(); setDeckCommander(state.activeFolder, card.id); });
+        el.querySelector(".count-badge")?.addEventListener("click", (e) => { e.stopPropagation(); startQtyEdit(e.currentTarget, card.id); });
         el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
         el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
         el.querySelector("img").addEventListener("click", () => showDetail(card));
         savedGrid.appendChild(el);
       });
       scheduleTiltInit(savedGrid);
+    }
+
+    // Swap a basic land's count badge for an inline number field; commit on Enter/blur.
+    function startQtyEdit(badge, cardId) {
+      const folderId = state.activeFolder;
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = "1";
+      input.className = "count-edit";
+      input.value = cardQty(folderId, cardId);
+      badge.replaceWith(input);
+      input.focus();
+      input.select();
+      let settled = false;
+      const cancel = () => { if (!settled) { settled = true; renderSavedCards(); } };
+      const commit = () => {
+        if (settled) return;
+        settled = true;
+        setCardQty(folderId, cardId, input.value);
+        renderFolderRail(); // deck size in the sidebar
+        renderSavedCards(); // badge + deck analysis
+      };
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); commit(); }
+        else if (e.key === "Escape") { e.preventDefault(); cancel(); }
+      });
+      input.addEventListener("blur", commit);
     }
 
     savedFilter.addEventListener("input", renderSavedCards);
@@ -3360,16 +3533,19 @@
     };
     const isLandCard = (c) => cardTypes(c).has("land");
 
-    function computeDeckStats(cards) {
+    function computeDeckStats(cards, folderId) {
+      const qty = (c) => cardQty(folderId, c.id); // 1 for everything but multi-count basics
       const nonland = cards.filter((c) => !isLandCard(c));
       const curve = [0, 0, 0, 0, 0, 0, 0, 0]; // buckets 0..6, index 7 = 7+
-      nonland.forEach((c) => { curve[Math.min(7, Math.max(0, Math.round(c.cmc || 0)))]++; });
-      const avgMv = nonland.length ? nonland.reduce((s, c) => s + (c.cmc || 0), 0) / nonland.length : 0;
-      const price = cards.reduce((s, c) => s + (priceNum(c) || 0), 0);
+      nonland.forEach((c) => { curve[Math.min(7, Math.max(0, Math.round(c.cmc || 0)))] += qty(c); });
+      const nonlandCount = nonland.reduce((s, c) => s + qty(c), 0);
+      const avgMv = nonlandCount ? nonland.reduce((s, c) => s + (c.cmc || 0) * qty(c), 0) / nonlandCount : 0;
+      const price = cards.reduce((s, c) => s + (priceNum(c) || 0) * qty(c), 0);
       const typeCounts = {};
       CARD_TYPES.forEach((t) => (typeCounts[t] = 0));
-      cards.forEach((c) => cardTypes(c).forEach((t) => { if (typeCounts[t] !== undefined) typeCounts[t]++; }));
-      return { total: cards.length, lands: cards.length - nonland.length, curve, avgMv, price, typeCounts };
+      cards.forEach((c) => cardTypes(c).forEach((t) => { if (typeCounts[t] !== undefined) typeCounts[t] += qty(c); }));
+      const total = cards.reduce((s, c) => s + qty(c), 0);
+      return { total, lands: total - nonlandCount, curve, avgMv, price, typeCounts };
     }
 
     const meterStatus = (v, lo, hi) => (v < lo ? "low" : (hi != null && v > hi ? "high" : "ok"));
@@ -3428,65 +3604,297 @@
       return `<div class="da-block da-ci"><div class="da-h">Color identity <span class="ci-pips">${pipHtml}</span></div>${status}${list}</div>`;
     }
 
+    // ═══ Deck Analysis 2.0 helpers ═══════════════════════════════════
+    const WUBRG = ["W", "U", "B", "R", "G"];
+    const COLOR_FULL = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
+    const STATUS_COLOR = { ok: "#6E8A69", low: "#C79A3E", high: "#C0704E" };
+    const BRACKET_NAMES = { 1: "Exhibition", 2: "Core", 3: "Upgraded", 4: "Optimized", 5: "cEDH" };
+    const GRADE_SCALE = [[0.92, "A"], [0.85, "A−"], [0.78, "B+"], [0.70, "B"], [0.62, "B−"], [0.54, "C+"], [0.45, "C"], [0.32, "C−"], [0, "D"]];
+    // WUBRG-ordered color-combo names (guilds / shards / wedges / nephilim / 5c).
+    const COLOR_COMBO_NAMES = {
+      "": "Colorless", W: "Mono-White", U: "Mono-Blue", B: "Mono-Black", R: "Mono-Red", G: "Mono-Green",
+      WU: "Azorius", WB: "Orzhov", WR: "Boros", WG: "Selesnya", UB: "Dimir", UR: "Izzet", UG: "Simic", BR: "Rakdos", BG: "Golgari", RG: "Gruul",
+      WUB: "Esper", WUR: "Jeskai", WUG: "Bant", WBR: "Mardu", WBG: "Abzan", WRG: "Naya", UBR: "Grixis", UBG: "Sultai", URG: "Temur", BRG: "Jund",
+      WUBR: "Yore-Tiller", WUBG: "Witch-Maw", WURG: "Ink-Treader", WBRG: "Dune-Brood", UBRG: "Glint-Eye", WUBRG: "Five-Color",
+    };
+    function colorComboName(colors) { const k = WUBRG.filter((c) => colors.includes(c)).join(""); return COLOR_COMBO_NAMES[k] || k || "Colorless"; }
+    function deckColors(cards, commander) {
+      if (commander && Array.isArray(commander.color_identity)) return commander.color_identity.slice();
+      const s = new Set(); cards.forEach((c) => (c.color_identity || []).forEach((x) => s.add(x))); return [...s];
+    }
+    function manaPipsHtml(colors) { return `<span class="da2-pips">${WUBRG.filter((c) => colors.includes(c)).map((c) => `<span class="da2-pip">${MANA_SVG[c.toLowerCase()]}</span>`).join("")}</span>`; }
+
+    function cardProduces(card) {
+      if (Array.isArray(card.produced_mana)) return card.produced_mana;
+      if (Array.isArray(card.card_faces)) { const s = new Set(); card.card_faces.forEach((f) => (f.produced_mana || []).forEach((m) => s.add(m))); return [...s]; }
+      return [];
+    }
+    function cardManaCost(card) {
+      if (card.mana_cost) return card.mana_cost;
+      if (Array.isArray(card.card_faces)) return card.card_faces.map((f) => f.mana_cost || "").join("");
+      return "";
+    }
+    // Per color: land sources you have vs. what pip-demand suggests you need.
+    function colorSourceStats(cards, folderId, colors) {
+      const have = { W: 0, U: 0, B: 0, R: 0, G: 0 }, pips = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+      let lands = 0;
+      cards.forEach((c) => {
+        const q = cardQty(folderId, c.id);
+        if (isLandCard(c)) { lands += q; cardProduces(c).forEach((m) => { if (have[m] !== undefined) have[m] += q; }); }
+        else { (cardManaCost(c).match(/\{[^}]+\}/g) || []).forEach((sym) => WUBRG.forEach((col) => { if (sym.includes(col)) pips[col] += q; })); }
+      });
+      const totalPips = WUBRG.reduce((s, c) => s + pips[c], 0) || 1;
+      return WUBRG.filter((c) => colors.includes(c)).map((c) => {
+        // Floor a played color to a realistic minimum — a light splash rounds to ~1, which reads oddly.
+        const need = Math.max(pips[c] > 0 ? 4 : 0, Math.round(pips[c] / totalPips * lands));
+        const status = have[c] >= need ? "ok" : (have[c] >= need - 2 ? "low" : "high");
+        return { c, have: have[c], need, status };
+      });
+    }
+    function sourcesHtml(sources) {
+      if (!sources.length) return `<div class="da2-vsub">Colorless — no colored sources needed.</div>`;
+      return sources.map((s) => {
+        const max = Math.max(s.have, s.need, 1) * 1.3;
+        const label = s.status === "ok" ? "Reliable" : (s.status === "low" ? "Tight" : "Short");
+        const lc = s.c.toLowerCase();
+        return `<div class="da2-src">
+          <div class="da2-srcpip da2-sb-${lc}">${MANA_SVG[lc]}</div>
+          <div class="da2-srctrack"><div class="da2-srcfill da2-sb-${lc}" style="width:${s.have / max * 100}%"></div><div class="da2-srctick" style="left:${s.need / max * 100}%"></div></div>
+          <div class="da2-srcmeta">${s.have}/${s.need}<small style="color:${STATUS_COLOR[s.status]}">${label}</small></div>
+        </div>`;
+      }).join("");
+    }
+
+    // Heuristic role detection — approximate, refined by the AI review.
+    function detectRoles(cards, folderId) {
+      const counts = { ramp: 0, draw: 0, removal: 0, wipes: 0, tutors: 0, interaction: 0, graveyardHate: 0, protection: 0 };
+      cards.forEach((c) => {
+        if (isBasicLand(c)) return;
+        const q = cardQty(folderId, c.id);
+        const tl = (c.type_line || "").toLowerCase();
+        const ot = getOracleText(c).toLowerCase();
+        const isLand = tl.includes("land");
+        const add = (k) => (counts[k] += q);
+        if (!isLand && (/\badd \{/.test(ot) || /search your library for .*\bland\b/.test(ot) || /put .*\bland[s]?\b.*onto the battlefield/.test(ot))) add("ramp");
+        if (/draw (a|one|two|three|four|x|\w+) cards?/.test(ot) && !/opponent draws|each player draws/.test(ot)) add("draw");
+        if (/destroy target|exile target|return target .*to (its|their) owner|deals? \d+ damage to (target|any target)|fights? target|target creature gets -/.test(ot)) add("removal");
+        if (/destroy all|exile all|destroy each|deals? \d+ damage to each|all creatures get -|each player sacrifices/.test(ot)) add("wipes");
+        if (/search your library for (a|an|up to)/.test(ot) && !/basic land/.test(ot)) add("tutors");
+        if (tl.includes("instant") || /\bflash\b/.test(ot)) add("interaction");
+        if (/exile.*graveyard|graveyard.*exile|from a graveyard/.test(ot)) add("graveyardHate");
+        if (/hexproof|indestructible|protection from|\bward\b|\bshroud\b|can't be countered/.test(ot)) add("protection");
+      });
+      return counts;
+    }
+    function detectMassLandDenial(cards) {
+      return cards.some((c) => /destroy all lands|each player sacrifices? (a|all|two|three|\w+) lands?|destroy target land.*for each/.test(getOracleText(c).toLowerCase()));
+    }
+    function detectWinCons(cards) {
+      const names = [];
+      cards.forEach((c) => { if (isBasicLand(c)) return; if (/you win the game|wins the game|can't lose the game|each opponent loses the game|target player loses the game|you lose the game/.test(getOracleText(c).toLowerCase())) names.push(c.name); });
+      return [...new Set(names)];
+    }
+
+    function computeGrade(counts, sources, s) {
+      const checks = [];
+      checks.push(s.lands >= LAND_TARGET[0] - 1 && s.lands <= LAND_TARGET[1] + 2);
+      Object.keys(AI_TARGETS).forEach((k) => checks.push((counts[k] || 0) >= AI_TARGETS[k][0]));
+      sources.forEach((x) => checks.push(x.have >= x.need));
+      checks.push(s.avgMv <= MV_TARGET[1] + 0.3);
+      const passed = checks.filter(Boolean).length;
+      const pct = checks.length ? passed / checks.length : 0;
+      return { letter: GRADE_SCALE.find((g) => pct >= g[0])[1], passed, total: checks.length };
+    }
+    function deckGaps(counts, sources) {
+      const g = [];
+      Object.keys(AI_TARGETS).forEach((k) => { const lo = AI_TARGETS[k][0], n = counts[k] || 0; if (n < lo) g.push(`+${lo - n} ${AI_LABEL[k].toLowerCase()}`); });
+      sources.forEach((s) => { if (s.have < s.need) g.push(`+${s.need - s.have} ${COLOR_FULL[s.c].toLowerCase()} sources`); });
+      return g;
+    }
+    function listJoin(a) { return a.length <= 1 ? (a[0] || "") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
+    function heuristicVerdict(counts, sources) {
+      const shorts = [];
+      ["ramp", "draw", "removal", "wipes", "interaction"].forEach((k) => { if ((counts[k] || 0) < AI_TARGETS[k][0]) shorts.push(AI_LABEL[k].toLowerCase()); });
+      const shortColors = sources.filter((s) => s.have < s.need).map((s) => COLOR_FULL[s.c].toLowerCase());
+      const bits = [];
+      if (shorts.length) bits.push(`light on ${listJoin(shorts)}`);
+      if (shortColors.length) bits.push(`${listJoin(shortColors)} under-sourced`);
+      return bits.length ? `Solid core — ${listJoin(bits)}.` : "Well-rounded across the core Commander roles.";
+    }
+
+    function bracketDialHtml(bracket) {
+      const segs = [1, 2, 3, 4, 5].map((i) => `<span class="seg ${bracket && i <= bracket ? "on" : ""}"></span>`).join("");
+      return `<span class="segs">${segs}</span><span class="lbl">${bracket ? `Bracket ${bracket} · ${BRACKET_NAMES[bracket]}` : "Bracket …"}</span>`;
+    }
+
+    // Game Changers list (for the bracket) — fetched once, cached.
+    let gameChangersPromise = null;
+    function loadGameChangers() {
+      if (!gameChangersPromise) gameChangersPromise = fetch("/api/game-changers")
+        .then((r) => (r.ok ? r.json() : { names: [] }))
+        .then((d) => new Set((d.names || []).map((n) => frontFaceName(n).toLowerCase())))
+        .catch(() => new Set());
+      return gameChangersPromise;
+    }
+    const deckReviewCache = {}; // folderId -> { sig, data }
+    let daCtx = null; // { folderId, sources, stats } for the currently rendered panel — lets AI extras recompute grade/gaps
+    function deckSig(cards, folderId) { return cards.map((c) => c.id + ":" + cardQty(folderId, c.id)).sort().join("|"); }
+
+    async function enhanceBracket(cards, folderId) {
+      const gc = await loadGameChangers();
+      const el = $("#da2-bracket");
+      if (!el || state.activeFolder !== folderId) return; // deck switched while loading
+      const hits = cards.filter((c) => gc.has(frontFaceName(c.name).toLowerCase())).map((c) => c.name);
+      const mld = detectMassLandDenial(cards);
+      const bracket = (hits.length >= 4 || mld) ? 4 : (hits.length >= 1 ? 3 : 2);
+      el.innerHTML = bracketDialHtml(bracket);
+      el.title = `${hits.length} Game Changer${hits.length === 1 ? "" : "s"}${mld ? ", mass land denial" : ""} → minimum Bracket ${bracket} (${BRACKET_NAMES[bracket]})` + (hits.length ? `\n${hits.join(", ")}` : "");
+    }
+    const comboCountCache = {}; // commander (lowercased front-face) -> { n, hasMore }
+    async function enhanceCombos(commanderName, folderId) {
+      const key = frontFaceName(commanderName).toLowerCase();
+      const apply = (info) => {
+        const el = $("#da2-combos");
+        if (!el || state.activeFolder !== folderId || !info || !info.n) return;
+        el.style.display = "flex";
+        el.innerHTML = `<span class="dot" style="background:#B9892A"></span>${info.n}${info.hasMore ? "+" : ""} combo line${info.n === 1 ? "" : "s"} with ${esc(frontFaceName(commanderName))} — open the Combos button to see them`;
+      };
+      if (comboCountCache[key]) return apply(comboCountCache[key]);
+      try {
+        const res = await fetch(`/api/combos?commander=${encodeURIComponent(frontFaceName(commanderName))}&offset=0`);
+        if (!res.ok) return;
+        const d = await res.json();
+        const info = { n: (d.combos || []).length, hasMore: Boolean(d.hasMore) };
+        comboCountCache[key] = info;
+        apply(info);
+      } catch (e) { /* offline / no combos — leave hidden */ }
+    }
+
+    // Fill the AI-only parts (verdict, refined radar, trim, notes) from a review result.
+    function renderAiExtras(data) {
+      const v = $("#da2-verdict"); if (v && data.verdict) v.textContent = data.verdict;
+      if (data.counts && Object.keys(data.counts).length) {
+        const r = $("#da2-radar"); if (r) r.innerHTML = roleRadarHtml(data.counts);
+        const a = $("#da2-approx"); if (a) a.textContent = "· AI-read";
+        // Keep the scorecard in sync with the refined counts — otherwise the Add
+        // chips and grade (computed from heuristics) contradict the AI radar.
+        if (daCtx) {
+          const grade = computeGrade(data.counts, daCtx.sources, daCtx.stats);
+          const g = $("#da2-grade");
+          if (g) { const b = g.querySelector("b"); if (b) b.textContent = grade.letter; g.title = `${grade.passed}/${grade.total} health checks passed`; }
+          const gaps = deckGaps(data.counts, daCtx.sources);
+          const addRow = $("#da2-add-row");
+          if (addRow) addRow.innerHTML = `<span class="da2-fixlbl add">Add</span>` + (gaps.length ? gaps.map((x) => `<span class="da2-chip add">${esc(x)}</span>`).join("") : `<span class="da2-chip muted">nothing urgent</span>`);
+          const sub = $("#da2-subnote"); if (sub) sub.textContent = "Role counts are AI-classified; targets are Commander rules-of-thumb.";
+        }
+      }
+      const row = $("#da2-trim-row");
+      if (row) {
+        const chips = (data.trim && data.trim.length) ? data.trim.map((t) => `<span class="da2-chip trim">${esc(t)}</span>`).join("") : `<span class="da2-chip muted">no obvious cuts</span>`;
+        row.innerHTML = `<span class="da2-fixlbl trim">Trim</span>${chips}`;
+      }
+      const notes = $("#da2-notes");
+      if (notes) notes.innerHTML = (data.notes && data.notes.length) ? `<ul class="da-notes">${data.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul><p class="da-approx">≈ AI classification of your cards.</p>` : "";
+    }
+
     function renderDeckAnalysis(deck, cards) {
       if (!cards.length) { dA.style.display = "none"; dA.innerHTML = ""; return; }
-      const s = computeDeckStats(cards);
+      const folderId = deck ? deck.id : state.activeFolder;
+      const s = computeDeckStats(cards, folderId);
       const commander = deck && deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
+      const colors = deckColors(cards, commander);
+      const sources = colorSourceStats(cards, folderId, colors);
+      const roles = detectRoles(cards, folderId);
+      const grade = computeGrade(roles, sources, s);
+      const gaps = deckGaps(roles, sources);
+      const wincons = detectWinCons(cards);
+      const deckName = deck ? deck.name : "All saved cards";
+
+      const sig = deckSig(cards, folderId);
+      const cached = deckReviewCache[folderId] && deckReviewCache[folderId].sig === sig ? deckReviewCache[folderId].data : null;
+      const counts = (cached && cached.counts && Object.keys(cached.counts).length) ? cached.counts : roles;
+      const verdict = (cached && cached.verdict) ? cached.verdict : heuristicVerdict(roles, sources);
+
+      const addChips = gaps.length ? gaps.map((g) => `<span class="da2-chip add">${esc(g)}</span>`).join("") : `<span class="da2-chip muted">nothing urgent</span>`;
+      const trimChips = (cached && cached.trim && cached.trim.length)
+        ? cached.trim.map((t) => `<span class="da2-chip trim">${esc(t)}</span>`).join("")
+        : `<span class="da2-chip muted cta" id="da2-trim-cta">Run AI Review for cut ideas →</span>`;
+
+      daCtx = { folderId, sources, stats: s }; // let renderAiExtras recompute grade/gaps from AI counts
+
       dA.innerHTML = `
-        <div class="da-head"><span class="da-title">Deck analysis</span>${deck ? "" : `<span class="da-sub">all saved cards</span>`}</div>
-        <div class="da-tiles">
-          ${statTile(s.total, "cards", s.total, 100, null)}
-          ${statTile(s.avgMv.toFixed(1), "avg MV", s.avgMv, MV_TARGET[0], MV_TARGET[1])}
-          ${statTile(s.lands, "lands", s.lands, LAND_TARGET[0], LAND_TARGET[1])}
-          ${statTile(s.price ? "€" + Math.round(s.price) : "—", "est. price", null, null, null)}
+        <div class="da2-strip">
+          <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)}</small></div>
+          <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
         </div>
-        <div class="da-grid">
-          <div class="da-block"><div class="da-h">Mana curve</div>${curveHtml(s.curve)}${curveReadHtml(s)}</div>
-          <div class="da-block"><div class="da-h">Card types</div>${typeBarHtml(s.typeCounts)}</div>
+        <div class="da2-score">
+          <div class="da2-badge" id="da2-grade" title="${grade.passed}/${grade.total} health checks passed"><b>${grade.letter}</b><span>Health</span></div>
+          <div>
+            <div class="da2-vrow"><div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div><button class="da-review-btn" id="da-review-btn">${cached ? "Re-run AI" : "AI Review"}</button></div>
+            <div class="da2-vsub" id="da2-subnote">${cached ? "Role counts are AI-classified; targets are Commander rules-of-thumb." : "Targets are Commander rules-of-thumb; role counts are heuristic until you run an AI review."}</div>
+            <div class="da2-fix" id="da2-add-row"><span class="da2-fixlbl add">Add</span>${addChips}</div>
+            <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>
+          </div>
         </div>
-        ${colorCheckHtml(commander, cards)}
-        <div class="da-block da-ai">
-          <div class="da-ai-head"><div class="da-h">Role coverage</div><button class="da-review-btn" id="da-review-btn">AI Review</button></div>
-          <div class="da-ai-body" id="da-ai-body"><p class="da-hint">Ramp, draw, removal &amp; interaction need reading the cards — run an AI pass to estimate them against Commander targets.</p></div>
-        </div>`;
+        <div class="da2-cols">
+          <div class="da2-card da2-radar-card"><div class="da-h">Role coverage <span class="da2-approx" id="da2-approx">${cached ? "· AI-read" : "· heuristic"}</span></div><div id="da2-radar">${roleRadarHtml(counts)}</div></div>
+          <div class="da2-card">
+            <div class="da-h">Color sources vs. need</div>
+            ${sourcesHtml(sources)}
+            <div class="da-h" style="margin-top:16px">Mana curve</div>
+            ${curveHtml(s.curve)}
+          </div>
+        </div>
+        <div class="da2-wc">
+          <div class="da2-wc-head"><div class="da-h" style="margin:0">Win conditions</div><div class="da2-wc-n">${wincons.length}</div></div>
+          ${wincons.length ? `<div>${wincons.slice(0, 8).map((w) => `<span class="da2-wtag">${esc(w)}</span>`).join("")}</div>` : `<div class="da2-vsub" style="margin-top:6px">No explicit game-ending card — likely wins through combat or value.</div>`}
+          <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
+        </div>
+        <div id="da2-notes"></div>`;
       dA.style.display = "block";
-      $("#da-review-btn").addEventListener("click", () => reviewDeckWithAI(cards));
+      $("#da-review-btn").addEventListener("click", () => reviewDeckWithAI(cards, folderId));
+      $("#da2-trim-cta")?.addEventListener("click", () => reviewDeckWithAI(cards, folderId));
+      if (cached) renderAiExtras(cached);
+      enhanceBracket(cards, folderId);
+      if (commander) enhanceCombos(commander.name, folderId);
     }
 
     // Role coverage as a radar: the deck's polygon vs a dashed target ring.
     function roleRadarHtml(counts) {
-      const SHORT = { ramp: "Ramp", draw: "Draw", removal: "Removal", wipes: "Wipes", tutors: "Tutors", interaction: "Interaction", graveyardHate: "Graveyard", protection: "Protection" };
+      const SHORT = { ramp: "Ramp", draw: "Draw", removal: "Removal", wipes: "Wipes", tutors: "Tutors", interaction: "Interaction", graveyardHate: "Graveyard hate", protection: "Protection" };
       const roles = Object.keys(AI_TARGETS).map((k) => {
         const [lo, hi] = AI_TARGETS[k];
         return { label: AI_LABEL[k], short: SHORT[k], v: counts[k] || 0, lo, hi };
       });
-      // Wide viewBox with horizontal padding so the axis labels sit *inside* the SVG
-      // (they scale with it instead of spilling out of the panel).
-      const W = 360, H = 300, cx = 180, cy = 146, R = 90, N = roles.length;
-      const maxOf = (r) => (r.hi != null ? r.hi * 1.35 : r.lo * 2.2);
+      const W = 380, H = 316, cx = 190, cy = 154, R = 96, N = roles.length;
+      const RT = 0.62; // the target (minimum) ring — every role's minimum normalized to one circle
       const tgt = (r) => (r.hi != null ? `${r.lo}–${r.hi}` : `${r.lo}+`);
-      const st = (r) => (r.v < r.lo ? "low" : (r.hi != null && r.v > r.hi ? "high" : "ok"));
+      // Deck radius: meeting the minimum lands you on the ring; going over is compressed
+      // so a role that clears a low bar (e.g. graveyard hate 3 vs 1) doesn't dominate the shape.
+      const valR = (r) => { const frac = r.v / (r.lo || 1); const f = frac <= 1 ? frac : 1 + Math.min(0.38, (frac - 1) * 0.12); return Math.min(0.98, RT * f); };
       const ang = (i) => (-90 + i * 360 / N) * Math.PI / 180;
       const pt = (i, f) => [cx + Math.cos(ang(i)) * R * f, cy + Math.sin(ang(i)) * R * f];
-      const rings = [0.33, 0.66, 1].map((f) => `<polygon points="${roles.map((_, i) => pt(i, f).join(",")).join(" ")}" fill="none" stroke="rgba(31,29,25,0.10)"/>`).join("");
-      const axes = roles.map((_, i) => { const [x, y] = pt(i, 1); return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(31,29,25,0.08)"/>`; }).join("");
-      const tp = roles.map((r, i) => pt(i, Math.min(1, r.lo / maxOf(r))).join(",")).join(" ");
-      const dp = roles.map((r, i) => pt(i, Math.min(1.02, r.v / maxOf(r))).join(",")).join(" ");
-      const dots = roles.map((r, i) => { const [x, y] = pt(i, Math.min(1.02, r.v / maxOf(r))); return `<circle cx="${x}" cy="${y}" r="2.6" fill="#B9892A"/>`; }).join("");
-      const labels = roles.map((r, i) => { const [x, y] = pt(i, 1.2); const a = Math.abs(x - cx) < 8 ? "middle" : (x < cx ? "end" : "start"); return `<text x="${x}" y="${y}" text-anchor="${a}" dominant-baseline="middle" class="rad-lbl">${esc(r.short)}</text>`; }).join("");
-      const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Role coverage radar">${rings}${axes}<polygon points="${tp}" fill="none" stroke="#7FA07A" stroke-dasharray="4 3" stroke-width="1.5"/><polygon points="${dp}" fill="rgba(185,137,42,0.18)" stroke="#B9892A" stroke-width="2" stroke-linejoin="round"/>${dots}${labels}</svg>`;
-      const list = roles.map((r) => `<div class="rad-row"><span class="dot ${st(r)}"></span><span class="nm">${esc(r.label)}</span><span class="vl">≈ ${r.v} / ${tgt(r)}</span></div>`).join("");
-      return `<div class="radar-wrap"><div class="radar-fig">${svg}</div><div class="radar-side">
-        <div class="rad-legend"><span class="rad-key"><span class="rad-swatch deck"></span>This deck</span><span class="rad-key"><span class="rad-swatch target"></span>Target (minimum)</span></div>
-        <div class="rad-list">${list}</div></div></div>`;
+      const rings = [0.31, 0.62, 0.93].map((f) => `<polygon points="${roles.map((_, i) => pt(i, f).join(",")).join(" ")}" fill="none" stroke="rgba(31,29,25,0.09)"/>`).join("");
+      const axes = roles.map((_, i) => { const [x, y] = pt(i, 0.96); return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(31,29,25,0.08)"/>`; }).join("");
+      const tp = roles.map((_, i) => pt(i, RT).join(",")).join(" ");
+      const dp = roles.map((r, i) => pt(i, valR(r)).join(",")).join(" ");
+      const dots = roles.map((r, i) => { const [x, y] = pt(i, valR(r)); const cl = r.v < r.lo ? "#C0704E" : "#B9892A"; return `<circle cx="${x}" cy="${y}" r="3" fill="${cl}"/>`; }).join("");
+      const labels = roles.map((r, i) => {
+        const [x, y] = pt(i, 1.16);
+        const a = Math.abs(x - cx) < 12 ? "middle" : (x < cx ? "end" : "start");
+        return `<text x="${x}" y="${y}" text-anchor="${a}" class="rad-lbl">${esc(r.short)}<tspan x="${x}" dy="11" class="rad-lbl-v">${r.v} / ${tgt(r)}</tspan></text>`;
+      }).join("");
+      const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Role coverage radar">${rings}${axes}<polygon points="${tp}" fill="none" stroke="#7FA07A" stroke-dasharray="4 3" stroke-width="1.5"/><polygon points="${dp}" fill="rgba(185,137,42,0.18)" stroke="#B9892A" stroke-width="2.2" stroke-linejoin="round"/>${dots}${labels}</svg>`;
+      return `<div class="radar-wrap"><div class="radar-fig">${svg}</div>
+        <div class="rad-legend"><span class="rad-key"><span class="rad-swatch deck"></span>This deck</span><span class="rad-key"><span class="rad-swatch target"></span>Target (minimum)</span></div></div>`;
     }
 
-    async function reviewDeckWithAI(cards) {
+    async function reviewDeckWithAI(cards, folderId) {
       if (!state.hasApiKey) return showSettings();
       const btn = $("#da-review-btn");
-      const body = $("#da-ai-body");
-      btn.disabled = true; btn.textContent = "Reviewing…";
-      body.innerHTML = `<p class="da-hint">Reading ${cards.length} cards…</p>`;
+      const trimRow = $("#da2-trim-row");
+      if (btn) { btn.disabled = true; btn.textContent = "Reviewing…"; }
+      if (trimRow) trimRow.innerHTML = `<span class="da2-fixlbl trim">Trim</span><span class="da2-chip muted">Reading ${cards.length} cards…</span>`;
       try {
         const payload = cards.slice(0, 120).map((c) => ({ name: c.name, type_line: c.type_line || "", oracle_text: getOracleText(c), cmc: c.cmc || 0 }));
         const res = await fetch("/api/deck-review", {
@@ -3495,14 +3903,14 @@
         });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Review failed"); }
         const data = await res.json();
-        const counts = data.counts || {};
-        const notes = Array.isArray(data.notes) && data.notes.length
-          ? `<ul class="da-notes">${data.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : "";
-        body.innerHTML = `${roleRadarHtml(counts)}${notes}<p class="da-approx">≈ approximate — AI classification of your cards.</p>`;
+        deckReviewCache[folderId] = { sig: deckSig(cards, folderId), data }; // cache per deck version — no re-spend on re-open
+        if (state.activeFolder === folderId) renderAiExtras(data);
+        if (btn) btn.textContent = "Re-run AI";
       } catch (err) {
-        body.innerHTML = `<p class="da-hint da-err">${esc(err.message || "Couldn't review the deck.")}</p>`;
+        if (trimRow) trimRow.innerHTML = `<span class="da2-fixlbl trim">Trim</span><span class="da2-chip trim">${esc(err.message || "Review failed")}</span>`;
+        if (btn) btn.textContent = "AI Review";
       } finally {
-        btn.disabled = false; btn.textContent = "AI Review";
+        if (btn) btn.disabled = false;
       }
     }
 
@@ -3624,7 +4032,31 @@
     }
     function folderCount(folderId) {
       if (folderId === "all") return state.savedCards.length;
-      return state.savedCards.reduce((n, c) => n + (cardFolders(c.id).includes(folderId) ? 1 : 0), 0);
+      return state.savedCards.reduce((n, c) => n + (cardFolders(c.id).includes(folderId) ? cardQty(folderId, c.id) : 0), 0);
+    }
+
+    // ── Basic-land quantities (per deck) ──────────────────────────────
+    // Only basic lands carry a count > 1; every other card is a singleton, so
+    // cardQty returns 1 for them and the qty-weighted math stays a no-op.
+    const isBasicLand = (c) => c && (c.type_line || "").includes("Basic") && isLandCard(c);
+    function cardQty(folderId, id) {
+      if (!folderId || folderId === "all") return 1;
+      const counts = state.quantities[folderId];
+      const n = counts && counts[id];
+      return Number.isFinite(n) && n > 0 ? n : 1;
+    }
+    function setCardQty(folderId, id, n) {
+      if (!folderId || folderId === "all") return;
+      n = Math.max(1, Math.floor(Number(n) || 1));
+      if (!state.quantities[folderId]) state.quantities[folderId] = {};
+      if (n <= 1) delete state.quantities[folderId][id];
+      else state.quantities[folderId][id] = n;
+      if (!Object.keys(state.quantities[folderId]).length) delete state.quantities[folderId];
+      persistQuantities();
+    }
+    function persistQuantities() {
+      localStorage.setItem("card_quantities", JSON.stringify(state.quantities));
+      queueOp({ type: "setQuantities", quantities: state.quantities });
     }
 
     // Add/remove a card to/from one collection. Auto-saves the card on first add;
@@ -3644,6 +4076,7 @@
         } else {
           state.membership[card.id] = mem;
         }
+        setCardQty(folderId, card.id, 1); // drop any stored count for the folder it left
       }
       saveCardsStore();
       saveMembership();
@@ -3684,6 +4117,7 @@
         if (mem.length === 0) mem = [DEFAULT_FOLDER]; // orphans fall back to Unsorted, never lost
         state.membership[cid] = mem;
       });
+      if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
       saveFolders();
       saveMembership();
       queueOp({ type: "setFolders", folders: state.folders });
