@@ -13,6 +13,9 @@ app.use(express.static(join(__dirname, "public")));
 
 const DATA_DIR = process.env.DATA_DIR || join(__dirname, "data");
 const STATE_FILE = join(DATA_DIR, "state.json");
+const AI_PROVIDERS = new Set(["anthropic", "openai"]);
+const DEFAULT_ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1";
 const DEFAULT_APP_STATE = {
   savedCards: [],
   folders: [],
@@ -22,6 +25,10 @@ const DEFAULT_APP_STATE = {
   translateCache: {},
   searchHistory: [],
   apiKey: "",
+  openaiApiKey: "",
+  preferredAiProvider: "anthropic",
+  anthropicModel: DEFAULT_ANTHROPIC_MODEL,
+  openaiModel: DEFAULT_OPENAI_MODEL,
   forceAiSearch: false,
 };
 const COLOR_IDS = new Set(["w", "u", "b", "r", "g"]);
@@ -41,12 +48,16 @@ function normalizeAppState(value = {}) {
     translateCache: plainObject(input.translateCache) || {},
     searchHistory: Array.isArray(input.searchHistory) ? input.searchHistory : [],
     apiKey: typeof input.apiKey === "string" ? input.apiKey : "",
+    openaiApiKey: typeof input.openaiApiKey === "string" ? input.openaiApiKey : "",
+    preferredAiProvider: AI_PROVIDERS.has(input.preferredAiProvider) ? input.preferredAiProvider : "anthropic",
+    anthropicModel: typeof input.anthropicModel === "string" && input.anthropicModel.trim() ? input.anthropicModel.trim() : DEFAULT_ANTHROPIC_MODEL,
+    openaiModel: typeof input.openaiModel === "string" && input.openaiModel.trim() ? input.openaiModel.trim() : DEFAULT_OPENAI_MODEL,
     forceAiSearch: Boolean(input.forceAiSearch),
   };
 }
 
 function publicAppState(state) {
-  const { apiKey, ...rest } = state;
+  const { apiKey, openaiApiKey, ...rest } = state;
   return rest;
 }
 
@@ -142,6 +153,10 @@ function mergeStates(base, incoming) {
     searchHistory: mergeSearchHistory(base.searchHistory, incoming.searchHistory),
     forceAiSearch: typeof incoming.forceAiSearch === "boolean" ? incoming.forceAiSearch : base.forceAiSearch,
     apiKey: base.apiKey,
+    openaiApiKey: base.openaiApiKey,
+    preferredAiProvider: base.preferredAiProvider,
+    anthropicModel: base.anthropicModel,
+    openaiModel: base.openaiModel,
   });
 }
 
@@ -316,6 +331,7 @@ If no color identity is provided, do NOT add an id<= filter — just use f:comma
 1. Translate the user's natural language into a valid Scryfall query string.
 2. ALWAYS include f:commander and game:paper.
 3. ALWAYS include id<=IDENTITY using the user's commander color identity if provided.
+   If the query uses OR logic, wrap the OR expression in parentheses before appending f:commander, id<=IDENTITY, and game:paper.
 4. Use keyword: for keyword abilities (flying, trample, haste, lifelink, deathtouch, vigilance, reach, first strike, double strike, hexproof, indestructible, menace, flash, defender, ward, etc.)
 5. Use o:"text" for ability descriptions that aren't simple keywords (e.g. "grant flying to creatures" → o:"creatures you control" o:"flying" or o:"gain flying" or o:"have flying").
 6. For "grant/give an ability to creatures", search oracle text for phrases like "creatures you control have/get/gain" — use o: with relevant phrases.
@@ -392,16 +408,79 @@ function extractQuery(text) {
   return text;
 }
 
+function hasTopLevelOr(query) {
+  let inQuote = false;
+  let depth = 0;
+  for (let i = 0; i < query.length; i++) {
+    const ch = query[i];
+    if (ch === '"' && query[i - 1] !== "\\") inQuote = !inQuote;
+    if (inQuote) continue;
+    if (ch === "(") depth++;
+    else if (ch === ")" && depth > 0) depth--;
+    else if (depth === 0 && /\bor\b/i.test(query.slice(i, i + 2))) {
+      const before = query[i - 1];
+      const after = query[i + 2];
+      if ((!before || /\s|\(/.test(before)) && (!after || /\s|\)/.test(after))) return true;
+    }
+  }
+  return false;
+}
+
+function stripCommanderFilters(query) {
+  return (query || "")
+    .replace(/\bf(?:ormat)?:commander\b/gi, "")
+    .replace(/\bgame:paper\b/gi, "")
+    .replace(/\b(?:id|identity)\s*(?:<=|>=|!=|=|<|>|:)\s*[a-z]+\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function tokenizeScryfallQuery(query) {
+  const tokens = [];
+  let buf = "";
+  let inQuote = false;
+  let depth = 0;
+  for (let i = 0; i < query.length; i++) {
+    const ch = query[i];
+    if (ch === '"' && query[i - 1] !== "\\") inQuote = !inQuote;
+    if (!inQuote) {
+      if (ch === "(") depth++;
+      if (ch === ")" && depth > 0) depth--;
+      if (/\s/.test(ch) && depth === 0) {
+        if (buf) tokens.push(buf);
+        buf = "";
+        continue;
+      }
+    }
+    buf += ch;
+  }
+  if (buf) tokens.push(buf);
+  return tokens;
+}
+
+function repairLeadingOrGroup(query) {
+  if (!query || query.trim().startsWith("(")) return query;
+  const tokens = tokenizeScryfallQuery(query);
+  if (tokens.length < 4 || tokens[1]?.toLowerCase() !== "or") return query;
+  let end = 0;
+  while (tokens[end + 1]?.toLowerCase() === "or" && tokens[end + 2]) end += 2;
+  if (end < 2 || end >= tokens.length - 1) return query;
+  return `(${tokens.slice(0, end + 1).join(" ")}) ${tokens.slice(end + 1).join(" ")}`;
+}
+
 // Deterministically guarantee the mandatory Commander filters, so color identity
 // (and f:commander / game:paper) never depend on the model remembering them.
-// Idempotent: only adds a clause the query is missing.
+// Existing commander filters are stripped and re-appended after the grouped core
+// query so an ungrouped "A or B" cannot leak off-identity cards from the left side.
 function enforceCommanderFilters(query, colorIdentity) {
-  let q = (query || "").trim();
-  if (!/\bf(?:ormat)?:commander\b/i.test(q)) q += " f:commander";
-  if (!/\bgame:paper\b/i.test(q)) q += " game:paper";
+  const core = repairLeadingOrGroup(stripCommanderFilters(query));
+  const terms = [];
+  if (core) terms.push(hasTopLevelOr(core) ? `(${core})` : core);
+  terms.push("f:commander");
   const id = typeof colorIdentity === "string" ? colorIdentity.trim().toLowerCase() : "";
-  if (id && !/\b(?:id|identity)\s*[<>=:]/i.test(q)) q += ` id<=${id}`;
-  return q.replace(/\s{2,}/g, " ").trim();
+  if (id) terms.push(`id<=${id}`);
+  terms.push("game:paper");
+  return terms.join(" ").replace(/\s{2,}/g, " ").trim();
 }
 
 app.get("/api/app-state", async (req, res) => {
@@ -434,7 +513,14 @@ app.post("/api/app-state/ops", async (req, res) => {
     const nextState = await withStateLock(async () => {
       const current = await readAppState();
       const updated = applyOps(current, req.body?.ops);
-      return writeAppState({ ...updated, apiKey: current.apiKey });
+      return writeAppState({
+        ...updated,
+        apiKey: current.apiKey,
+        openaiApiKey: current.openaiApiKey,
+        preferredAiProvider: current.preferredAiProvider,
+        anthropicModel: current.anthropicModel,
+        openaiModel: current.openaiModel,
+      });
     });
     res.json(publicAppState(nextState));
   } catch (err) {
@@ -442,11 +528,56 @@ app.post("/api/app-state/ops", async (req, res) => {
   }
 });
 
+function providerKeySource(envKey, storedKey) {
+  if (envKey) return "environment";
+  if (storedKey) return "appdata";
+  return "none";
+}
+
+function settingsSummary(state) {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY || state.apiKey;
+  const openaiKey = process.env.OPENAI_API_KEY || state.openaiApiKey;
+  const preferredAiProvider = AI_PROVIDERS.has(state.preferredAiProvider) ? state.preferredAiProvider : "anthropic";
+  const providers = {
+    anthropic: {
+      hasApiKey: Boolean(anthropicKey),
+      source: providerKeySource(process.env.ANTHROPIC_API_KEY, state.apiKey),
+      model: process.env.ANTHROPIC_MODEL || state.anthropicModel || DEFAULT_ANTHROPIC_MODEL,
+      modelSource: process.env.ANTHROPIC_MODEL ? "environment" : "appdata",
+    },
+    openai: {
+      hasApiKey: Boolean(openaiKey),
+      source: providerKeySource(process.env.OPENAI_API_KEY, state.openaiApiKey),
+      model: process.env.OPENAI_MODEL || state.openaiModel || DEFAULT_OPENAI_MODEL,
+      modelSource: process.env.OPENAI_MODEL ? "environment" : "appdata",
+    },
+  };
+  const preferred = providers[preferredAiProvider];
+  return {
+    preferredAiProvider,
+    providers,
+    hasApiKey: Boolean(preferred?.hasApiKey),
+    source: preferred?.source || "none",
+  };
+}
+
+function activeAiConfig(state) {
+  const summary = settingsSummary(state);
+  const provider = summary.preferredAiProvider;
+  const apiKey =
+    provider === "openai"
+      ? process.env.OPENAI_API_KEY || state.openaiApiKey
+      : process.env.ANTHROPIC_API_KEY || state.apiKey;
+  return {
+    provider,
+    apiKey,
+    model: summary.providers[provider]?.model,
+  };
+}
+
 app.get("/api/settings", async (req, res) => {
   try {
-    const state = await readAppState();
-    const hasApiKey = Boolean(process.env.ANTHROPIC_API_KEY || state.apiKey);
-    res.json({ hasApiKey, source: process.env.ANTHROPIC_API_KEY ? "environment" : (state.apiKey ? "appdata" : "none") });
+    res.json(settingsSummary(await readAppState()));
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to read settings" });
   }
@@ -454,22 +585,138 @@ app.get("/api/settings", async (req, res) => {
 
 app.put("/api/settings", async (req, res) => {
   try {
-    const apiKey = String(req.body?.apiKey || "").trim();
-    if (!apiKey) return res.status(400).json({ error: "Missing API key" });
+    const body = req.body || {};
     const state = await readAppState();
-    await writeAppState({ ...state, apiKey });
-    res.json({ hasApiKey: true, source: process.env.ANTHROPIC_API_KEY ? "environment" : "appdata" });
+    const next = { ...state };
+
+    if (typeof body.preferredAiProvider === "string" && AI_PROVIDERS.has(body.preferredAiProvider)) {
+      next.preferredAiProvider = body.preferredAiProvider;
+    }
+    if (typeof body.anthropicModel === "string" && body.anthropicModel.trim()) next.anthropicModel = body.anthropicModel.trim();
+    if (typeof body.openaiModel === "string" && body.openaiModel.trim()) next.openaiModel = body.openaiModel.trim();
+
+    const legacyAnthropicKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
+    const anthropicApiKey = typeof body.anthropicApiKey === "string" ? body.anthropicApiKey.trim() : legacyAnthropicKey;
+    const openaiApiKey = typeof body.openaiApiKey === "string" ? body.openaiApiKey.trim() : "";
+    if (anthropicApiKey) next.apiKey = anthropicApiKey;
+    if (openaiApiKey) next.openaiApiKey = openaiApiKey;
+
+    const saved = await writeAppState(next);
+    res.json(settingsSummary(saved));
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to save settings" });
   }
 });
 
+function parseJsonObject(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    return start >= 0 && end > start ? JSON.parse(raw.slice(start, end + 1)) : {};
+  }
+}
+
+function normalizeRecommendedCards(value) {
+  return Array.isArray(value)
+    ? value.filter((c) => c && c.name).map((c) => ({ name: String(c.name), reason: String(c.reason || "") }))
+    : [];
+}
+
+async function callOpenAIJson({ apiKey, model, system, user, maxTokens = 2048 }) {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: maxTokens,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = new Error(data?.error?.message || `OpenAI request failed (${response.status})`);
+    err.status = response.status;
+    throw err;
+  }
+  return parseJsonObject(data?.choices?.[0]?.message?.content || "");
+}
+
+async function translateWithAnthropic({ apiKey, model, userMessage, colorIdentity }) {
+  const client = new Anthropic({ apiKey });
+  const message = await client.messages.create({
+    model,
+    max_tokens: 8192,
+    thinking: { type: "adaptive" },
+    system: SCRYFALL_SYSTEM_PROMPT,
+    tools: [RECOMMEND_TOOL, WEB_SEARCH_TOOL],
+    tool_choice: { type: "auto" },
+    messages: [{ role: "user", content: userMessage }],
+  });
+
+  const rec = message.content.find((b) => b.type === "tool_use" && b.name === "recommend_cards");
+  if (rec) {
+    return {
+      type: "cards",
+      summary: String(rec.input?.summary || ""),
+      cards: normalizeRecommendedCards(rec.input?.cards),
+    };
+  }
+
+  const textBlock = message.content.find((b) => b.type === "text");
+  const scryfallQuery = enforceCommanderFilters(extractQuery((textBlock?.text || "").trim()), colorIdentity);
+  return { type: "query", query: scryfallQuery, scryfallQuery };
+}
+
+async function translateWithOpenAI({ apiKey, model, userMessage, colorIdentity }) {
+  const parsed = await callOpenAIJson({
+    apiKey,
+    model,
+    maxTokens: 4096,
+    system: `${SCRYFALL_SYSTEM_PROMPT}
+
+Respond only as JSON. Use one of these shapes:
+{"type":"query","query":"Scryfall search query"}
+{"type":"cards","summary":"short framing sentence","cards":[{"name":"Exact card name","reason":"short reason"}]}
+For plain Scryfall-searchable requests, return type "query". For curated recommendations, return type "cards" with real Magic card names.`,
+    user: userMessage,
+  });
+  if (parsed.type === "cards") {
+    return {
+      type: "cards",
+      summary: String(parsed.summary || ""),
+      cards: normalizeRecommendedCards(parsed.cards),
+    };
+  }
+  const scryfallQuery = enforceCommanderFilters(extractQuery(String(parsed.query || parsed.scryfallQuery || "")), colorIdentity);
+  return { type: "query", query: scryfallQuery, scryfallQuery };
+}
+
+function aiErrorMessage(err, provider, fallback = "AI request failed") {
+  if (err.status === 401) return `Invalid ${provider === "openai" ? "OpenAI" : "Anthropic"} API key. Check your key in Settings.`;
+  if (err.status === 404) return "Model not found. Check the selected model in Settings or your API access.";
+  if (err.status === 429) return "Rate limited. Wait a moment and try again.";
+  return err.message || fallback;
+}
+
 app.post("/api/translate", async (req, res) => {
   const { query, colorIdentity, forceAiSearch } = req.body;
   const appState = await readAppState();
-  const apiKey = process.env.ANTHROPIC_API_KEY || appState.apiKey || req.body.apiKey;
-  if (!query || !apiKey) {
-    return res.status(400).json({ error: "Missing query or API key" });
+  const ai = activeAiConfig(appState);
+  if (!query || !ai.apiKey) {
+    return res.status(400).json({
+      error: `Missing ${ai.provider === "openai" ? "OpenAI" : "Anthropic"} API key. Add it in Settings or switch providers.`,
+    });
   }
 
   let userMessage = query;
@@ -483,38 +730,13 @@ ${userMessage}`;
   }
 
   try {
-    const client = new Anthropic({ apiKey });
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6", // bump to an Opus model for stronger deckbuilding recommendations
-      max_tokens: 8192,
-      thinking: { type: "adaptive" },
-      system: SCRYFALL_SYSTEM_PROMPT,
-      tools: [RECOMMEND_TOOL, WEB_SEARCH_TOOL],
-      tool_choice: { type: "auto" },
-      messages: [{ role: "user", content: userMessage }],
-    });
-
-    // Recommendation path: the model called recommend_cards with a curated list.
-    const rec = message.content.find((b) => b.type === "tool_use" && b.name === "recommend_cards");
-    if (rec) {
-      const cards = Array.isArray(rec.input?.cards)
-        ? rec.input.cards.filter((c) => c && c.name).map((c) => ({ name: String(c.name), reason: String(c.reason || "") }))
-        : [];
-      return res.json({ type: "cards", summary: String(rec.input?.summary || ""), cards });
-    }
-
-    // Search path: the model returned a Scryfall query string as text.
-    const textBlock = message.content.find((b) => b.type === "text");
-    const scryfallQuery = enforceCommanderFilters(extractQuery((textBlock?.text || "").trim()), colorIdentity);
-    res.json({ type: "query", query: scryfallQuery, scryfallQuery });
+    const result = ai.provider === "openai"
+      ? await translateWithOpenAI({ apiKey: ai.apiKey, model: ai.model, userMessage, colorIdentity })
+      : await translateWithAnthropic({ apiKey: ai.apiKey, model: ai.model, userMessage, colorIdentity });
+    res.json({ ...result, provider: ai.provider, model: ai.model });
   } catch (err) {
     const status = err.status || 500;
-    let errorMsg = "Failed to translate query";
-    if (err.status === 401) errorMsg = "Invalid API key. Check your key in Settings.";
-    else if (err.status === 404) errorMsg = "Model not found. Your API plan may not have access to this model.";
-    else if (err.status === 429) errorMsg = "Rate limited. Wait a moment and try again.";
-    else if (err.message) errorMsg = err.message;
-    res.status(status).json({ error: errorMsg });
+    res.status(status).json({ error: aiErrorMessage(err, ai.provider, "Failed to translate query") });
   }
 });
 
@@ -531,43 +753,74 @@ Roles and healthy Commander targets (context only):
 - protection: protect your board/commander — hexproof, indestructible, counters, protective equipment (target 3+)
 
 Respond with ONLY minified JSON, no prose or code fences:
-{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"verdict":"...","trim":["...","..."],"notes":["...","..."]}
+{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"confidence":{"ramp":0.8,"draw":0.8,"removal":0.8,"wipes":0.8,"tutors":0.8,"interaction":0.8,"graveyardHate":0.8,"protection":0.8},"roleNotes":{"ramp":"...","draw":"...","removal":"...","wipes":"...","tutors":"...","interaction":"...","graveyardHate":"...","protection":"..."},"verdict":"...","trim":["...","..."]}
 - verdict: ONE sentence (under 140 chars) — the deck's overall standing and its biggest weakness.
 - trim: 2-4 concrete cut suggestions to make room for upgrades (Commander decks stay at 100). Prefer specific card names from the list when a card is clearly the weakest of its role, else a category (e.g. "-2 highest-MV cards with no payoff"). Each under 60 chars, start with a minus sign.
-- notes: 2-4 brief, specific suggestions comparing the deck to the targets (e.g. "Light on ramp (6 vs 8-10) — add a couple of 2-mana rocks."). Each under 120 chars.`;
+- confidence: 0-1 estimate for how confident you are in each role count, lower for modal or synergy-dependent cards.
+- roleNotes: terse explanation for each role count. Each value under 55 chars; name 1-3 example cards at most.`;
+
+function normalizeDeckReview(parsed = {}) {
+  const roleNotes = {};
+  if (parsed.roleNotes && typeof parsed.roleNotes === "object") {
+    for (const [k, v] of Object.entries(parsed.roleNotes)) roleNotes[k] = String(v).replace(/\s+/g, " ").trim().slice(0, 90);
+  }
+  return {
+    counts: parsed.counts && typeof parsed.counts === "object" ? parsed.counts : {},
+    confidence: parsed.confidence && typeof parsed.confidence === "object" ? parsed.confidence : {},
+    roleNotes,
+    verdict: typeof parsed.verdict === "string" ? parsed.verdict.slice(0, 200) : "",
+    trim: Array.isArray(parsed.trim) ? parsed.trim.slice(0, 4).map(String) : [],
+    notes: Array.isArray(parsed.notes) ? parsed.notes.slice(0, 4).map(String) : [],
+  };
+}
+
+async function reviewDeckWithAnthropic({ apiKey, model, list }) {
+  const client = new Anthropic({ apiKey });
+  const message = await client.messages.create({
+    model,
+    max_tokens: 2048,
+    system: DECK_REVIEW_PROMPT,
+    messages: [{ role: "user", content: `Classify this Commander deck and return the JSON.\n\n${list}` }],
+  });
+  const text = message.content.find((b) => b.type === "text")?.text || "";
+  return normalizeDeckReview(parseJsonObject(text));
+}
+
+async function reviewDeckWithOpenAI({ apiKey, model, list }) {
+  const parsed = await callOpenAIJson({
+    apiKey,
+    model,
+    maxTokens: 2048,
+    system: `${DECK_REVIEW_PROMPT}
+
+Return only one valid JSON object.`,
+    user: `Classify this Commander deck and return the JSON.\n\n${list}`,
+  });
+  return normalizeDeckReview(parsed);
+}
 
 app.post("/api/deck-review", async (req, res) => {
   const appState = await readAppState();
-  const apiKey = process.env.ANTHROPIC_API_KEY || appState.apiKey || req.body?.apiKey;
+  const ai = activeAiConfig(appState);
   const cards = Array.isArray(req.body?.cards) ? req.body.cards.slice(0, 130) : [];
-  if (!cards.length || !apiKey) return res.status(400).json({ error: "Missing cards or API key" });
+  if (!cards.length || !ai.apiKey) {
+    return res.status(400).json({
+      error: !cards.length
+        ? "Missing cards"
+        : `Missing ${ai.provider === "openai" ? "OpenAI" : "Anthropic"} API key. Add it in Settings or switch providers.`,
+    });
+  }
   try {
     const list = cards
       .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${String(c.oracle_text || "").replace(/\s+/g, " ").slice(0, 240)}`)
       .join("\n");
-    const client = new Anthropic({ apiKey });
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2048,
-      system: DECK_REVIEW_PROMPT,
-      messages: [{ role: "user", content: `Classify this Commander deck and return the JSON.\n\n${list}` }],
-    });
-    const text = message.content.find((b) => b.type === "text")?.text || "";
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    const parsed = start >= 0 && end > start ? JSON.parse(text.slice(start, end + 1)) : {};
-    res.json({
-      counts: parsed.counts && typeof parsed.counts === "object" ? parsed.counts : {},
-      verdict: typeof parsed.verdict === "string" ? parsed.verdict.slice(0, 200) : "",
-      trim: Array.isArray(parsed.trim) ? parsed.trim.slice(0, 4).map(String) : [],
-      notes: Array.isArray(parsed.notes) ? parsed.notes.slice(0, 4).map(String) : [],
-    });
+    const review = ai.provider === "openai"
+      ? await reviewDeckWithOpenAI({ apiKey: ai.apiKey, model: ai.model, list })
+      : await reviewDeckWithAnthropic({ apiKey: ai.apiKey, model: ai.model, list });
+    res.json({ ...review, provider: ai.provider, model: ai.model });
   } catch (err) {
     const status = err.status || 500;
-    let msg = err.message || "Deck review failed";
-    if (err.status === 401) msg = "Invalid API key. Check your key in Settings.";
-    else if (err.status === 429) msg = "Rate limited. Wait a moment and try again.";
-    res.status(status).json({ error: msg });
+    res.status(status).json({ error: aiErrorMessage(err, ai.provider, "Deck review failed") });
   }
 });
 

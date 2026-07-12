@@ -881,7 +881,7 @@
       background: #fff;
       border-radius: 16px;
       padding: 28px;
-      max-width: 480px;
+      max-width: 560px;
       width: 90%;
       box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     }
@@ -903,7 +903,8 @@
       margin-bottom: 6px;
     }
 
-    .modal input {
+    .modal input,
+    .modal select {
       width: 100%;
       padding: 10px 14px;
       border-radius: 8px;
@@ -916,7 +917,36 @@
       transition: border-color 0.2s;
     }
 
-    .modal input:focus { border-color: #999; }
+    .modal select { cursor: pointer; }
+    .modal input:focus,
+    .modal select:focus { border-color: #999; }
+    .settings-grid { display: grid; gap: 12px; }
+    .settings-provider-card {
+      border: 1px solid rgba(31,29,25,0.10);
+      border-radius: 12px;
+      padding: 14px;
+      background: #FCFBF7;
+    }
+    .settings-provider-card h3 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 12px;
+      color: #2F2C26;
+      font-size: 14px;
+      font-weight: 750;
+    }
+    .settings-status {
+      color: #8C867A;
+      font-size: 11px;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .settings-status.ready { color: #517B58; }
+    .settings-status.missing { color: #B66A48; }
+    .settings-help { color: #8C867A; display: block; margin: -10px 0 8px; font-size: 12px; line-height: 1.35; }
 
     .modal textarea {
       width: 100%;
@@ -1375,8 +1405,6 @@
     .da-review-btn:disabled { opacity: 0.5; cursor: default; }
     .da-hint { font-size: 12px; color: #9E9B92; line-height: 1.5; margin: 0; max-width: 60ch; }
     .da-err { color: #B45B4E; }
-    .da-notes { margin: 12px 0 0; padding-left: 18px; font-size: 12px; color: #57524A; line-height: 1.55; }
-    .da-notes li { margin: 3px 0; }
     .da-approx { font-size: 10.5px; color: #B0A99E; margin: 10px 0 0; }
 
     .radar-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center; }
@@ -1400,24 +1428,60 @@
 
     /* ── Deck Analysis 2.0 (Command Table) ── */
     .da2-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; padding-bottom: 13px; border-bottom: 1px solid rgba(31,29,25,0.10); flex-wrap: wrap; }
+    .deck-analysis.collapsed .da2-strip { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .deck-analysis.collapsed .da2-body { display: none; }
     .da2-id { font-size: 13px; font-weight: 700; color: #57524A; display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; }
     .da2-id small { font-weight: 500; color: #9E9B92; }
     .da2-pips { display: inline-flex; gap: 3px; margin: 0 6px; vertical-align: middle; }
     .da2-pip { width: 15px; height: 15px; display: inline-flex; color: #2A2721; }
     .da2-pip svg { width: 100%; height: 100%; }
+    .da2-bracket-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+    .da2-style-field { display: inline-flex; align-items: center; gap: 7px; }
+    .da2-style-label { color: #A39E93; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .da2-style-select { height: 28px; max-width: 150px; border: 1px solid rgba(31,29,25,0.10); border-radius: 8px; background: #FFFEFA; color: #57524A; font: 650 11px/1 inherit; padding: 0 24px 0 9px; cursor: pointer; }
+    .da2-style-select:hover { border-color: rgba(31,29,25,0.18); }
     .da2-bracket { display: inline-flex; align-items: center; gap: 8px; }
     .da2-bracket .segs { display: inline-flex; gap: 3px; }
     .da2-bracket .seg { width: 20px; height: 6px; border-radius: 3px; background: #E7E1D3; }
     .da2-bracket .seg.on { background: #B9892A; }
     .da2-bracket .lbl { font-size: 11px; font-weight: 700; color: #57524A; }
+    .da2-collapse-btn { width: 28px; height: 28px; border-radius: 9px; border: 1px solid rgba(31,29,25,0.10); background: #FFFEFA; color: #8C867C; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+    .da2-collapse-btn:hover { background: #F2EFE8; color: #2A2721; border-color: rgba(31,29,25,0.16); }
+    .da2-collapse-btn svg { width: 16px; height: 16px; transition: transform 0.18s ease; }
+    .deck-analysis.collapsed .da2-collapse-btn svg { transform: rotate(180deg); }
 
     .da2-score { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; padding: 14px 15px; background: #FAF8F2; border: 1px solid #ECE7DB; border-radius: 12px; margin-bottom: 14px; }
+    .da2-gradebox { display: grid; gap: 8px; justify-items: center; align-self: start; }
     .da2-badge { width: 58px; height: 58px; border-radius: 14px; display: grid; place-items: center; align-self: center; background: #F1F4EF; border: 1px solid #DCE4D8; }
     .da2-badge b { font-size: 21px; font-weight: 780; color: #5E8A5E; line-height: 1; font-variant-numeric: tabular-nums; }
     .da2-badge span { font-size: 8px; font-weight: 700; letter-spacing: 0.08em; color: #7d8a78; text-transform: uppercase; margin-top: 3px; }
+    .da2-badge.grade-a { background: #EEF4EB; border-color: #D7E5D0; }
+    .da2-badge.grade-a b { color: #527F4F; }
+    .da2-badge.grade-a span { color: #6D8C67; }
+    .da2-badge.grade-b { background: #F1F4EF; border-color: #DCE4D8; }
+    .da2-badge.grade-b b { color: #5E8A5E; }
+    .da2-badge.grade-b span { color: #7D8A78; }
+    .da2-badge.grade-c { background: #F8F0D9; border-color: #EAD9A9; }
+    .da2-badge.grade-c b { color: #A17317; }
+    .da2-badge.grade-c span { color: #A18543; }
+    .da2-badge.grade-d { background: #F5E7E0; border-color: #E7CBBB; }
+    .da2-badge.grade-d b { color: #A45636; }
+    .da2-badge.grade-d span { color: #A9705C; }
+    .da2-more-btn { width: 28px; height: 28px; border: 1px solid rgba(31,29,25,0.10); border-radius: 999px; background: #FFFEFA; color: #78726A; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .da2-more-btn:hover, .da2-more-btn[aria-expanded="true"] { border-color: rgba(31,29,25,0.18); color: #2A2721; background: #F2EFE8; }
+    .da2-more-btn svg { width: 16px; height: 16px; transition: transform 0.18s ease; }
+    .da2-more-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
     .da2-vrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .da2-vhead { font-size: 14.5px; font-weight: 720; margin-bottom: 3px; letter-spacing: -0.01em; color: #2A2721; }
     .da2-vsub { font-size: 12px; color: #9E9B92; line-height: 1.5; }
+    .da2-tags { display: flex; align-items: center; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
+    .da2-tags-label { color: #A39E93; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .da2-tag-chip { border: 1px solid #E0DACD; background: #FFFEFA; color: #57524A; border-radius: 999px; height: 24px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1 inherit; cursor: pointer; }
+    .da2-tag-chip:hover { border-color: #CFC7B8; color: #2A2721; }
+    .da2-tag-chip span { color: #A39E93; font-weight: 800; line-height: 1; }
+    .da2-tag-add { height: 24px; max-width: 118px; border: 1px dashed #D8D1C5; border-radius: 999px; background: #FFFEFA; color: #78726A; font: 650 11px/1 inherit; padding: 0 20px 0 8px; cursor: pointer; }
+    .da2-tag-reset { height: 24px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #A39E93; font: 750 10.5px/1 inherit; padding: 0 6px; cursor: pointer; }
+    .da2-tag-reset:hover { color: #57524A; background: #F2EFE8; }
     .da2-fix { display: flex; align-items: baseline; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .da2-fixlbl { font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; width: 32px; flex: none; padding-top: 4px; }
     .da2-fixlbl.add { color: #6E8A69; } .da2-fixlbl.trim { color: #C0704E; }
@@ -1427,11 +1491,28 @@
     .da2-chip.muted { border: 1px dashed #DDD8CC; color: #9E9B92; font-weight: 600; }
     .da2-chip.muted.cta { cursor: pointer; }
     .da2-chip.muted.cta:hover { border-color: #B9892A; color: #8a6a20; }
+    .da2-grade-drawer { grid-column: 1 / -1; display: none; border-top: 1px solid rgba(31,29,25,0.08); padding-top: 13px; margin-top: 1px; }
+    .da2-grade-drawer.open { display: block; }
+    .da2-grade-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; color: #78726A; font-size: 11.5px; }
+    .da2-grade-top b { color: #2A2721; font-variant-numeric: tabular-nums; }
+    .da2-grade-group { margin-top: 10px; }
+    .da2-grade-group:first-child { margin-top: 0; }
+    .da2-grade-group h4 { margin: 0 0 7px; color: #A39E93; font-size: 9.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .da2-check { display: grid; grid-template-columns: minmax(92px, 0.8fr) minmax(84px, auto) minmax(0, 1.2fr); gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid rgba(31,29,25,0.06); font-size: 12px; }
+    .da2-check:first-of-type { border-top: none; }
+    .da2-check-name { color: #2A2721; font-weight: 700; }
+    .da2-check-val { color: #57524A; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .da2-check-note { color: #8C867C; line-height: 1.35; }
+    .da2-check.ok .da2-check-name::before, .da2-check.low .da2-check-name::before, .da2-check.high .da2-check-name::before { content: ""; width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 7px; vertical-align: 1px; }
+    .da2-check.ok .da2-check-name::before { background: #7FA07A; }
+    .da2-check.low .da2-check-name::before { background: #D6A24A; }
+    .da2-check.high .da2-check-name::before { background: #C6795A; }
 
-    .da2-cols { display: grid; grid-template-columns: 1fr 290px; gap: 14px; margin-bottom: 14px; }
+    .da2-cols { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(340px, 0.62fr); gap: 14px; margin-bottom: 14px; }
     .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
+    .da2-radar-card { padding: 12px 10px 11px; }
     .da2-radar-card .radar-wrap { grid-template-columns: 1fr; gap: 6px; }
-    .da2-radar-card .radar-fig { max-width: 440px; margin: 0 auto; width: 100%; }
+    .da2-radar-card .radar-fig { max-width: 390px; margin: 0 auto; width: 100%; }
     .da2-radar-card .rad-legend { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 2px 0 0; }
     .rad-lbl-v { font-size: 8px; font-weight: 600; fill: #A39E93; }
     .da2-approx { font-size: 9.5px; font-weight: 600; color: #B0A99E; letter-spacing: 0; text-transform: none; }
@@ -1451,9 +1532,8 @@
     .da2-wc-n { font-size: 19px; font-weight: 750; color: #2A2721; font-variant-numeric: tabular-nums; }
     .da2-wtag { display: inline-block; font: 600 12px/1.4 inherit; background: #F2EFEA; color: #6a5a3c; border: 1px solid #E7E0D2; padding: 5px 9px; border-radius: 7px; margin: 8px 5px 0 0; }
     .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
-    #da2-notes .da-notes { margin-top: 14px; }
-
-    @media (max-width: 620px) { .da2-cols { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .da2-cols { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) { .da2-check { grid-template-columns: 1fr; gap: 3px; } .da2-style-field { width: 100%; } .da2-style-select { max-width: none; flex: 1; } .da2-tag-add { max-width: none; } }
 
     .detail-reason {
       margin: 0 0 14px;
@@ -1948,11 +2028,31 @@
   <div class="modal-overlay" id="settings-modal">
     <div class="modal">
       <h2>Settings</h2>
-      <label for="api-key-input">Claude API Key</label>
-      <input type="password" id="api-key-input" placeholder="sk-ant-...">
-      <small style="color: #aaa; display: block; margin-top: -12px; margin-bottom: 20px; font-size: 12px;">
-        Stored in the appdata folder for this Spellbook container.
-      </small>
+      <div class="settings-grid">
+        <div>
+          <label for="preferred-ai-provider">Preferred AI provider</label>
+          <select id="preferred-ai-provider">
+            <option value="anthropic">Anthropic</option>
+            <option value="openai">OpenAI</option>
+          </select>
+        </div>
+        <div class="settings-provider-card">
+          <h3>Anthropic <span class="settings-status" id="anthropic-key-status">Not set</span></h3>
+          <label for="anthropic-api-key-input">Anthropic API key</label>
+          <input type="password" id="anthropic-api-key-input" placeholder="sk-ant-...">
+          <small class="settings-help">Leave blank to keep the saved key. Environment variables override stored keys.</small>
+          <label for="anthropic-model-input">Anthropic model</label>
+          <input type="text" id="anthropic-model-input" placeholder="claude-sonnet-4-6">
+        </div>
+        <div class="settings-provider-card">
+          <h3>OpenAI <span class="settings-status" id="openai-key-status">Not set</span></h3>
+          <label for="openai-api-key-input">OpenAI API key</label>
+          <input type="password" id="openai-api-key-input" placeholder="sk-proj-...">
+          <small class="settings-help">Stored in the appdata folder for this Spellbook container when pasted here.</small>
+          <label for="openai-model-input">OpenAI model</label>
+          <input type="text" id="openai-model-input" placeholder="gpt-4.1">
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="btn-cancel" id="settings-cancel">Cancel</button>
         <button class="btn-save" id="settings-save">Save</button>
@@ -1991,6 +2091,7 @@
   <script>
     const state = {
       hasApiKey: false,
+      aiSettings: null,
       savedCards: JSON.parse(localStorage.getItem("saved_cards") || "[]"),
       results: [],
       currentQuery: "",
@@ -2066,14 +2167,24 @@
     const detailCollapseBtn = $("#detail-collapse-btn");
     const ICON_RECENTS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>`;
     const ICON_FOLDER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+    const ICON_CHEVRON_LEFT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>`;
     // The rail header icon reflects the active tab: recents (clock) for Search, folder for Saved.
     function railModeIcon() { return state.activeTab === "saved" ? ICON_FOLDER : ICON_RECENTS; }
+    function navPanelLabel() { return state.activeTab === "saved" ? "decks" : "recents"; }
+    function updateNavCollapseButton() {
+      const collapsed = appShell.classList.contains("nav-collapsed");
+      const action = collapsed ? "Expand" : "Collapse";
+      navCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
+      navCollapseBtn.title = `${action} ${navPanelLabel()}`;
+      navCollapseBtn.setAttribute("aria-label", navCollapseBtn.title);
+      navCollapseBtn.innerHTML = collapsed ? railModeIcon() : ICON_CHEVRON_LEFT;
+    }
     function updateRailIcon() {
       const saved = state.activeTab === "saved";
       const label = saved ? "Decks" : "Recents";
       const railIcon = $("#rail-icon");
       if (railIcon) { railIcon.innerHTML = railModeIcon(); railIcon.title = label; railIcon.setAttribute("aria-label", label); }
-      if (appShell.classList.contains("nav-collapsed")) navCollapseBtn.innerHTML = railModeIcon();
+      updateNavCollapseButton();
     }
     const ICON_SORT_ASC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 5-6 6"/><path d="m12 5 6 6"/><path d="M12 5v14"/></svg>`;
     const ICON_SORT_DESC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-6-6"/><path d="m12 19 6-6"/><path d="M12 5v14"/></svg>`;
@@ -2158,46 +2269,87 @@
     $("#settings-btn").addEventListener("click", showSettings);
     $("#settings-cancel").addEventListener("click", hideSettings);
     $("#settings-save").addEventListener("click", async () => {
-      const key = $("#api-key-input").value.trim();
-      if (!key) return;
-      await saveApiKey(key);
+      await saveApiSettings({
+        preferredAiProvider: $("#preferred-ai-provider").value,
+        anthropicApiKey: $("#anthropic-api-key-input").value.trim(),
+        openaiApiKey: $("#openai-api-key-input").value.trim(),
+        anthropicModel: $("#anthropic-model-input").value.trim(),
+        openaiModel: $("#openai-model-input").value.trim(),
+      });
     });
 
     async function loadApiSettings() {
       const localKey = localStorage.getItem("claude_api_key") || "";
       if (localKey) {
-        await saveApiKey(localKey, { migrated: true });
+        await saveApiSettings({ anthropicApiKey: localKey }, { migrated: true });
         localStorage.removeItem("claude_api_key");
-        return;
       }
       try {
         const res = await fetch("/api/settings");
         if (!res.ok) throw new Error("Could not load settings");
         const data = await res.json();
-        state.hasApiKey = Boolean(data.hasApiKey);
+        applyApiSettings(data);
       } catch (err) {
         console.warn(err);
       }
       if (!state.hasApiKey) showSettings();
     }
 
-    async function saveApiKey(key, options = {}) {
+    function applyApiSettings(data) {
+      state.aiSettings = data || null;
+      state.hasApiKey = Boolean(data?.hasApiKey);
+      renderSearchHistory();
+      renderCacheList();
+    }
+
+    function providerStatusText(provider) {
+      const source = provider?.source || "none";
+      if (!provider?.hasApiKey) return "Not set";
+      return source === "environment" ? "Env key" : "Saved key";
+    }
+
+    function paintProviderStatus(id, provider) {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = providerStatusText(provider);
+      el.classList.toggle("ready", Boolean(provider?.hasApiKey));
+      el.classList.toggle("missing", !provider?.hasApiKey);
+    }
+
+    async function saveApiSettings(payload, options = {}) {
+      const body = {};
+      if (payload.preferredAiProvider) body.preferredAiProvider = payload.preferredAiProvider;
+      if (payload.anthropicApiKey) body.anthropicApiKey = payload.anthropicApiKey;
+      if (payload.openaiApiKey) body.openaiApiKey = payload.openaiApiKey;
+      if (payload.anthropicModel) body.anthropicModel = payload.anthropicModel;
+      if (payload.openaiModel) body.openaiModel = payload.openaiModel;
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: key }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        showStatus(err.error || "Could not save API key", true);
+        showStatus(err.error || "Could not save settings", true);
         return;
       }
-      state.hasApiKey = true;
+      applyApiSettings(await res.json());
       localStorage.removeItem("claude_api_key");
       if (!options.migrated) hideSettings();
     }
 
-    function showSettings() { $("#api-key-input").value = ""; $("#settings-modal").classList.add("visible"); }
+    function showSettings() {
+      const settings = state.aiSettings || {};
+      const providers = settings.providers || {};
+      $("#preferred-ai-provider").value = settings.preferredAiProvider || "anthropic";
+      $("#anthropic-api-key-input").value = "";
+      $("#openai-api-key-input").value = "";
+      $("#anthropic-model-input").value = providers.anthropic?.model || "claude-sonnet-4-6";
+      $("#openai-model-input").value = providers.openai?.model || "gpt-4.1";
+      paintProviderStatus("#anthropic-key-status", providers.anthropic);
+      paintProviderStatus("#openai-key-status", providers.openai);
+      $("#settings-modal").classList.add("visible");
+    }
     function hideSettings() { $("#settings-modal").classList.remove("visible"); }
 
     // Search
@@ -2241,11 +2393,8 @@
     });
 
     navCollapseBtn.addEventListener("click", () => {
-      const collapsed = appShell.classList.toggle("nav-collapsed");
-      navCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
-      navCollapseBtn.title = collapsed ? "Expand recents" : "Collapse recents";
-      navCollapseBtn.setAttribute("aria-label", navCollapseBtn.title);
-      navCollapseBtn.innerHTML = collapsed ? railModeIcon() : ICON_CHEVRON_LEFT;
+      appShell.classList.toggle("nav-collapsed");
+      updateNavCollapseButton();
     });
 
     detailCollapseBtn.addEventListener("click", () => {
@@ -2264,7 +2413,12 @@
     const TRANSLATE_CACHE_MAX = 60;
     const SEARCH_HISTORY_MAX = 10;
     const TRANSLATE_CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
-    const translateCacheKey = (q, ci, forceAi = false) => `${forceAi ? "ai" : "query"}|${ci || ""}|${q.trim().toLowerCase().replace(/\s+/g, " ")}`;
+    function activeAiCacheKey() {
+      const provider = state.aiSettings?.preferredAiProvider || "anthropic";
+      const model = state.aiSettings?.providers?.[provider]?.model || "";
+      return `${provider}:${model}`;
+    }
+    const translateCacheKey = (q, ci, forceAi = false, aiKey = activeAiCacheKey()) => `${aiKey}|${forceAi ? "ai" : "query"}|${ci || ""}|${q.trim().toLowerCase().replace(/\s+/g, " ")}`;
     function readTranslateCache() { try { return JSON.parse(localStorage.getItem(TRANSLATE_CACHE_KEY) || "{}"); } catch { return {}; } }
     function readSearchHistory() { try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]"); } catch { return []; } }
     function updateAiSearchToggle() {
@@ -2315,7 +2469,9 @@
       queueOp({ type: "setCaches", translateCache: readTranslateCache() });
     }
     function rememberSearch(q, ci, forceAi, data) {
-      const item = { q, ci: ci || "", forceAi: !!forceAi, type: data?.type || "query", ts: Date.now() };
+      const provider = state.aiSettings?.preferredAiProvider || "anthropic";
+      const model = state.aiSettings?.providers?.[provider]?.model || "";
+      const item = { q, ci: ci || "", forceAi: !!forceAi, type: data?.type || "query", provider, model, ts: Date.now() };
       const history = readSearchHistory().filter((h) => translateCacheKey(h.q || "", h.ci || "", !!h.forceAi) !== translateCacheKey(q, ci, forceAi));
       history.unshift(item);
       try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, SEARCH_HISTORY_MAX))); } catch {}
@@ -2347,14 +2503,22 @@
     }
     function cacheDisplayKey(key) {
       const parts = key.split("|");
+      if (parts.length >= 4 && parts[0].includes(":")) {
+        return { aiKey: parts[0], forceAi: parts[1] === "ai", ci: parts[2], q: parts.slice(3).join("|") };
+      }
       return parts.length >= 3
-        ? { forceAi: parts[0] === "ai", ci: parts[1], q: parts.slice(2).join("|") }
+        ? { aiKey: "", forceAi: parts[0] === "ai", ci: parts[1], q: parts.slice(2).join("|") }
         : { forceAi: false, ci: parts[0], q: parts.slice(1).join("|") };
+    }
+    function cacheMatchesActiveProvider(key) {
+      const d = cacheDisplayKey(key);
+      return !d.aiKey || d.aiKey === activeAiCacheKey();
     }
     function renderSearchHistory() {
       const cache = readTranslateCache();
       const cacheItems = Object.entries(cache)
         .filter(([, v]) => v && (Date.now() - v.ts) < TRANSLATE_CACHE_TTL)
+        .filter(([key]) => cacheMatchesActiveProvider(key))
         .map(([key, v]) => ({ ...cacheDisplayKey(key), ts: v.ts, cached: true }));
       const seen = new Set();
       const items = [...readSearchHistory().map((h) => ({ ...h, cached: !!cache[translateCacheKey(h.q || "", h.ci || "", !!h.forceAi)] })), ...cacheItems]
@@ -2382,6 +2546,7 @@
       const cache = readTranslateCache();
       const entries = Object.entries(cache)
         .filter(([, v]) => v && (Date.now() - v.ts) < TRANSLATE_CACHE_TTL)
+        .filter(([key]) => cacheMatchesActiveProvider(key))
         .sort((a, b) => b[1].ts - a[1].ts)
         .slice(0, 8);
       if (!entries.length) {
@@ -2656,21 +2821,93 @@
     }
 
     // Guarantee the mandatory Commander filters are present even if the AI — or a
-    // stale, persisted translateCache entry — left them out. Color identity is the
-    // one that matters most: without it Scryfall returns every color. Idempotent,
-    // so it never duplicates a clause the query already has.
+    // stale, persisted translateCache entry — left them out. Existing commander
+    // filters are stripped and re-appended after the grouped core query so an
+    // ungrouped "A or B" cannot leak off-identity cards from the left side.
     // A query with no Scryfall operator characters is treated as a plain card name.
     function isBareNameQuery(q) {
       return !/[:<>=]/.test(q || "");
     }
 
+    function hasTopLevelOr(query) {
+      let inQuote = false;
+      let depth = 0;
+      for (let i = 0; i < query.length; i++) {
+        const ch = query[i];
+        if (ch === '"' && query[i - 1] !== "\\") inQuote = !inQuote;
+        if (inQuote) continue;
+        if (ch === "(") depth++;
+        else if (ch === ")" && depth > 0) depth--;
+        else if (depth === 0 && /\bor\b/i.test(query.slice(i, i + 2))) {
+          const before = query[i - 1];
+          const after = query[i + 2];
+          if ((!before || /\s|\(/.test(before)) && (!after || /\s|\)/.test(after))) return true;
+        }
+      }
+      return false;
+    }
+
+    function stripCommanderFilters(query) {
+      return (query || "")
+        .replace(/\bf(?:ormat)?:commander\b/gi, "")
+        .replace(/\bgame:paper\b/gi, "")
+        .replace(/\b(?:id|identity)\s*(?:<=|>=|!=|=|<|>|:)\s*[a-z]+\b/gi, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    function tokenizeScryfallQuery(query) {
+      const tokens = [];
+      let buf = "";
+      let inQuote = false;
+      let depth = 0;
+      for (let i = 0; i < query.length; i++) {
+        const ch = query[i];
+        if (ch === '"' && query[i - 1] !== "\\") inQuote = !inQuote;
+        if (!inQuote) {
+          if (ch === "(") depth++;
+          if (ch === ")" && depth > 0) depth--;
+          if (/\s/.test(ch) && depth === 0) {
+            if (buf) tokens.push(buf);
+            buf = "";
+            continue;
+          }
+        }
+        buf += ch;
+      }
+      if (buf) tokens.push(buf);
+      return tokens;
+    }
+
+    function repairLeadingOrGroup(query) {
+      if (!query || query.trim().startsWith("(")) return query;
+      const tokens = tokenizeScryfallQuery(query);
+      if (tokens.length < 4 || tokens[1]?.toLowerCase() !== "or") return query;
+      let end = 0;
+      while (tokens[end + 1]?.toLowerCase() === "or" && tokens[end + 2]) end += 2;
+      if (end < 2 || end >= tokens.length - 1) return query;
+      return `(${tokens.slice(0, end + 1).join(" ")}) ${tokens.slice(end + 1).join(" ")}`;
+    }
+
     function withCommanderFilters(query) {
-      let q = (query || "").trim();
-      if (!/\bf(?:ormat)?:commander\b/i.test(q)) q += " f:commander";
-      if (!/\bgame:paper\b/i.test(q)) q += " game:paper";
+      const core = repairLeadingOrGroup(stripCommanderFilters(query));
+      const terms = [];
+      if (core) terms.push(hasTopLevelOr(core) ? `(${core})` : core);
+      terms.push("f:commander");
       const id = state.colorIdentity.join("").toLowerCase();
-      if (id && !/\b(?:id|identity)\s*[<>=:]/i.test(q)) q += ` id<=${id}`;
-      return q.replace(/\s{2,}/g, " ").trim();
+      if (id) terms.push(`id<=${id}`);
+      terms.push("game:paper");
+      return terms.join(" ").replace(/\s{2,}/g, " ").trim();
+    }
+
+    function matchesSelectedIdentity(card) {
+      if (!state.colorIdentity.length) return true;
+      const allowed = new Set(state.colorIdentity.map((c) => c.toUpperCase()));
+      return (card.color_identity || []).every((c) => allowed.has(c));
+    }
+
+    function filterSelectedIdentity(cards) {
+      return state.colorIdentity.length ? (cards || []).filter(matchesSelectedIdentity) : (cards || []);
     }
 
     async function doSearch() {
@@ -2802,18 +3039,19 @@
         });
         found.forEach((c, i) => { if (!used.has(i)) ordered.push(c); }); // any unmatched extras
 
-        state.recommendOrder = ordered.slice(); // preserve AI ranking for "Recommended" sort
-        state.results = ordered;
+        const legalOrdered = filterSelectedIdentity(ordered);
+        state.recommendOrder = legalOrdered.slice(); // preserve AI ranking for "Recommended" sort
+        state.results = legalOrdered;
         hideStatus();
         renderSearchView();
         paginationEl.style.display = "none";
         setSortMode("recommend"); // client-side sorting; defaults to the AI's order
-        sortBar.style.display = ordered.length ? "flex" : "none";
+        sortBar.style.display = legalOrdered.length ? "flex" : "none";
 
         const notFound = (data.not_found || []).length;
         aiSummaryText.innerHTML = esc(summary) + (notFound ? ` <span class="ai-not-found">(${notFound} suggestion${notFound === 1 ? "" : "s"} couldn't be matched on Scryfall)</span>` : "");
-        aiSummary.style.display = ordered.length || summary ? "flex" : "none";
-        if (!ordered.length) showStatus("None of the recommended cards could be found on Scryfall.", true);
+        aiSummary.style.display = legalOrdered.length || summary ? "flex" : "none";
+        if (!legalOrdered.length) showStatus("None of the recommended cards matched the selected color identity.", true);
       } catch (err) {
         if (err.name === "AbortError" || !isActiveSearch(run)) return;
         showStatus(err.message, true);
@@ -2844,13 +3082,14 @@
         }
         const data = await res.json();
         if (!isActiveSearch(run)) return 0;
-        state.results.push(...data.data);
+        const legalCards = filterSelectedIdentity(data.data);
+        state.results.push(...legalCards);
         state.nextPage = data.has_more ? data.next_page : null;
         hideStatus();
         renderSearchView();
         paginationEl.style.display = state.nextPage ? "flex" : "none";
         sortBar.style.display = state.results.length ? "flex" : "none";
-        return data.data.length;
+        return legalCards.length;
       } catch (err) {
         if (err.name === "AbortError" || !isActiveSearch(run)) return 0;
         if (opts.silent) return 0;
@@ -3523,14 +3762,106 @@
     const dA = $("#deck-analysis");
     const LAND_TARGET = [36, 38];
     const MV_TARGET = [3.0, 3.5];
-    const AI_TARGETS = {
+    const BASE_ROLE_TARGETS = {
       ramp: [8, 12], draw: [10, null], removal: [6, 10], wipes: [3, 5],
       tutors: [2, 8], interaction: [8, null], graveyardHate: [1, null], protection: [3, null],
     };
+    const AI_TARGETS = BASE_ROLE_TARGETS;
     const AI_LABEL = {
       ramp: "Ramp", draw: "Card draw", removal: "Removal", wipes: "Board wipes",
       tutors: "Tutors", interaction: "Instant interaction", graveyardHate: "Graveyard hate", protection: "Protection",
     };
+    const ROLE_WEIGHTS = {
+      ramp: 1.25, draw: 1.35, removal: 1.2, wipes: 0.75,
+      tutors: 0.55, interaction: 1.0, graveyardHate: 0.45, protection: 0.75,
+    };
+    const DECK_STYLE_PROFILES = {
+      default: {
+        label: "Default",
+        note: "Generic Commander defaults",
+        roleTargets: BASE_ROLE_TARGETS,
+        landTarget: LAND_TARGET,
+        mvTarget: MV_TARGET,
+        roleWeights: ROLE_WEIGHTS,
+      },
+      graveyard: {
+        label: "Graveyard",
+        note: "Values engines and recursion over generic hate",
+        roleTargets: { ...BASE_ROLE_TARGETS, draw: [9, null], wipes: [2, 4], tutors: [3, 8], protection: [4, null], graveyardHate: [0, null] },
+        landTarget: [35, 38],
+        mvTarget: [2.9, 3.6],
+        roleWeights: { ...ROLE_WEIGHTS, graveyardHate: 0.15, protection: 0.95, tutors: 0.75 },
+      },
+      spellslinger: {
+        label: "Spellslinger",
+        note: "Rewards cheap draw and instant-speed play",
+        roleTargets: { ...BASE_ROLE_TARGETS, ramp: [7, 11], draw: [11, null], wipes: [2, 4], interaction: [10, null], protection: [2, null] },
+        landTarget: [34, 37],
+        mvTarget: [2.6, 3.25],
+        roleWeights: { ...ROLE_WEIGHTS, draw: 1.5, interaction: 1.25, wipes: 0.55 },
+      },
+      aristocrats: {
+        label: "Aristocrats",
+        note: "Allows lower wipes if the deck wins through engines",
+        roleTargets: { ...BASE_ROLE_TARGETS, draw: [10, null], removal: [7, 11], wipes: [2, 4], interaction: [6, null], protection: [2, null] },
+        landTarget: [35, 38],
+        mvTarget: [2.8, 3.45],
+        roleWeights: { ...ROLE_WEIGHTS, draw: 1.45, removal: 1.25, wipes: 0.5 },
+      },
+      battlecruiser: {
+        label: "Battlecruiser",
+        note: "Needs more mana and protection for expensive threats",
+        roleTargets: { ...BASE_ROLE_TARGETS, ramp: [10, 14], draw: [10, null], interaction: [6, null], protection: [4, null] },
+        landTarget: [37, 40],
+        mvTarget: [3.2, 4.15],
+        roleWeights: { ...ROLE_WEIGHTS, ramp: 1.55, protection: 1.05, interaction: 0.75 },
+      },
+      aggro: {
+        label: "Aggro",
+        note: "Lower curve, fewer wipes, more early pressure",
+        roleTargets: { ...BASE_ROLE_TARGETS, ramp: [7, 10], draw: [9, null], removal: [7, 11], wipes: [1, 3], interaction: [6, null] },
+        landTarget: [34, 37],
+        mvTarget: [2.4, 3.2],
+        roleWeights: { ...ROLE_WEIGHTS, removal: 1.3, wipes: 0.35, draw: 1.2 },
+      },
+      casual: {
+        label: "Precon/Casual",
+        note: "Softer targets for relaxed or upgraded-precon decks",
+        roleTargets: { ...BASE_ROLE_TARGETS, ramp: [7, 11], draw: [8, null], removal: [5, 9], wipes: [2, 4], tutors: [0, 5], interaction: [5, null], protection: [2, null] },
+        landTarget: [35, 39],
+        mvTarget: [2.9, 3.75],
+        roleWeights: { ...ROLE_WEIGHTS, tutors: 0.2, graveyardHate: 0.25 },
+      },
+      cedh: {
+        label: "High-power",
+        note: "More interaction and tutors; fewer lands can be normal",
+        roleTargets: { ...BASE_ROLE_TARGETS, ramp: [10, 16], draw: [11, null], removal: [7, 11], wipes: [1, 3], tutors: [5, 12], interaction: [12, null], protection: [3, null] },
+        landTarget: [28, 34],
+        mvTarget: [1.8, 2.9],
+        roleWeights: { ...ROLE_WEIGHTS, tutors: 1.0, interaction: 1.45, ramp: 1.35, wipes: 0.25 },
+      },
+    };
+    const deckStyles = JSON.parse(localStorage.getItem("deck_styles") || "{}");
+    const DECK_TAGS = {
+      graveyard: { label: "Graveyard", lens: "graveyard" },
+      reanimator: { label: "Reanimator", lens: "graveyard" },
+      tokens: { label: "Tokens", lens: "aristocrats" },
+      aristocrats: { label: "Aristocrats", lens: "aristocrats" },
+      sacrifice: { label: "Sacrifice", lens: "aristocrats" },
+      saprolings: { label: "Saprolings", lens: "aristocrats" },
+      spellslinger: { label: "Spellslinger", lens: "spellslinger" },
+      voltron: { label: "Voltron", lens: "aggro" },
+      lands: { label: "Lands", lens: "battlecruiser" },
+      artifacts: { label: "Artifacts", lens: "default" },
+      enchantress: { label: "Enchantress", lens: "default" },
+      battlecruiser: { label: "Battlecruiser", lens: "battlecruiser" },
+      control: { label: "Control", lens: "default" },
+      combo: { label: "Combo", lens: "cedh" },
+      highPower: { label: "High-power", lens: "cedh" },
+      casual: { label: "Casual", lens: "casual" },
+    };
+    const TAG_PRIORITY = ["highPower", "combo", "graveyard", "reanimator", "aristocrats", "sacrifice", "tokens", "saprolings", "spellslinger", "voltron", "lands", "artifacts", "enchantress", "control", "battlecruiser", "casual"];
+    const deckTags = JSON.parse(localStorage.getItem("deck_tags") || "{}");
     const isLandCard = (c) => cardTypes(c).has("land");
 
     function computeDeckStats(cards, folderId) {
@@ -3623,6 +3954,86 @@
       const s = new Set(); cards.forEach((c) => (c.color_identity || []).forEach((x) => s.add(x))); return [...s];
     }
     function manaPipsHtml(colors) { return `<span class="da2-pips">${WUBRG.filter((c) => colors.includes(c)).map((c) => `<span class="da2-pip">${MANA_SVG[c.toLowerCase()]}</span>`).join("")}</span>`; }
+    function deckStyleKey(folderId) { return deckStyles[folderId] && DECK_STYLE_PROFILES[deckStyles[folderId]] ? deckStyles[folderId] : "default"; }
+    function deckProfile(folderId) { return DECK_STYLE_PROFILES[deckStyleKey(folderId)] || DECK_STYLE_PROFILES.default; }
+    function autoDeckTags(cards) {
+      const text = cards.map((c) => `${c.name} ${c.type_line || ""} ${getOracleText(c)}`).join(" ").toLowerCase();
+      const has = (re) => (text.match(re) || []).length;
+      const tags = new Set();
+      const graveyardSignals = has(/\bgraveyard\b|reanimate|return .*from your graveyard|mill\b|dredge|buried alive|stitcher's supplier|meren|slimefoot and squee/g);
+      const tokenSignals = has(/\btoken\b|saproling|aristocrat|sacrifice another|whenever .* dies|dies\b|viscera seer|skullclamp|altar of dementia/g);
+      const saprolingSignals = has(/saproling|thallid|spore|fungal|slimefoot|mycotyrant|shroofus/g);
+      const instantSignals = has(/\binstant\b|sorcery|copy target|magecraft|prowess|counter target/g);
+      const bigManaSignals = has(/\bpower 7|mana value 7|big creature|eldrazi|dragon\b|dinosaur\b|trample\b/g);
+      const artifactSignals = has(/\bartifact\b|equipment|treasure|servo|thopter|clue\b|food\b/g);
+      const enchantmentSignals = has(/\benchantment\b|aura\b|constellation|enchantress/g);
+      const landsSignals = has(/\blandfall\b|lands? you control|play an additional land|from your graveyard.*land|life from the loam/g);
+      const voltronSignals = has(/commander gets|equipped creature|enchanted creature|double strike|aura you control|equipment you control/g);
+      const controlSignals = has(/counter target|draw-go|tap target|can't attack|return target .*owner/g);
+      const comboSignals = has(/combo|infinite|you win the game|wins the game|untap .*permanent|copy .*spell/g);
+      const lowCurveSignals = cards.filter((c) => !isLandCard(c) && (c.cmc || 0) <= 2).length;
+      if (graveyardSignals >= 6) tags.add("graveyard");
+      if (has(/reanimate|animate dead|return .*from your graveyard|meren|slimefoot and squee/g) >= 2) tags.add("reanimator");
+      if (tokenSignals >= 6) tags.add("tokens");
+      if (tokenSignals >= 8 || has(/sacrifice|dies\b|viscera seer|skullclamp|altar of dementia|attrition/g) >= 5) tags.add("aristocrats");
+      if (has(/sacrifice|viscera seer|altar of dementia|culling the weak|village rites|attrition/g) >= 4) tags.add("sacrifice");
+      if (saprolingSignals >= 4) tags.add("saprolings");
+      if (instantSignals >= 10) tags.add("spellslinger");
+      if (voltronSignals >= 5) tags.add("voltron");
+      if (landsSignals >= 4) tags.add("lands");
+      if (artifactSignals >= 10) tags.add("artifacts");
+      if (enchantmentSignals >= 10) tags.add("enchantress");
+      if (bigManaSignals >= 8) tags.add("battlecruiser");
+      if (controlSignals >= 10) tags.add("control");
+      if (comboSignals >= 4) tags.add("combo");
+      if (lowCurveSignals >= 28 && (instantSignals >= 8 || comboSignals >= 3)) tags.add("highPower");
+      if (!tags.size) tags.add("casual");
+      const ordered = TAG_PRIORITY.filter((key) => tags.has(key));
+      return ordered.slice(0, 5);
+    }
+    function deckTagKeys(folderId, cards) {
+      const manual = deckTags[folderId];
+      if (Array.isArray(manual)) return manual.filter((key) => DECK_TAGS[key]);
+      return autoDeckTags(cards);
+    }
+    function suggestedDeckStyle(cards, tags = autoDeckTags(cards)) {
+      for (const key of TAG_PRIORITY) {
+        if (tags.includes(key) && DECK_STYLE_PROFILES[DECK_TAGS[key].lens]) return DECK_TAGS[key].lens;
+      }
+      return "default";
+    }
+    function effectiveDeckStyleKey(folderId, cards, tags = deckTagKeys(folderId, cards)) {
+      return deckStyles[folderId] && DECK_STYLE_PROFILES[deckStyles[folderId]] ? deckStyles[folderId] : suggestedDeckStyle(cards, tags);
+    }
+    function effectiveDeckProfile(folderId, cards, tags) { return DECK_STYLE_PROFILES[effectiveDeckStyleKey(folderId, cards, tags)] || DECK_STYLE_PROFILES.default; }
+    function deckStyleOptionsHtml(folderId, cards, tags) {
+      const current = cards ? effectiveDeckStyleKey(folderId, cards, tags) : deckStyleKey(folderId);
+      return Object.entries(DECK_STYLE_PROFILES).map(([key, p]) => `<option value="${key}" ${key === current ? "selected" : ""}>${esc(p.label)}</option>`).join("");
+    }
+    function persistDeckStyle(folderId, style) {
+      if (!DECK_STYLE_PROFILES[style]) delete deckStyles[folderId];
+      else deckStyles[folderId] = style;
+      localStorage.setItem("deck_styles", JSON.stringify(deckStyles));
+    }
+    function persistDeckTags(folderId, tags) {
+      deckTags[folderId] = TAG_PRIORITY.filter((key) => tags.includes(key) && DECK_TAGS[key]);
+      localStorage.setItem("deck_tags", JSON.stringify(deckTags));
+    }
+    function resetDeckTags(folderId) {
+      delete deckTags[folderId];
+      localStorage.setItem("deck_tags", JSON.stringify(deckTags));
+    }
+    function deckTagsHtml(folderId, cards) {
+      const tags = deckTagKeys(folderId, cards);
+      const selected = new Set(tags);
+      const available = TAG_PRIORITY.filter((key) => DECK_TAGS[key] && !selected.has(key));
+      const manual = Array.isArray(deckTags[folderId]);
+      const chips = tags.map((key) => `<button class="da2-tag-chip" data-tag="${key}" title="Remove ${esc(DECK_TAGS[key].label)}" aria-label="Remove ${esc(DECK_TAGS[key].label)}">${esc(DECK_TAGS[key].label)}<span aria-hidden="true">×</span></button>`).join("");
+      const add = available.length
+        ? `<select class="da2-tag-add" id="da2-tag-add" aria-label="Add deck tag"><option value="">Add tag</option>${available.map((key) => `<option value="${key}">${esc(DECK_TAGS[key].label)}</option>`).join("")}</select>`
+        : "";
+      return `<div class="da2-tags" id="da2-tags"><span class="da2-tags-label">Tags</span>${chips}${add}${manual ? `<button class="da2-tag-reset" id="da2-tag-reset" title="Restore auto tags">Auto</button>` : ""}</div>`;
+    }
 
     function cardProduces(card) {
       if (Array.isArray(card.produced_mana)) return card.produced_mana;
@@ -3634,28 +4045,63 @@
       if (Array.isArray(card.card_faces)) return card.card_faces.map((f) => f.mana_cost || "").join("");
       return "";
     }
-    // Per color: land sources you have vs. what pip-demand suggests you need.
+    function coloredPipCounts(card) {
+      const pips = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+      (cardManaCost(card).match(/\{[^}]+\}/g) || []).forEach((sym) => {
+        WUBRG.forEach((col) => { if (sym.includes(col)) pips[col] += 1; });
+      });
+      return pips;
+    }
+
+    // Per color: weighted sources you have vs. what pip-demand suggests you need.
+    // Lands count most; mana rocks/dorks count, but less because they need a setup turn.
     function colorSourceStats(cards, folderId, colors) {
-      const have = { W: 0, U: 0, B: 0, R: 0, G: 0 }, pips = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+      const have = { W: 0, U: 0, B: 0, R: 0, G: 0 }, rawHave = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+      const pips = { W: 0, U: 0, B: 0, R: 0, G: 0 }, earlyPips = { W: 0, U: 0, B: 0, R: 0, G: 0 };
       let lands = 0;
       cards.forEach((c) => {
         const q = cardQty(folderId, c.id);
-        if (isLandCard(c)) { lands += q; cardProduces(c).forEach((m) => { if (have[m] !== undefined) have[m] += q; }); }
-        else { (cardManaCost(c).match(/\{[^}]+\}/g) || []).forEach((sym) => WUBRG.forEach((col) => { if (sym.includes(col)) pips[col] += q; })); }
+        const isLand = isLandCard(c);
+        if (isLand) lands += q;
+        const oracle = getOracleText(c);
+        const isFetchLand = isLand && /search your library for (a|an).*land|search your library for.*basic land/i.test(oracle);
+        const sourceWeight = isLand
+          ? (isFetchLand ? 0.7 : (/enters? the battlefield tapped|enters? tapped/i.test(oracle) ? 0.85 : 1))
+          : 0.55;
+        const produced = new Set(cardProduces(c));
+        if (isFetchLand) colors.forEach((m) => produced.add(m));
+        produced.forEach((m) => {
+          if (have[m] !== undefined) {
+            rawHave[m] += q;
+            have[m] += q * sourceWeight;
+          }
+        });
+        if (!isLand) {
+          const cps = coloredPipCounts(c);
+          WUBRG.forEach((col) => {
+            pips[col] += cps[col] * q;
+            if ((c.cmc || 0) <= 2) earlyPips[col] += cps[col] * q;
+          });
+        }
       });
       const totalPips = WUBRG.reduce((s, c) => s + pips[c], 0) || 1;
       return WUBRG.filter((c) => colors.includes(c)).map((c) => {
-        // Floor a played color to a realistic minimum — a light splash rounds to ~1, which reads oddly.
-        const need = Math.max(pips[c] > 0 ? 4 : 0, Math.round(pips[c] / totalPips * lands));
-        const status = have[c] >= need ? "ok" : (have[c] >= need - 2 ? "low" : "high");
-        return { c, have: have[c], need, status };
+        const share = pips[c] / totalPips;
+        const splash = share > 0 && share < 0.16 && earlyPips[c] <= 1;
+        const baseNeed = Math.round(lands * (0.12 + share * 0.5));
+        const earlyNeed = earlyPips[c] >= 8 ? 3 : (earlyPips[c] >= 4 ? 2 : (earlyPips[c] >= 2 ? 1 : 0));
+        const floor = pips[c] > 0 ? (splash ? 3 : 5) : 0;
+        const need = Math.max(floor, baseNeed + earlyNeed);
+        const weightedHave = Math.round(have[c] * 10) / 10;
+        const status = weightedHave >= need ? "ok" : (weightedHave >= need - 2 ? "low" : "high");
+        return { c, have: weightedHave, rawHave: rawHave[c], need, status, pips: pips[c], earlyPips: earlyPips[c], splash };
       });
     }
     function sourcesHtml(sources) {
       if (!sources.length) return `<div class="da2-vsub">Colorless — no colored sources needed.</div>`;
       return sources.map((s) => {
         const max = Math.max(s.have, s.need, 1) * 1.3;
-        const label = s.status === "ok" ? "Reliable" : (s.status === "low" ? "Tight" : "Short");
+        const label = s.status === "ok" ? (s.splash ? "Splash" : "Reliable") : (s.status === "low" ? "Tight" : "Short");
         const lc = s.c.toLowerCase();
         return `<div class="da2-src">
           <div class="da2-srcpip da2-sb-${lc}">${MANA_SVG[lc]}</div>
@@ -3675,14 +4121,14 @@
         const ot = getOracleText(c).toLowerCase();
         const isLand = tl.includes("land");
         const add = (k) => (counts[k] += q);
-        if (!isLand && (/\badd \{/.test(ot) || /search your library for .*\bland\b/.test(ot) || /put .*\bland[s]?\b.*onto the battlefield/.test(ot))) add("ramp");
-        if (/draw (a|one|two|three|four|x|\w+) cards?/.test(ot) && !/opponent draws|each player draws/.test(ot)) add("draw");
-        if (/destroy target|exile target|return target .*to (its|their) owner|deals? \d+ damage to (target|any target)|fights? target|target creature gets -/.test(ot)) add("removal");
-        if (/destroy all|exile all|destroy each|deals? \d+ damage to each|all creatures get -|each player sacrifices/.test(ot)) add("wipes");
+        if (!isLand && (/\badd \{/.test(ot) || /whenever .* add \{/.test(ot) || /mana of any (one )?color/.test(ot) || /search your library for .*\bland\b/.test(ot) || /put .*\bland[s]?\b.*onto the battlefield/.test(ot) || /lands? you control.*add[s]? an additional/.test(ot) || /treasure token/.test(ot))) add("ramp");
+        if ((/draw (a|one|two|three|four|x|\w+) cards?/.test(ot) || /whenever .*draw a card/.test(ot) || /you may play .*from (the top of|your graveyard)/.test(ot) || /look at the top card .* you may (cast|play)/.test(ot)) && !/opponent draws|each player draws/.test(ot)) add("draw");
+        if (/destroy target|exile target|return target .*to (its|their) owner|put target .* on (the top|bottom) of|deals? \d+ damage to (target|any target)|fights? target|target creature gets -|counter target activated|counter target triggered|counter target spell/.test(ot)) add("removal");
+        if (/destroy all|exile all|destroy each|exile each|deals? \d+ damage to each|all creatures get -|each player sacrifices|for each creature|sacrifice all/.test(ot)) add("wipes");
         if (/search your library for (a|an|up to)/.test(ot) && !/basic land/.test(ot)) add("tutors");
-        if (tl.includes("instant") || /\bflash\b/.test(ot)) add("interaction");
-        if (/exile.*graveyard|graveyard.*exile|from a graveyard/.test(ot)) add("graveyardHate");
-        if (/hexproof|indestructible|protection from|\bward\b|\bshroud\b|can't be countered/.test(ot)) add("protection");
+        if (tl.includes("instant") || /\bflash\b|counter target|cast .* as though .* flash|activate only as an instant/.test(ot)) add("interaction");
+        if (/exile.*graveyard|graveyard.*exile|from a graveyard|can't leave graveyards|cards in graveyards can't|graveyards? are exiled/.test(ot)) add("graveyardHate");
+        if (/hexproof|indestructible|protection from|\bward\b|\bshroud\b|can't be countered|phase out|prevent all damage|regenerate|return .* you control .* to (its|their) owner's hand/.test(ot)) add("protection");
       });
       return counts;
     }
@@ -3695,36 +4141,152 @@
       return [...new Set(names)];
     }
 
-    function computeGrade(counts, sources, s) {
-      const checks = [];
-      checks.push(s.lands >= LAND_TARGET[0] - 1 && s.lands <= LAND_TARGET[1] + 2);
-      Object.keys(AI_TARGETS).forEach((k) => checks.push((counts[k] || 0) >= AI_TARGETS[k][0]));
-      sources.forEach((x) => checks.push(x.have >= x.need));
-      checks.push(s.avgMv <= MV_TARGET[1] + 0.3);
-      const passed = checks.filter(Boolean).length;
-      const pct = checks.length ? passed / checks.length : 0;
-      return { letter: GRADE_SCALE.find((g) => pct >= g[0])[1], passed, total: checks.length };
+    function fmtScoreNum(n) {
+      return Number.isInteger(n) ? String(n) : Number(n).toFixed(1);
     }
-    function deckGaps(counts, sources) {
+    function targetLabel(lo, hi) {
+      if ((lo === 0 || lo == null) && hi != null) return `<=${fmtScoreNum(hi)}`;
+      return hi != null ? `${fmtScoreNum(lo)}-${fmtScoreNum(hi)}` : `${fmtScoreNum(lo)}+`;
+    }
+    function scoreCheck(value, lo, hi) {
+      if (lo != null && value < lo) {
+        const score = lo ? Math.max(0, value / lo) : 1;
+        return { score, status: "low", pass: false, severity: score < 0.5 ? "critical" : (score < 0.75 ? "major" : "minor") };
+      }
+      if (hi != null && value > hi) {
+        const overBy = value - hi;
+        const score = Math.max(0, 1 - overBy / Math.max(4, hi * 0.35));
+        return { score, status: "high", pass: false, severity: score < 0.65 ? "major" : "minor" };
+      }
+      return { score: 1, status: "ok", pass: true, severity: "ok" };
+    }
+    function computeGrade(counts, sources, s, profile = DECK_STYLE_PROFILES.default) {
+      const items = [];
+      const add = ({ group, key, label, value, lo, hi, weight, valueLabel, note }) => {
+        const result = scoreCheck(value, lo, hi);
+        items.push({
+          group, key, label, value, lo, hi, weight, status: result.status, severity: result.severity, pass: result.pass,
+          score: result.score, valueLabel: valueLabel || fmtScoreNum(value), target: targetLabel(lo, hi),
+          note: note || (result.pass ? "On target" : (result.status === "low" ? `Short by ${fmtScoreNum(lo - value)}` : `Above target by ${fmtScoreNum(value - hi)}`)),
+        });
+      };
+      add({ group: "Core", key: "lands", label: "Lands", value: s.lands, lo: profile.landTarget[0], hi: profile.landTarget[1], weight: 1.6, note: "Main deck mana base" });
+      add({ group: "Core", key: "curve", label: "Average MV", value: s.avgMv, lo: 0, hi: profile.mvTarget[1], weight: 0.8, valueLabel: s.avgMv.toFixed(1), note: "Curve pressure, not power level" });
+      sources.forEach((src) => {
+        if (src.need <= 0) return;
+        const colorName = COLOR_FULL[src.c];
+        add({
+          group: "Core", key: `source-${src.c}`, label: `${colorName} sources`,
+          value: src.have, lo: src.need, hi: null, weight: src.splash ? 0.65 : 1.1,
+          valueLabel: fmtScoreNum(src.have),
+          note: src.splash ? "Light splash allowance" : `${src.earlyPips || 0} early pip${src.earlyPips === 1 ? "" : "s"} considered`,
+        });
+      });
+      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
+      const weights = profile.roleWeights || ROLE_WEIGHTS;
+      Object.keys(targets).forEach((k) => {
+        const [lo, hi] = targets[k];
+        const group = ["ramp", "draw", "removal", "interaction"].includes(k) ? "Core roles" : "Support roles";
+        add({ group, key: k, label: AI_LABEL[k], value: counts[k] || 0, lo, hi, weight: weights[k] || 0.6 });
+      });
+      const totalWeight = items.reduce((sum, item) => sum + item.weight, 0) || 1;
+      const rawPct = items.reduce((sum, item) => sum + item.score * item.weight, 0) / totalWeight;
+      const critical = items.filter((item) => item.severity === "critical" && item.weight >= 0.7).length;
+      const majorCore = items.filter((item) => item.severity === "major" && item.weight >= 1).length;
+      let pct = rawPct - critical * 0.045 - majorCore * 0.03;
+      if (critical >= 2 && majorCore >= 1) pct = Math.min(pct, 0.74);
+      else if (critical >= 2) pct = Math.min(pct, 0.78);
+      pct = Math.max(0, Math.min(1, pct));
+      const passed = items.filter((item) => item.pass).length;
+      return {
+        letter: GRADE_SCALE.find((g) => pct >= g[0])[1],
+        passed,
+        total: items.length,
+        pct,
+        score: Math.round(pct * 100),
+        rawScore: Math.round(rawPct * 100),
+        items,
+        profileLabel: profile.label,
+        profileNote: profile.note,
+      };
+    }
+    function gradeTone(letter) {
+      const first = String(letter || "").charAt(0);
+      if (first === "A") return "grade-a";
+      if (first === "B") return "grade-b";
+      if (first === "C") return "grade-c";
+      return "grade-d";
+    }
+    function deckGaps(counts, sources, profile = DECK_STYLE_PROFILES.default) {
       const g = [];
-      Object.keys(AI_TARGETS).forEach((k) => { const lo = AI_TARGETS[k][0], n = counts[k] || 0; if (n < lo) g.push(`+${lo - n} ${AI_LABEL[k].toLowerCase()}`); });
-      sources.forEach((s) => { if (s.have < s.need) g.push(`+${s.need - s.have} ${COLOR_FULL[s.c].toLowerCase()} sources`); });
+      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
+      Object.keys(targets).forEach((k) => { const lo = targets[k][0], n = counts[k] || 0; if (n < lo) g.push(`+${Math.ceil(lo - n)} ${AI_LABEL[k].toLowerCase()}`); });
+      sources.forEach((s) => { if (s.have < s.need) g.push(`+${Math.ceil(s.need - s.have)} ${COLOR_FULL[s.c].toLowerCase()} sources`); });
       return g;
     }
     function listJoin(a) { return a.length <= 1 ? (a[0] || "") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
-    function heuristicVerdict(counts, sources) {
+    function heuristicVerdict(counts, sources, profile = DECK_STYLE_PROFILES.default) {
       const shorts = [];
-      ["ramp", "draw", "removal", "wipes", "interaction"].forEach((k) => { if ((counts[k] || 0) < AI_TARGETS[k][0]) shorts.push(AI_LABEL[k].toLowerCase()); });
+      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
+      ["ramp", "draw", "removal", "wipes", "interaction"].forEach((k) => { if ((counts[k] || 0) < targets[k][0]) shorts.push(AI_LABEL[k].toLowerCase()); });
       const shortColors = sources.filter((s) => s.have < s.need).map((s) => COLOR_FULL[s.c].toLowerCase());
       const bits = [];
       if (shorts.length) bits.push(`light on ${listJoin(shorts)}`);
       if (shortColors.length) bits.push(`${listJoin(shortColors)} under-sourced`);
-      return bits.length ? `Solid core — ${listJoin(bits)}.` : "Well-rounded across the core Commander roles.";
+      return bits.length ? `Solid ${profile.label.toLowerCase()} shell — ${listJoin(bits)}.` : `Well-rounded for ${profile.label.toLowerCase()}.`;
     }
 
     function bracketDialHtml(bracket) {
       const segs = [1, 2, 3, 4, 5].map((i) => `<span class="seg ${bracket && i <= bracket ? "on" : ""}"></span>`).join("");
       return `<span class="segs">${segs}</span><span class="lbl">${bracket ? `Bracket ${bracket} · ${BRACKET_NAMES[bracket]}` : "Bracket …"}</span>`;
+    }
+    function collapseChevronHtml() {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>`;
+    }
+    function compactNote(note, max = 96) {
+      const clean = String(note || "").replace(/\s+/g, " ").trim();
+      if (clean.length <= max) return clean;
+      return clean.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+    }
+    function gradeBreakdownHtml(grade) {
+      const groups = ["Core", "Core roles", "Support roles"];
+      const rows = groups.map((group) => {
+        const items = grade.items.filter((item) => item.group === group);
+        if (!items.length) return "";
+        return `<div class="da2-grade-group"><h4>${esc(group)}</h4>${items.map((item) => `
+          <div class="da2-check ${item.status}">
+            <div class="da2-check-name">${esc(item.label)}</div>
+            <div class="da2-check-val">${esc(item.valueLabel)} <span class="da2-vsub">/ ${esc(item.target)}</span></div>
+            <div class="da2-check-note">${esc(compactNote(item.note))} · weight ${item.weight.toFixed(2).replace(/\.00$/, "")}</div>
+          </div>`).join("")}</div>`;
+      }).join("");
+      const source = grade.aiRead ? "AI-read role counts" : "Heuristic role counts";
+      return `<div class="da2-grade-top"><span><b>${grade.score}%</b> weighted health score · ${source}</span><span>${esc(grade.profileLabel)} · ${esc(grade.profileNote)}</span></div>${rows}`;
+    }
+    function applyAiGradeContext(grade, data) {
+      if (!data || !data.roleNotes) return grade;
+      return {
+        ...grade,
+        aiRead: true,
+        items: grade.items.map((item) => {
+          const note = data.roleNotes[item.key];
+          const conf = data.confidence && data.confidence[item.key];
+          if (!note && conf == null) return item;
+          const confidence = conf == null ? "" : ` · AI confidence ${Math.round(Number(conf) * 100)}%`;
+          return { ...item, note: `${compactNote(note || item.note, 78)}${confidence}` };
+        }),
+      };
+    }
+    function updateGradeUi(grade) {
+      const g = $("#da2-grade");
+      if (g) {
+        const b = g.querySelector("b");
+        if (b) b.textContent = grade.letter;
+        g.className = `da2-badge ${gradeTone(grade.letter)}`;
+        g.title = `${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target`;
+      }
+      const drawer = $("#da2-grade-drawer");
+      if (drawer) drawer.innerHTML = gradeBreakdownHtml(grade);
     }
 
     // Game Changers list (for the bracket) — fetched once, cached.
@@ -3737,7 +4299,7 @@
       return gameChangersPromise;
     }
     const deckReviewCache = {}; // folderId -> { sig, data }
-    let daCtx = null; // { folderId, sources, stats } for the currently rendered panel — lets AI extras recompute grade/gaps
+    let daCtx = null; // current panel context — lets AI extras recompute grade/gaps/drawer
     function deckSig(cards, folderId) { return cards.map((c) => c.id + ":" + cardQty(folderId, c.id)).sort().join("|"); }
 
     async function enhanceBracket(cards, folderId) {
@@ -3770,22 +4332,21 @@
       } catch (e) { /* offline / no combos — leave hidden */ }
     }
 
-    // Fill the AI-only parts (verdict, refined radar, trim, notes) from a review result.
+    // Fill the AI-only parts (verdict, refined radar, trim) from a review result.
     function renderAiExtras(data) {
       const v = $("#da2-verdict"); if (v && data.verdict) v.textContent = data.verdict;
       if (data.counts && Object.keys(data.counts).length) {
-        const r = $("#da2-radar"); if (r) r.innerHTML = roleRadarHtml(data.counts);
+        const r = $("#da2-radar"); if (r) r.innerHTML = roleRadarHtml(data.counts, daCtx?.profile || DECK_STYLE_PROFILES.default);
         const a = $("#da2-approx"); if (a) a.textContent = "· AI-read";
         // Keep the scorecard in sync with the refined counts — otherwise the Add
         // chips and grade (computed from heuristics) contradict the AI radar.
         if (daCtx) {
-          const grade = computeGrade(data.counts, daCtx.sources, daCtx.stats);
-          const g = $("#da2-grade");
-          if (g) { const b = g.querySelector("b"); if (b) b.textContent = grade.letter; g.title = `${grade.passed}/${grade.total} health checks passed`; }
-          const gaps = deckGaps(data.counts, daCtx.sources);
+          const grade = applyAiGradeContext(computeGrade(data.counts, daCtx.sources, daCtx.stats, daCtx.profile), data);
+          updateGradeUi(grade);
+          const gaps = deckGaps(data.counts, daCtx.sources, daCtx.profile);
           const addRow = $("#da2-add-row");
           if (addRow) addRow.innerHTML = `<span class="da2-fixlbl add">Add</span>` + (gaps.length ? gaps.map((x) => `<span class="da2-chip add">${esc(x)}</span>`).join("") : `<span class="da2-chip muted">nothing urgent</span>`);
-          const sub = $("#da2-subnote"); if (sub) sub.textContent = "Role counts are AI-classified; targets are Commander rules-of-thumb.";
+          const sub = $("#da2-subnote"); if (sub) sub.textContent = `Role counts are AI-classified; health lens is ${daCtx.profile.label.toLowerCase()}.`;
         }
       }
       const row = $("#da2-trim-row");
@@ -3793,56 +4354,70 @@
         const chips = (data.trim && data.trim.length) ? data.trim.map((t) => `<span class="da2-chip trim">${esc(t)}</span>`).join("") : `<span class="da2-chip muted">no obvious cuts</span>`;
         row.innerHTML = `<span class="da2-fixlbl trim">Trim</span>${chips}`;
       }
-      const notes = $("#da2-notes");
-      if (notes) notes.innerHTML = (data.notes && data.notes.length) ? `<ul class="da-notes">${data.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul><p class="da-approx">≈ AI classification of your cards.</p>` : "";
     }
 
     function renderDeckAnalysis(deck, cards) {
       if (!cards.length) { dA.style.display = "none"; dA.innerHTML = ""; return; }
+      const collapsed = localStorage.getItem("deck_analysis_collapsed") === "true";
       const folderId = deck ? deck.id : state.activeFolder;
       const s = computeDeckStats(cards, folderId);
       const commander = deck && deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
       const colors = deckColors(cards, commander);
+      const tags = deckTagKeys(folderId, cards);
+      const profileKey = effectiveDeckStyleKey(folderId, cards, tags);
+      const profile = effectiveDeckProfile(folderId, cards, tags);
+      const profileSuggested = !deckStyles[folderId] && profileKey !== "default";
+      const tagsManual = Array.isArray(deckTags[folderId]);
       const sources = colorSourceStats(cards, folderId, colors);
       const roles = detectRoles(cards, folderId);
-      const grade = computeGrade(roles, sources, s);
-      const gaps = deckGaps(roles, sources);
       const wincons = detectWinCons(cards);
       const deckName = deck ? deck.name : "All saved cards";
 
       const sig = deckSig(cards, folderId);
       const cached = deckReviewCache[folderId] && deckReviewCache[folderId].sig === sig ? deckReviewCache[folderId].data : null;
       const counts = (cached && cached.counts && Object.keys(cached.counts).length) ? cached.counts : roles;
-      const verdict = (cached && cached.verdict) ? cached.verdict : heuristicVerdict(roles, sources);
+      const grade = applyAiGradeContext(computeGrade(counts, sources, s, profile), cached);
+      const gaps = deckGaps(counts, sources, profile);
+      const verdict = (cached && cached.verdict) ? cached.verdict : heuristicVerdict(roles, sources, profile);
 
       const addChips = gaps.length ? gaps.map((g) => `<span class="da2-chip add">${esc(g)}</span>`).join("") : `<span class="da2-chip muted">nothing urgent</span>`;
       const trimChips = (cached && cached.trim && cached.trim.length)
         ? cached.trim.map((t) => `<span class="da2-chip trim">${esc(t)}</span>`).join("")
         : `<span class="da2-chip muted cta" id="da2-trim-cta">Run AI Review for cut ideas →</span>`;
 
-      daCtx = { folderId, sources, stats: s }; // let renderAiExtras recompute grade/gaps from AI counts
+      daCtx = { folderId, sources, stats: s, profile }; // let renderAiExtras recompute grade/gaps from AI counts
 
       dA.innerHTML = `
         <div class="da2-strip">
           <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)}</small></div>
-          <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
+          <div class="da2-bracket-wrap">
+            <label class="da2-style-field"><span class="da2-style-label">Health lens</span><select class="da2-style-select" id="da2-style-select" title="Health lens" aria-label="Health lens">${deckStyleOptionsHtml(folderId, cards, tags)}</select></label>
+            <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
+            <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
+          </div>
         </div>
+        <div class="da2-body">
         <div class="da2-score">
-          <div class="da2-badge" id="da2-grade" title="${grade.passed}/${grade.total} health checks passed"><b>${grade.letter}</b><span>Health</span></div>
+          <div class="da2-gradebox">
+            <div class="da2-badge ${gradeTone(grade.letter)}" id="da2-grade" title="${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target"><b>${grade.letter}</b><span>Health</span></div>
+            <button class="da2-more-btn" id="da2-more-btn" title="Show grade details" aria-label="Show grade details" aria-expanded="false" aria-controls="da2-grade-drawer">${collapseChevronHtml()}</button>
+          </div>
           <div>
             <div class="da2-vrow"><div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div><button class="da-review-btn" id="da-review-btn">${cached ? "Re-run AI" : "AI Review"}</button></div>
-            <div class="da2-vsub" id="da2-subnote">${cached ? "Role counts are AI-classified; targets are Commander rules-of-thumb." : "Targets are Commander rules-of-thumb; role counts are heuristic until you run an AI review."}</div>
+            <div class="da2-vsub" id="da2-subnote">${cached ? `Role counts are AI-classified; health lens is ${profile.label.toLowerCase()}.` : `${profileSuggested ? `Auto-suggested ${profile.label.toLowerCase()} lens from ${tagsManual ? "deck tags" : "detected tags"}; ` : ""}targets are tuned for ${profile.label.toLowerCase()}; role counts are heuristic until you run AI Review.`}</div>
+            ${deckTagsHtml(folderId, cards)}
             <div class="da2-fix" id="da2-add-row"><span class="da2-fixlbl add">Add</span>${addChips}</div>
             <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>
           </div>
+          <div class="da2-grade-drawer" id="da2-grade-drawer">${gradeBreakdownHtml(grade)}</div>
         </div>
         <div class="da2-cols">
-          <div class="da2-card da2-radar-card"><div class="da-h">Role coverage <span class="da2-approx" id="da2-approx">${cached ? "· AI-read" : "· heuristic"}</span></div><div id="da2-radar">${roleRadarHtml(counts)}</div></div>
+          <div class="da2-card da2-radar-card"><div class="da-h">Role coverage <span class="da2-approx" id="da2-approx">${cached ? "· AI-read" : "· heuristic"}</span></div><div id="da2-radar">${roleRadarHtml(counts, profile)}</div></div>
           <div class="da2-card">
-            <div class="da-h">Color sources vs. need</div>
-            ${sourcesHtml(sources)}
-            <div class="da-h" style="margin-top:16px">Mana curve</div>
+            <div class="da-h">Mana curve</div>
             ${curveHtml(s.curve)}
+            <div class="da-h" style="margin-top:16px">Color sources vs. need</div>
+            ${sourcesHtml(sources)}
           </div>
         </div>
         <div class="da2-wc">
@@ -3850,20 +4425,63 @@
           ${wincons.length ? `<div>${wincons.slice(0, 8).map((w) => `<span class="da2-wtag">${esc(w)}</span>`).join("")}</div>` : `<div class="da2-vsub" style="margin-top:6px">No explicit game-ending card — likely wins through combat or value.</div>`}
           <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
         </div>
-        <div id="da2-notes"></div>`;
+        </div>`;
       dA.style.display = "block";
+      dA.classList.toggle("collapsed", collapsed);
+      $("#da2-style-select")?.addEventListener("change", (e) => {
+        persistDeckStyle(folderId, e.currentTarget.value);
+        renderDeckAnalysis(deck, cards);
+      });
+      $("#da2-tags")?.addEventListener("click", (e) => {
+        const chip = e.target.closest(".da2-tag-chip");
+        if (chip) {
+          persistDeckTags(folderId, deckTagKeys(folderId, cards).filter((key) => key !== chip.dataset.tag));
+          renderDeckAnalysis(deck, cards);
+          return;
+        }
+        if (e.target.closest("#da2-tag-reset")) {
+          resetDeckTags(folderId);
+          renderDeckAnalysis(deck, cards);
+        }
+      });
+      $("#da2-tag-add")?.addEventListener("change", (e) => {
+        const key = e.currentTarget.value;
+        if (!key) return;
+        persistDeckTags(folderId, [...new Set([...deckTagKeys(folderId, cards), key])]);
+        renderDeckAnalysis(deck, cards);
+      });
+      $("#da2-more-btn")?.addEventListener("click", (e) => {
+        const drawer = $("#da2-grade-drawer");
+        const open = !drawer?.classList.contains("open");
+        drawer?.classList.toggle("open", open);
+        e.currentTarget.setAttribute("aria-expanded", String(open));
+        e.currentTarget.title = open ? "Hide grade details" : "Show grade details";
+        e.currentTarget.setAttribute("aria-label", e.currentTarget.title);
+      });
       $("#da-review-btn").addEventListener("click", () => reviewDeckWithAI(cards, folderId));
       $("#da2-trim-cta")?.addEventListener("click", () => reviewDeckWithAI(cards, folderId));
+      $("#da2-collapse-btn")?.addEventListener("click", () => {
+        const next = !dA.classList.contains("collapsed");
+        dA.classList.toggle("collapsed", next);
+        localStorage.setItem("deck_analysis_collapsed", String(next));
+        const btn = $("#da2-collapse-btn");
+        if (btn) {
+          btn.setAttribute("aria-expanded", String(!next));
+          btn.title = next ? "Expand deck analysis" : "Collapse deck analysis";
+          btn.setAttribute("aria-label", btn.title);
+        }
+      });
       if (cached) renderAiExtras(cached);
       enhanceBracket(cards, folderId);
       if (commander) enhanceCombos(commander.name, folderId);
     }
 
     // Role coverage as a radar: the deck's polygon vs a dashed target ring.
-    function roleRadarHtml(counts) {
+    function roleRadarHtml(counts, profile = DECK_STYLE_PROFILES.default) {
       const SHORT = { ramp: "Ramp", draw: "Draw", removal: "Removal", wipes: "Wipes", tutors: "Tutors", interaction: "Interaction", graveyardHate: "Graveyard hate", protection: "Protection" };
-      const roles = Object.keys(AI_TARGETS).map((k) => {
-        const [lo, hi] = AI_TARGETS[k];
+      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
+      const roles = Object.keys(targets).map((k) => {
+        const [lo, hi] = targets[k];
         return { label: AI_LABEL[k], short: SHORT[k], v: counts[k] || 0, lo, hi };
       });
       const W = 380, H = 316, cx = 190, cy = 154, R = 96, N = roles.length;
@@ -4118,6 +4736,8 @@
         state.membership[cid] = mem;
       });
       if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
+      if (deckStyles[id]) { delete deckStyles[id]; localStorage.setItem("deck_styles", JSON.stringify(deckStyles)); }
+      if (deckTags[id]) { delete deckTags[id]; localStorage.setItem("deck_tags", JSON.stringify(deckTags)); }
       saveFolders();
       saveMembership();
       queueOp({ type: "setFolders", folders: state.folders });
