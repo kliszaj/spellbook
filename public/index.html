@@ -1433,13 +1433,9 @@
     .da2-id { font-size: 13px; font-weight: 700; color: #57524A; display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; }
     .da2-id small { font-weight: 500; color: #9E9B92; }
     .da2-pips { display: inline-flex; gap: 3px; margin: 0 6px; vertical-align: middle; }
-    .da2-pip { width: 15px; height: 15px; display: inline-flex; color: #2A2721; }
-    .da2-pip svg { width: 100%; height: 100%; }
+    .da2-pip { width: 14px; height: 14px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; }
+    .da2-pip svg { width: 8.5px; height: 8.5px; }
     .da2-bracket-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
-    .da2-style-field { display: inline-flex; align-items: center; gap: 7px; }
-    .da2-style-label { color: #A39E93; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-    .da2-style-select { height: 28px; max-width: 150px; border: 1px solid rgba(31,29,25,0.10); border-radius: 8px; background: #FFFEFA; color: #57524A; font: 650 11px/1 inherit; padding: 0 24px 0 9px; cursor: pointer; }
-    .da2-style-select:hover { border-color: rgba(31,29,25,0.18); }
     .da2-bracket { display: inline-flex; align-items: center; gap: 8px; }
     .da2-bracket .segs { display: inline-flex; gap: 3px; }
     .da2-bracket .seg { width: 20px; height: 6px; border-radius: 3px; background: #E7E1D3; }
@@ -1467,10 +1463,10 @@
     .da2-badge.grade-d { background: #F5E7E0; border-color: #E7CBBB; }
     .da2-badge.grade-d b { color: #A45636; }
     .da2-badge.grade-d span { color: #A9705C; }
-    .da2-more-btn { width: 28px; height: 28px; border: 1px solid rgba(31,29,25,0.10); border-radius: 999px; background: #FFFEFA; color: #78726A; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-    .da2-more-btn:hover, .da2-more-btn[aria-expanded="true"] { border-color: rgba(31,29,25,0.18); color: #2A2721; background: #F2EFE8; }
-    .da2-more-btn svg { width: 16px; height: 16px; transition: transform 0.18s ease; }
-    .da2-more-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .da2-more-btn { width: 22px; height: 22px; border: 1px solid rgba(31,29,25,0.14); border-radius: 999px; background: #FFFEFA; color: #9E9B92; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+    .da2-more-btn:hover { border-color: rgba(31,29,25,0.24); color: #57524A; }
+    .da2-more-btn[aria-expanded="true"] { background: #223126; border-color: #223126; color: #fff; }
+    .da2-more-btn svg { width: 13px; height: 13px; }
     .da2-vrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .da2-vhead { font-size: 14.5px; font-weight: 720; margin-bottom: 3px; letter-spacing: -0.01em; color: #2A2721; }
     .da2-vsub { font-size: 12px; color: #9E9B92; line-height: 1.5; }
@@ -1508,11 +1504,18 @@
     .da2-check.low .da2-check-name::before { background: #D6A24A; }
     .da2-check.high .da2-check-name::before { background: #C6795A; }
 
-    .da2-cols { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(340px, 0.62fr); gap: 14px; margin-bottom: 14px; }
-    .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
-    .da2-radar-card { padding: 12px 10px 11px; }
+    /* Radar sits in a bounded column so it stays a stable size instead of scaling with
+       the whole panel; the curve/distribution card takes all the flexible space. */
+    .da2-cols { display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); gap: 12px; margin-bottom: 14px; align-items: stretch; }
+    .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 12px; }
+    .da2-radar-card { padding: 12px 8px 11px; }
     .da2-radar-card .radar-wrap { grid-template-columns: 1fr; gap: 6px; }
-    .da2-radar-card .radar-fig { max-width: 390px; margin: 0 auto; width: 100%; }
+    .da2-radar-card .radar-fig { max-width: 360px; margin: 0 auto; width: 100%; }
+    /* Distribution card: flex column so the curve grows to fill the height the radar sets,
+       pushing the color-source rows to the bottom (no dead space). */
+    .da2-cols .da2-card:not(.da2-radar-card) { display: flex; flex-direction: column; padding: 14px 10px; }
+    .da2-cols .da2-card:not(.da2-radar-card) .curve { flex: 1 1 auto; height: auto; min-height: 130px; margin-top: 2px; }
+    .da2-cols .curve-bar { max-width: 46px; }
     .da2-radar-card .rad-legend { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 2px 0 0; }
     .rad-lbl-v { font-size: 8px; font-weight: 600; fill: #A39E93; }
     .da2-approx { font-size: 9.5px; font-weight: 600; color: #B0A99E; letter-spacing: 0; text-transform: none; }
@@ -1527,13 +1530,16 @@
     .da2-srcmeta small { display: block; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; }
     .da2-sb-w { background: #C9A24B; } .da2-sb-u { background: #5F86B0; } .da2-sb-b { background: #6E675A; } .da2-sb-r { background: #C0704E; } .da2-sb-g { background: #7FA07A; }
 
+    .da2-strip-min { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .da2-building { margin-top: 12px; padding: 14px 15px; background: #FAF8F2; border: 1px dashed #E0DACD; border-radius: 12px; color: #78726A; font-size: 12.5px; line-height: 1.5; }
+    .da2-building b { color: #57524A; font-weight: 700; }
     .da2-wc { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
     .da2-wc-head { display: flex; align-items: baseline; justify-content: space-between; }
     .da2-wc-n { font-size: 19px; font-weight: 750; color: #2A2721; font-variant-numeric: tabular-nums; }
     .da2-wtag { display: inline-block; font: 600 12px/1.4 inherit; background: #F2EFEA; color: #6a5a3c; border: 1px solid #E7E0D2; padding: 5px 9px; border-radius: 7px; margin: 8px 5px 0 0; }
     .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
     @media (max-width: 900px) { .da2-cols { grid-template-columns: 1fr; } }
-    @media (max-width: 620px) { .da2-check { grid-template-columns: 1fr; gap: 3px; } .da2-style-field { width: 100%; } .da2-style-select { max-width: none; flex: 1; } .da2-tag-add { max-width: none; } }
+    @media (max-width: 620px) { .da2-check { grid-template-columns: 1fr; gap: 3px; } .da2-tag-add { max-width: none; } }
 
     .detail-reason {
       margin: 0 0 14px;
@@ -1952,6 +1958,7 @@
 
         <div class="saved-section" id="saved-section">
           <div class="saved-main">
+          <div id="deck-analysis" class="deck-analysis" style="display:none"></div>
           <div class="search-bar">
             <input type="text" id="saved-filter" placeholder="Filter saved cards...">
           </div>
@@ -1977,7 +1984,6 @@
             </div>
           </div>
           <div class="type-filter" id="saved-type-filter" style="display:none" aria-label="Filter by card type"></div>
-          <div id="deck-analysis" class="deck-analysis" style="display:none"></div>
           <div id="saved-empty" class="empty-state">
             <p>No saved cards yet</p>
             <small>Search for cards and save them to build your list</small>
@@ -2378,7 +2384,7 @@
     historyList.addEventListener("click", (e) => {
       const removeBtn = e.target.closest(".history-remove");
       if (removeBtn) {
-        removeSearch(removeBtn.dataset.query || "", removeBtn.dataset.ci || "", removeBtn.dataset.forceAi === "true");
+        removeSearch(removeBtn.dataset.query || "", removeBtn.dataset.ci || "", removeBtn.dataset.forceAi === "true", removeBtn.dataset.cacheKey || "");
         return;
       }
       const btn = e.target.closest(".history-btn");
@@ -2419,6 +2425,16 @@
       return `${provider}:${model}`;
     }
     const translateCacheKey = (q, ci, forceAi = false, aiKey = activeAiCacheKey()) => `${aiKey}|${forceAi ? "ai" : "query"}|${ci || ""}|${q.trim().toLowerCase().replace(/\s+/g, " ")}`;
+    const legacyTranslateCacheKey = (q, ci, forceAi = false) => `${forceAi ? "ai" : "query"}|${ci || ""}|${q.trim().toLowerCase().replace(/\s+/g, " ")}`;
+    function historyAiCacheKey(item) {
+      return item?.provider ? `${item.provider}:${item.model || ""}` : activeAiCacheKey();
+    }
+    function historyCacheKey(item) {
+      return translateCacheKey(item?.q || "", item?.ci || "", !!item?.forceAi, historyAiCacheKey(item));
+    }
+    function sameSearchIdentity(item, q, ci, forceAi) {
+      return legacyTranslateCacheKey(item?.q || "", item?.ci || "", !!item?.forceAi) === legacyTranslateCacheKey(q, ci, forceAi);
+    }
     function readTranslateCache() { try { return JSON.parse(localStorage.getItem(TRANSLATE_CACHE_KEY) || "{}"); } catch { return {}; } }
     function readSearchHistory() { try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || "[]"); } catch { return []; } }
     function updateAiSearchToggle() {
@@ -2472,17 +2488,24 @@
       const provider = state.aiSettings?.preferredAiProvider || "anthropic";
       const model = state.aiSettings?.providers?.[provider]?.model || "";
       const item = { q, ci: ci || "", forceAi: !!forceAi, type: data?.type || "query", provider, model, ts: Date.now() };
-      const history = readSearchHistory().filter((h) => translateCacheKey(h.q || "", h.ci || "", !!h.forceAi) !== translateCacheKey(q, ci, forceAi));
+      const history = readSearchHistory().filter((h) => historyCacheKey(h) !== historyCacheKey(item));
       history.unshift(item);
       try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, SEARCH_HISTORY_MAX))); } catch {}
       renderSearchHistory();
       queueOp({ type: "setCaches", searchHistory: readSearchHistory() });
     }
-    function removeSearch(q, ci, forceAi) {
-      const key = translateCacheKey(q, ci, forceAi);
-      const history = readSearchHistory().filter((h) => translateCacheKey(h.q || "", h.ci || "", !!h.forceAi) !== key);
+    function removeSearch(q, ci, forceAi, exactKey = "") {
+      const candidateKeys = new Set([
+        exactKey,
+        translateCacheKey(q, ci, forceAi),
+        legacyTranslateCacheKey(q, ci, forceAi),
+      ].filter(Boolean));
+      const history = readSearchHistory().filter((h) => !sameSearchIdentity(h, q, ci, forceAi));
       const cache = readTranslateCache();
-      delete cache[key];
+      for (const key of Object.keys(cache)) {
+        const d = cacheDisplayKey(key);
+        if (candidateKeys.has(key) || sameSearchIdentity(d, q, ci, forceAi)) delete cache[key];
+      }
       try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history)); } catch {}
       try { localStorage.setItem(TRANSLATE_CACHE_KEY, JSON.stringify(cache)); } catch {}
       renderSearchHistory();
@@ -2519,11 +2542,14 @@
       const cacheItems = Object.entries(cache)
         .filter(([, v]) => v && (Date.now() - v.ts) < TRANSLATE_CACHE_TTL)
         .filter(([key]) => cacheMatchesActiveProvider(key))
-        .map(([key, v]) => ({ ...cacheDisplayKey(key), ts: v.ts, cached: true }));
+        .map(([key, v]) => ({ ...cacheDisplayKey(key), cacheKey: key, ts: v.ts, cached: true }));
       const seen = new Set();
-      const items = [...readSearchHistory().map((h) => ({ ...h, cached: !!cache[translateCacheKey(h.q || "", h.ci || "", !!h.forceAi)] })), ...cacheItems]
+      const items = [...readSearchHistory().map((h) => {
+          const key = historyCacheKey(h);
+          return { ...h, cacheKey: key, cached: !!cache[key] || !!cache[legacyTranslateCacheKey(h.q || "", h.ci || "", !!h.forceAi)] };
+        }), ...cacheItems]
         .filter((h) => {
-          const key = translateCacheKey(h.q || "", h.ci || "", !!h.forceAi);
+          const key = h.cacheKey || historyCacheKey(h);
           if (!h.q || seen.has(key)) return false;
           seen.add(key);
           return true;
@@ -2539,7 +2565,7 @@
           <button class="history-btn" data-query="${esc(h.q || "")}" data-ci="${esc(h.ci || "")}" data-force-ai="${h.forceAi ? "true" : "false"}">
             <span>${esc(h.q || "")}</span>
           </button>
-          <button class="history-remove" data-query="${esc(h.q || "")}" data-ci="${esc(h.ci || "")}" data-force-ai="${h.forceAi ? "true" : "false"}" title="Remove" aria-label="Remove ${esc(h.q || "search")}">&times;</button>
+          <button class="history-remove" data-query="${esc(h.q || "")}" data-ci="${esc(h.ci || "")}" data-force-ai="${h.forceAi ? "true" : "false"}" data-cache-key="${esc(h.cacheKey || "")}" title="Remove" aria-label="Remove ${esc(h.q || "search")}">&times;</button>
         </div>`).join("");
     }
     function renderCacheList() {
@@ -3760,6 +3786,7 @@
 
     // ── Deck analysis ─────────────────────────────────────────────────
     const dA = $("#deck-analysis");
+    const ANALYSIS_MIN_CARDS = 60; // below this, a deck is too incomplete to judge against 100-card targets
     const LAND_TARGET = [36, 38];
     const MV_TARGET = [3.0, 3.5];
     const BASE_ROLE_TARGETS = {
@@ -3841,7 +3868,6 @@
         roleWeights: { ...ROLE_WEIGHTS, tutors: 1.0, interaction: 1.45, ramp: 1.35, wipes: 0.25 },
       },
     };
-    const deckStyles = JSON.parse(localStorage.getItem("deck_styles") || "{}");
     const DECK_TAGS = {
       graveyard: { label: "Graveyard", lens: "graveyard" },
       reanimator: { label: "Reanimator", lens: "graveyard" },
@@ -3953,9 +3979,7 @@
       if (commander && Array.isArray(commander.color_identity)) return commander.color_identity.slice();
       const s = new Set(); cards.forEach((c) => (c.color_identity || []).forEach((x) => s.add(x))); return [...s];
     }
-    function manaPipsHtml(colors) { return `<span class="da2-pips">${WUBRG.filter((c) => colors.includes(c)).map((c) => `<span class="da2-pip">${MANA_SVG[c.toLowerCase()]}</span>`).join("")}</span>`; }
-    function deckStyleKey(folderId) { return deckStyles[folderId] && DECK_STYLE_PROFILES[deckStyles[folderId]] ? deckStyles[folderId] : "default"; }
-    function deckProfile(folderId) { return DECK_STYLE_PROFILES[deckStyleKey(folderId)] || DECK_STYLE_PROFILES.default; }
+    function manaPipsHtml(colors) { return `<span class="da2-pips">${WUBRG.filter((c) => colors.includes(c)).map((c) => `<span class="da2-pip da2-sb-${c.toLowerCase()}">${MANA_SVG[c.toLowerCase()]}</span>`).join("")}</span>`; }
     function autoDeckTags(cards) {
       const text = cards.map((c) => `${c.name} ${c.type_line || ""} ${getOracleText(c)}`).join(" ").toLowerCase();
       const has = (re) => (text.match(re) || []).length;
@@ -3996,24 +4020,46 @@
       if (Array.isArray(manual)) return manual.filter((key) => DECK_TAGS[key]);
       return autoDeckTags(cards);
     }
-    function suggestedDeckStyle(cards, tags = autoDeckTags(cards)) {
-      for (const key of TAG_PRIORITY) {
-        if (tags.includes(key) && DECK_STYLE_PROFILES[DECK_TAGS[key].lens]) return DECK_TAGS[key].lens;
-      }
-      return "default";
+    // A deck is rarely a single archetype — blend the profiles of every archetype its
+    // tags imply into one composite lens: targets are averaged, weights taken at their max
+    // (so if any archetype leans hard on a role, the blended lens still cares about it).
+    function blendProfiles(tags) {
+      const lensKeys = [...new Set((tags || [])
+        .map((t) => DECK_TAGS[t] && DECK_TAGS[t].lens)
+        .filter((k) => k && DECK_STYLE_PROFILES[k] && k !== "default"))];
+      if (!lensKeys.length) return DECK_STYLE_PROFILES.default;
+      const profiles = lensKeys.map((k) => DECK_STYLE_PROFILES[k]);
+      const label = lensKeys.map((k) => DECK_STYLE_PROFILES[k].label).join(" + ");
+      if (profiles.length === 1) return { ...profiles[0], label };
+      const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+      const blendRange = (field, decimals) => {
+        const lo = avg(profiles.map((p) => p[field][0]));
+        const open = profiles.some((p) => p[field][1] == null);
+        const hi = open ? null : avg(profiles.map((p) => p[field][1]));
+        const r = (x) => (decimals ? Math.round(x * 10) / 10 : Math.round(x));
+        return [r(lo), hi == null ? null : r(hi)];
+      };
+      const roleTargets = {};
+      Object.keys(BASE_ROLE_TARGETS).forEach((role) => {
+        const ranges = profiles.map((p) => (p.roleTargets || BASE_ROLE_TARGETS)[role]);
+        const hiOpen = ranges.some((t) => t[1] == null);
+        roleTargets[role] = [Math.round(avg(ranges.map((t) => t[0]))), hiOpen ? null : Math.round(avg(ranges.map((t) => t[1])))];
+      });
+      const roleWeights = {};
+      Object.keys(ROLE_WEIGHTS).forEach((role) => {
+        roleWeights[role] = Math.max(...profiles.map((p) => (p.roleWeights || ROLE_WEIGHTS)[role] || 0));
+      });
+      return {
+        label,
+        note: `Blended from ${profiles.length} archetypes`,
+        roleTargets,
+        roleWeights,
+        landTarget: blendRange("landTarget", false),
+        mvTarget: blendRange("mvTarget", true),
+      };
     }
-    function effectiveDeckStyleKey(folderId, cards, tags = deckTagKeys(folderId, cards)) {
-      return deckStyles[folderId] && DECK_STYLE_PROFILES[deckStyles[folderId]] ? deckStyles[folderId] : suggestedDeckStyle(cards, tags);
-    }
-    function effectiveDeckProfile(folderId, cards, tags) { return DECK_STYLE_PROFILES[effectiveDeckStyleKey(folderId, cards, tags)] || DECK_STYLE_PROFILES.default; }
-    function deckStyleOptionsHtml(folderId, cards, tags) {
-      const current = cards ? effectiveDeckStyleKey(folderId, cards, tags) : deckStyleKey(folderId);
-      return Object.entries(DECK_STYLE_PROFILES).map(([key, p]) => `<option value="${key}" ${key === current ? "selected" : ""}>${esc(p.label)}</option>`).join("");
-    }
-    function persistDeckStyle(folderId, style) {
-      if (!DECK_STYLE_PROFILES[style]) delete deckStyles[folderId];
-      else deckStyles[folderId] = style;
-      localStorage.setItem("deck_styles", JSON.stringify(deckStyles));
+    function effectiveDeckProfile(folderId, cards, tags = deckTagKeys(folderId, cards)) {
+      return blendProfiles(tags);
     }
     function persistDeckTags(folderId, tags) {
       deckTags[folderId] = TAG_PRIORITY.filter((key) => tags.includes(key) && DECK_TAGS[key]);
@@ -4298,7 +4344,10 @@
         .catch(() => new Set());
       return gameChangersPromise;
     }
-    const deckReviewCache = {}; // folderId -> { sig, data }
+    // folderId -> { sig, data } — persisted so an AI review survives reloads; the stored
+    // sig is compared to the live deck signature on render, so it self-invalidates on edits.
+    const deckReviewCache = JSON.parse(localStorage.getItem("deck_reviews") || "{}");
+    function persistDeckReviews() { try { localStorage.setItem("deck_reviews", JSON.stringify(deckReviewCache)); } catch (e) { /* quota — keep the in-memory copy */ } }
     let daCtx = null; // current panel context — lets AI extras recompute grade/gaps/drawer
     function deckSig(cards, folderId) { return cards.map((c) => c.id + ":" + cardQty(folderId, c.id)).sort().join("|"); }
 
@@ -4346,7 +4395,7 @@
           const gaps = deckGaps(data.counts, daCtx.sources, daCtx.profile);
           const addRow = $("#da2-add-row");
           if (addRow) addRow.innerHTML = `<span class="da2-fixlbl add">Add</span>` + (gaps.length ? gaps.map((x) => `<span class="da2-chip add">${esc(x)}</span>`).join("") : `<span class="da2-chip muted">nothing urgent</span>`);
-          const sub = $("#da2-subnote"); if (sub) sub.textContent = `Role counts are AI-classified; health lens is ${daCtx.profile.label.toLowerCase()}.`;
+          const sub = $("#da2-subnote"); if (sub) sub.textContent = `Role counts are AI-classified; targets blended from your archetype tags${daCtx.profile.label && daCtx.profile.label !== "Default" ? ` (${daCtx.profile.label.toLowerCase()})` : ""}.`;
         }
       }
       const row = $("#da2-trim-row");
@@ -4363,15 +4412,26 @@
       const s = computeDeckStats(cards, folderId);
       const commander = deck && deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
       const colors = deckColors(cards, commander);
+      const deckName = deck ? deck.name : "All saved cards";
+
+      // Below a near-complete count, targets calibrated for a 100-card deck would flag
+      // everything as "short" — noise. Show only the deck's identity + a build prompt.
+      if (s.total < ANALYSIS_MIN_CARDS) {
+        dA.innerHTML = `
+          <div class="da2-strip da2-strip-min">
+            <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)}</small></div>
+          </div>
+          <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role radar, bracket and mana checks will appear here.</div>`;
+        dA.style.display = "block";
+        dA.classList.remove("collapsed");
+        return;
+      }
       const tags = deckTagKeys(folderId, cards);
-      const profileKey = effectiveDeckStyleKey(folderId, cards, tags);
       const profile = effectiveDeckProfile(folderId, cards, tags);
-      const profileSuggested = !deckStyles[folderId] && profileKey !== "default";
-      const tagsManual = Array.isArray(deckTags[folderId]);
+      const lensNote = profile.label && profile.label !== "Default" ? ` (${profile.label.toLowerCase()})` : "";
       const sources = colorSourceStats(cards, folderId, colors);
       const roles = detectRoles(cards, folderId);
       const wincons = detectWinCons(cards);
-      const deckName = deck ? deck.name : "All saved cards";
 
       const sig = deckSig(cards, folderId);
       const cached = deckReviewCache[folderId] && deckReviewCache[folderId].sig === sig ? deckReviewCache[folderId].data : null;
@@ -4391,7 +4451,6 @@
         <div class="da2-strip">
           <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)}</small></div>
           <div class="da2-bracket-wrap">
-            <label class="da2-style-field"><span class="da2-style-label">Health lens</span><select class="da2-style-select" id="da2-style-select" title="Health lens" aria-label="Health lens">${deckStyleOptionsHtml(folderId, cards, tags)}</select></label>
             <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
             <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
           </div>
@@ -4399,12 +4458,12 @@
         <div class="da2-body">
         <div class="da2-score">
           <div class="da2-gradebox">
-            <div class="da2-badge ${gradeTone(grade.letter)}" id="da2-grade" title="${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target"><b>${grade.letter}</b><span>Health</span></div>
-            <button class="da2-more-btn" id="da2-more-btn" title="Show grade details" aria-label="Show grade details" aria-expanded="false" aria-controls="da2-grade-drawer">${collapseChevronHtml()}</button>
+            <div class="da2-badge ${gradeTone(grade.letter)}" id="da2-grade" title="${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target"><b>${grade.letter}</b></div>
+            <button class="da2-more-btn" id="da2-more-btn" title="Show grade details" aria-label="Show grade details" aria-expanded="false" aria-controls="da2-grade-drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>
           </div>
           <div>
             <div class="da2-vrow"><div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div><button class="da-review-btn" id="da-review-btn">${cached ? "Re-run AI" : "AI Review"}</button></div>
-            <div class="da2-vsub" id="da2-subnote">${cached ? `Role counts are AI-classified; health lens is ${profile.label.toLowerCase()}.` : `${profileSuggested ? `Auto-suggested ${profile.label.toLowerCase()} lens from ${tagsManual ? "deck tags" : "detected tags"}; ` : ""}targets are tuned for ${profile.label.toLowerCase()}; role counts are heuristic until you run AI Review.`}</div>
+            <div class="da2-vsub" id="da2-subnote">${cached ? `Role counts are AI-classified; targets blended from your archetype tags${esc(lensNote)}.` : `Targets blended from your archetype tags${esc(lensNote)}; role counts are heuristic until you run AI Review.`}</div>
             ${deckTagsHtml(folderId, cards)}
             <div class="da2-fix" id="da2-add-row"><span class="da2-fixlbl add">Add</span>${addChips}</div>
             <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>
@@ -4416,7 +4475,7 @@
           <div class="da2-card">
             <div class="da-h">Mana curve</div>
             ${curveHtml(s.curve)}
-            <div class="da-h" style="margin-top:16px">Color sources vs. need</div>
+            <div class="da-h" style="margin-top:14px">Distribution</div>
             ${sourcesHtml(sources)}
           </div>
         </div>
@@ -4428,10 +4487,6 @@
         </div>`;
       dA.style.display = "block";
       dA.classList.toggle("collapsed", collapsed);
-      $("#da2-style-select")?.addEventListener("change", (e) => {
-        persistDeckStyle(folderId, e.currentTarget.value);
-        renderDeckAnalysis(deck, cards);
-      });
       $("#da2-tags")?.addEventListener("click", (e) => {
         const chip = e.target.closest(".da2-tag-chip");
         if (chip) {
@@ -4522,6 +4577,7 @@
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Review failed"); }
         const data = await res.json();
         deckReviewCache[folderId] = { sig: deckSig(cards, folderId), data }; // cache per deck version — no re-spend on re-open
+        persistDeckReviews();
         if (state.activeFolder === folderId) renderAiExtras(data);
         if (btn) btn.textContent = "Re-run AI";
       } catch (err) {
@@ -4736,8 +4792,8 @@
         state.membership[cid] = mem;
       });
       if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
-      if (deckStyles[id]) { delete deckStyles[id]; localStorage.setItem("deck_styles", JSON.stringify(deckStyles)); }
       if (deckTags[id]) { delete deckTags[id]; localStorage.setItem("deck_tags", JSON.stringify(deckTags)); }
+      if (deckReviewCache[id]) { delete deckReviewCache[id]; persistDeckReviews(); }
       saveFolders();
       saveMembership();
       queueOp({ type: "setFolders", folders: state.folders });

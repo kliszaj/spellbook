@@ -110,14 +110,22 @@ Deck Analysis is heuristic-first and AI-assisted:
 - Heuristics compute deck health, role coverage, mana curve, color sources, tags,
   and profile/lens adjustments instantly.
 - The AI Review button refines role counts, verdict, and trim suggestions.
-- AI review output is cached per deck signature in-memory on the client.
+- AI review output is cached per deck signature in `localStorage` (`deck_reviews`), so
+  it survives reloads and only re-spends tokens when the deck actually changes.
 
-Deck archetype tags are multi-select. The health lens is a single profile and can
-be changed independently from tags. Current tags/profiles are localStorage-backed
-client preferences.
+Deck archetype tags are multi-select and localStorage-backed. There is **no single
+health-lens dropdown** — the tags' archetypes are blended into one composite profile
+(`blendProfiles`: targets averaged, role weights taken at their max), so a deck that
+is several archetypes at once is judged against all of them. Editing tags re-blends.
+
+Deck analysis and the bracket are **hidden until a deck has `ANALYSIS_MIN_CARDS` (60)**
+cards; below that only the identity strip + a "keep building" prompt show, since
+100-card targets would flag an incomplete deck as short on everything.
 
 The bottom AI-notes bullet list was removed; verdict and Add/Trim chips carry the
-primary guidance.
+primary guidance. The grade badge shows just the letter (no "Health" label) with a
+small circular info toggle that opens the weighted-check breakdown drawer. The whole
+analysis block sits at the top of the deck view, above the card filter.
 
 ## Commander Spellbook Combos
 
