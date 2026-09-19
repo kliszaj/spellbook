@@ -2106,7 +2106,7 @@
               <button id="detail-maybe-btn" style="display:none">Mark as Maybe</button>
               <button id="detail-combos-btn" style="display:none">Combos</button>
               <button id="detail-edhrec-btn" style="display:none">EDHREC</button>
-              <button id="detail-cardmarket-btn">Cardmarket</button>
+              <button id="detail-download-btn" title="Save the print-resolution image for proxies">Download</button>
               <button id="detail-scryfall-btn">Scryfall</button>
             </div>
           </div>
@@ -3512,6 +3512,13 @@
     }
     function faceImage(card, face) {
       return card.card_faces?.[face]?.image_uris?.normal || getCardImage(card);
+    }
+    // Highest-resolution image Scryfall serves for a face, for printing proxies:
+    // png is 745×1040 (~300 DPI at the real 63×88mm card size); large/normal are
+    // smaller JPEGs and only stand in when a printing has no png.
+    function facePrintImage(card, face) {
+      const uris = card.card_faces?.[face]?.image_uris || card.image_uris || card.card_faces?.[0]?.image_uris;
+      return uris?.png || uris?.large || uris?.normal || "";
     }
     // Shared per-tile flip wiring: toggles the tile's img between the two faces.
     function wireFlipBtn(el, card) {
@@ -4947,9 +4954,58 @@
       showDetail(card);
     });
 
-    $("#detail-cardmarket-btn").addEventListener("click", () => {
-      if (state.detailCard?.purchase_uris?.cardmarket) window.open(state.detailCard.purchase_uris.cardmarket, "_blank");
-      else window.open(`https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(state.detailCard?.name || "")}`, "_blank");
+    // ── Download the print-resolution image (proxies) ─────────────────
+    // Scryfall's image CDN sends Access-Control-Allow-Origin:*, so we can pull the
+    // png as a blob and hand it to a synthetic <a download>. A cross-origin href
+    // would ignore the download attribute and navigate instead, hence the blob.
+    function printImageFilename(card, face) {
+      // Only transform/MDFC cards have a per-face image worth naming by its face;
+      // split/adventure cards share one image showing the whole card.
+      const name = (isDoubleFaced(card) && card.card_faces?.[face]?.name) || card.name || "card";
+      const set = (card.set || "").toUpperCase();
+      const parts = [name, set && `(${set})`, card.collector_number].filter(Boolean);
+      // Split cards are named "Fire // Ice"; keep the halves readable before the
+      // slash strip below turns them into one run-on word.
+      const safe = parts.join(" ")
+        .replace(/\s*\/\/\s*/g, " - ")
+        // Strip characters Windows/macOS reject in filenames, plus trailing dots.
+        .replace(/[\\/:*?"<>|]/g, "")
+        .replace(/\s+/g, " ").trim().replace(/\.+$/, "");
+      return `${safe || "card"}.png`;
+    }
+
+    $("#detail-download-btn").addEventListener("click", async (e) => {
+      const card = state.detailCard;
+      if (!card) return;
+      const url = facePrintImage(card, detailFace);
+      if (!url) { showStatus("No printable image for this card.", true); return; }
+      const btn = e.currentTarget;
+      const label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Downloading…";
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Scryfall returned ${res.status}`);
+        const blob = await res.blob();
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = printImageFilename(card, detailFace);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // Revoking synchronously after click() cancels the download in some browsers.
+        setTimeout(() => URL.revokeObjectURL(href), 10000);
+        btn.textContent = "Saved ✓";
+      } catch (err) {
+        // Blob path failed (offline, CORS change, blocked fetch) — leave the user
+        // with the image open so they can still save it by hand.
+        console.error("Card image download failed:", err);
+        btn.textContent = "Opened ↗";
+        window.open(url, "_blank");
+      } finally {
+        setTimeout(() => { btn.textContent = label; btn.disabled = false; }, 1500);
+      }
     });
 
     $("#detail-scryfall-btn").addEventListener("click", () => {

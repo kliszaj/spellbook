@@ -30,6 +30,9 @@ Single-page app: Node/Express backend (`server.js`), all UI + client state in
 - **Import / export** — paste a decklist (quantities, set codes, comments, DFCs all
   handled) to build a deck; export the visible cards as a Cardmarket/Moxfield list.
 - **EDHREC** — jump to a card's EDHREC page.
+- **Download** — save a card's print-resolution image (Scryfall PNG, 745×1040 —
+  roughly 300 DPI at real card size) for printing proxies. Double-faced cards
+  download whichever face the detail panel is showing.
 
 ### Deck analysis
 Heuristic-first and instant (no tokens), with an optional AI pass:
