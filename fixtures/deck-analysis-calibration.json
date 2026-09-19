@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Human-reviewed Commander deck corpus for tuning and manually validating deck analysis.",
+  "fixtures": [
+    {
+      "id": "slimefoot-squee",
+      "source": "local-user-decklist",
+      "commander": "Slimefoot and Squee",
+      "bracket": 2,
+      "intendedTags": ["Tokens", "Typal: Saproling", "Aristocrats", "Sacrifice", "Reanimator", "Graveyard"],
+      "analysisLenses": ["aristocrats", "graveyard"],
+      "expectations": ["Treat sacrifice outlets and recursion as meaningful engine pieces.", "Do not count Saproling Symbiosis as a board wipe.", "Treat a board wipe as contextual rather than the deck's automatic biggest weakness.", "Surface conditional card flow separately from early direct access."]
+    },
+    {
+      "id": "pako-haldan-voltron",
+      "source": "https://moxfield.com/decks/AZKbE6E6kUWW2zMfHR41sQ",
+      "commander": "Pako, Arcane Retriever / Haldan, Avid Arcanist",
+      "bracket": 2,
+      "intendedTags": ["Voltron", "Aggro", "Tempo"],
+      "analysisLenses": ["aggro"],
+      "expectations": ["Do not penalize the deck for a lower creature count than generic midrange.", "Recognize commander-centric protection and evasion as relevant support.", "Keep board-wipe expectations low."]
+    },
+    {
+      "id": "spellslinger-precon",
+      "source": "https://moxfield.com/decks/UbO_Mq2RREaIUQhbCr3lOw",
+      "bracket": 2,
+      "intendedTags": ["Spellslinger", "Precon"],
+      "analysisLenses": ["spellslinger", "casual"],
+      "expectations": ["Reward cheap card flow and reactive interaction.", "Do not mistake every instant-speed value spell for responsive interaction."]
+    },
+    {
+      "id": "landfall",
+      "source": "https://moxfield.com/decks/9OntxpFr0E-M7h_OtgSvcA",
+      "bracket": 3,
+      "intendedTags": ["Landfall", "Lands Matter"],
+      "analysisLenses": ["battlecruiser"],
+      "expectations": ["Accept a larger land count and land-recursion package.", "Count extra-land effects and land ramp without treating every land as ramp."]
+    },
+    {
+      "id": "control",
+      "source": "https://moxfield.com/decks/zJ0qPOnI2UqykOwmeIUixg",
+      "bracket": 3,
+      "intendedTags": ["Control"],
+      "analysisLenses": ["default"],
+      "expectations": ["Value responsive interaction and removal over creature count.", "Do not expect an aggro-style board presence."]
+    },
+    {
+      "id": "artifacts",
+      "source": "https://moxfield.com/decks/gVKFVDjU_UyDlsmsjwbe1g",
+      "bracket": 4,
+      "intendedTags": ["Artifacts"],
+      "analysisLenses": ["default"],
+      "expectations": ["Recognize artifact mana and artifact-based draw engines.", "Allow overlap between artifact synergy, ramp, and card flow."]
+    },
+    {
+      "id": "enchantments-not-enchantress",
+      "source": "https://moxfield.com/decks/9fOKPSSttkedH3WwGRI7og",
+      "bracket": 2,
+      "intendedTags": ["Enchantments"],
+      "analysisLenses": ["default", "casual"],
+      "expectations": ["Do not assume every enchantment deck is Enchantress.", "Only credit enchantment-driven card flow when the cards actually provide it."]
+    },
+    {
+      "id": "lifegain",
+      "source": "https://moxfield.com/decks/x9PjY9XdcU-f9giP4_oI0w",
+      "bracket": 3,
+      "intendedTags": ["Lifegain"],
+      "analysisLenses": ["default"],
+      "expectations": ["Separate life-gain payoffs from actual card flow, ramp, and removal.", "Identify whether the deck has a concrete route from life total to victory."]
+    },
+    {
+      "id": "zombies",
+      "source": "https://moxfield.com/decks/TTWtzdt3qkyYR4TcSxsJlA",
+      "bracket": 3,
+      "intendedTags": ["Typal: Zombie"],
+      "analysisLenses": ["default"],
+      "expectations": ["Treat typal as a descriptive identity, not a universal scoring lens.", "Recognize typal payoffs without inflating generic role counts."]
+    },
+    {
+      "id": "high-power",
+      "source": "https://moxfield.com/decks/sbt8qFFKA0KMHWn8h9pUeg",
+      "bracket": 4,
+      "intendedTags": ["High-power", "Combo"],
+      "analysisLenses": ["cedh"],
+      "expectations": ["Allow fewer lands and board wipes when fast mana, tutors, and interaction support a proactive win.", "Weight tutors and reactive interaction more heavily than in casual profiles."]
+    },
+    {
+      "id": "blink",
+      "source": "https://moxfield.com/decks/HyFTsFIbZUKgxMJVLQgSQg",
+      "bracket": 3,
+      "intendedTags": ["Blink", "ETB"],
+      "analysisLenses": ["default"],
+      "expectations": ["Do not classify self-blink as a board wipe.", "Credit repeatable ETB engines only when they actually provide a role."]
+    },
+    {
+      "id": "ant-man-power-treasure",
+      "source": "https://moxfield.com/decks/Y6B-Ol__J0G25GGSScN2nw",
+      "commander": "Ant-Man, Elusive Avenger",
+      "bracket": null,
+      "intendedTags": ["Voltron", "Aggro", "Treasure", "Spellslinger", "Burn", "Power Matters"],
+      "analysisLenses": ["aggro", "spellslinger"],
+      "expectations": ["Treat commander combat damage and post-blocker pump as a coherent win plan.", "Recognize Chandra's Ignition, Soul's Fire, and Fling effects as table-kill finishers.", "Treat commander-generated treasure as conditional ramp.", "Keep board wipes optional for this proactive strategy.", "Separate conditional combat, cast-spell, targeting, and treasure card flow from early direct access."]
+    }
+  ]
+}

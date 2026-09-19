@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "Bash(start:*)"
+      "Bash(start:*)",
+      "Bash(git fetch *)",
+      "Bash(bash \"/c/Users/Adrian/.claude/plugins/cache/claude-plugins-official/superpowers/6.1.1/skills/brainstorming/scripts/start-server.sh\" --project-dir \"/c/Users/Adrian/Documents/Coding/spellbook\" --open)"
     ]
   }
 }

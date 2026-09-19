@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test:calibration": "node scripts/check-deck-analysis-fixtures.mjs",
+    "test:board-wipes": "node scripts/check-board-wipe-regressions.mjs",
+    "test:deck-identity": "node scripts/check-deck-identity-contract.mjs",
+    "test:deck-analysis": "npm run test:calibration && npm run test:board-wipes && npm run test:deck-identity"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",

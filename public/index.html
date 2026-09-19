@@ -973,6 +973,7 @@
       display: flex;
       gap: 8px;
       justify-content: flex-end;
+      margin-top: 22px;
     }
 
     .modal-actions button {
@@ -1400,7 +1401,8 @@
 
     .da-ai { margin-top: 15px; border-top: 1px solid rgba(31,29,25,0.08); padding-top: 14px; }
     .da-ai-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
-    .da-review-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 13px; border: 1px solid #1a1a1a; border-radius: 8px; background: #1a1a1a; color: #fff; cursor: pointer; transition: opacity 0.15s; }
+    .da-review-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 13px; border: 1px solid #1a1a1a; border-radius: 8px; background: #1a1a1a; color: #fff; cursor: pointer; transition: opacity 0.15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .da-review-btn svg { width: 13px; height: 13px; color: #ffd66b; }
     .da-review-btn:hover:not(:disabled) { opacity: 0.88; }
     .da-review-btn:disabled { opacity: 0.5; cursor: default; }
     .da-hint { font-size: 12px; color: #9E9B92; line-height: 1.5; margin: 0; max-width: 60ch; }
@@ -1463,21 +1465,13 @@
     .da2-badge.grade-d { background: #F5E7E0; border-color: #E7CBBB; }
     .da2-badge.grade-d b { color: #A45636; }
     .da2-badge.grade-d span { color: #A9705C; }
-    .da2-more-btn { width: 22px; height: 22px; border: 1px solid rgba(31,29,25,0.14); border-radius: 999px; background: #FFFEFA; color: #9E9B92; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
-    .da2-more-btn:hover { border-color: rgba(31,29,25,0.24); color: #57524A; }
-    .da2-more-btn[aria-expanded="true"] { background: #223126; border-color: #223126; color: #fff; }
-    .da2-more-btn svg { width: 13px; height: 13px; }
     .da2-vrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .da2-vhead { font-size: 14.5px; font-weight: 720; margin-bottom: 3px; letter-spacing: -0.01em; color: #2A2721; }
     .da2-vsub { font-size: 12px; color: #9E9B92; line-height: 1.5; }
     .da2-tags { display: flex; align-items: center; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
     .da2-tags-label { color: #A39E93; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-    .da2-tag-chip { border: 1px solid #E0DACD; background: #FFFEFA; color: #57524A; border-radius: 999px; height: 24px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1 inherit; cursor: pointer; }
-    .da2-tag-chip:hover { border-color: #CFC7B8; color: #2A2721; }
-    .da2-tag-chip span { color: #A39E93; font-weight: 800; line-height: 1; }
-    .da2-tag-add { height: 24px; max-width: 118px; border: 1px dashed #D8D1C5; border-radius: 999px; background: #FFFEFA; color: #78726A; font: 650 11px/1 inherit; padding: 0 20px 0 8px; cursor: pointer; }
-    .da2-tag-reset { height: 24px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #A39E93; font: 750 10.5px/1 inherit; padding: 0 6px; cursor: pointer; }
-    .da2-tag-reset:hover { color: #57524A; background: #F2EFE8; }
+    .da2-tag-chip { border: 1px solid #E0DACD; background: #FFFEFA; color: #57524A; border-radius: 999px; height: 24px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1 inherit; cursor: default; }
+    .da2-tag-chip span { color: #A39E93; font-weight: 650; line-height: 1; }
     .da2-fix { display: flex; align-items: baseline; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .da2-fixlbl { font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; width: 32px; flex: none; padding-top: 4px; }
     .da2-fixlbl.add { color: #6E8A69; } .da2-fixlbl.trim { color: #C0704E; }
@@ -1487,37 +1481,56 @@
     .da2-chip.muted { border: 1px dashed #DDD8CC; color: #9E9B92; font-weight: 600; }
     .da2-chip.muted.cta { cursor: pointer; }
     .da2-chip.muted.cta:hover { border-color: #B9892A; color: #8a6a20; }
-    .da2-grade-drawer { grid-column: 1 / -1; display: none; border-top: 1px solid rgba(31,29,25,0.08); padding-top: 13px; margin-top: 1px; }
-    .da2-grade-drawer.open { display: block; }
-    .da2-grade-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; color: #78726A; font-size: 11.5px; }
-    .da2-grade-top b { color: #2A2721; font-variant-numeric: tabular-nums; }
-    .da2-grade-group { margin-top: 10px; }
-    .da2-grade-group:first-child { margin-top: 0; }
-    .da2-grade-group h4 { margin: 0 0 7px; color: #A39E93; font-size: 9.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-    .da2-check { display: grid; grid-template-columns: minmax(92px, 0.8fr) minmax(84px, auto) minmax(0, 1.2fr); gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid rgba(31,29,25,0.06); font-size: 12px; }
-    .da2-check:first-of-type { border-top: none; }
-    .da2-check-name { color: #2A2721; font-weight: 700; }
-    .da2-check-val { color: #57524A; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .da2-check-note { color: #8C867C; line-height: 1.35; }
-    .da2-check.ok .da2-check-name::before, .da2-check.low .da2-check-name::before, .da2-check.high .da2-check-name::before { content: ""; width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 7px; vertical-align: 1px; }
-    .da2-check.ok .da2-check-name::before { background: #7FA07A; }
-    .da2-check.low .da2-check-name::before { background: #D6A24A; }
-    .da2-check.high .da2-check-name::before { background: #C6795A; }
-
-    /* Radar sits in a bounded column so it stays a stable size instead of scaling with
-       the whole panel; the curve/distribution card takes all the flexible space. */
-    .da2-cols { display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); gap: 12px; margin-bottom: 14px; align-items: stretch; }
+    .da2-fix-wrap:empty { display: none; }
+    .da2-card-chip { cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease; }
+    .da2-chip.add.da2-card-chip:hover { background: #EEF5EA; border-color: #B6CFAC; }
+    .da2-chip.trim.da2-card-chip:hover { background: #F7ECE6; border-color: #E0C0B2; }
+    .da2-layout { display: grid; grid-template-columns: minmax(0, 1.32fr) minmax(300px, 0.82fr); gap: 12px; margin-bottom: 14px; align-items: stretch; }
     .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 12px; }
-    .da2-radar-card { padding: 12px 8px 11px; }
-    .da2-radar-card .radar-wrap { grid-template-columns: 1fr; gap: 6px; }
-    .da2-radar-card .radar-fig { max-width: 360px; margin: 0 auto; width: 100%; }
-    /* Distribution card: flex column so the curve grows to fill the height the radar sets,
-       pushing the color-source rows to the bottom (no dead space). */
-    .da2-cols .da2-card:not(.da2-radar-card) { display: flex; flex-direction: column; padding: 14px 10px; }
-    .da2-cols .da2-card:not(.da2-radar-card) .curve { flex: 1 1 auto; height: auto; min-height: 130px; margin-top: 2px; }
-    .da2-cols .curve-bar { max-width: 46px; }
-    .da2-radar-card .rad-legend { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 2px 0 0; }
-    .rad-lbl-v { font-size: 8px; font-weight: 600; fill: #A39E93; }
+    .da2-ledger { padding: 0; overflow: hidden; }
+    .da2-ledger-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 13px 14px 11px; }
+    .da2-ledger-hint { color: #A39E93; font-size: 10.5px; }
+    .da2-role { border-top: 1px solid rgba(31,29,25,0.08); }
+    .da2-role-toggle { width: 100%; display: grid; grid-template-columns: 8px minmax(0, 1fr) auto 16px; gap: 9px; align-items: center; border: 0; padding: 10px 14px; background: transparent; color: #2A2721; text-align: left; cursor: pointer; font: inherit; transition: background 0.15s ease; }
+    .da2-role-toggle:hover { background: #F8F6F0; }
+    .da2-role-toggle:active { transform: translateY(1px); }
+    .da2-role-status { width: 7px; height: 7px; border-radius: 50%; background: #7FA07A; }
+    .da2-role.low .da2-role-status { background: #D6A24A; }
+    .da2-role.high .da2-role-status { background: #C6795A; }
+    .da2-role-title { display: block; color: #2A2721; font-size: 12px; font-weight: 720; }
+    .da2-role-sub { display: block; margin-top: 2px; color: #9E9B92; font-size: 10.5px; line-height: 1.35; }
+    .da2-role-value { color: #57524A; font: 650 12px/1 ui-monospace, "SF Mono", Menlo, monospace; white-space: nowrap; }
+    .da2-role-value small { color: #A39E93; font: 500 10.5px/1 inherit; }
+    .da2-role-chevron { width: 15px; height: 15px; color: #918A7F; transition: transform 0.18s ease; }
+    .da2-role.open .da2-role-chevron { transform: rotate(180deg); }
+    .da2-role-detail { display: none; padding: 0 14px 13px 31px; }
+    .da2-role.open .da2-role-detail { display: block; }
+    .da2-role-note { margin: 0 0 8px; color: #78726A; font-size: 11.5px; line-height: 1.45; }
+    .da2-role-cards { display: flex; flex-wrap: wrap; gap: 5px; }
+    .da2-role-card { border: 1px solid #E5DED2; border-radius: 6px; background: #F7F4EC; color: #5C564D; padding: 4px 7px; font-size: 10.5px; line-height: 1.25; }
+    button.da2-role-card { font-family: inherit; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease; }
+    button.da2-role-card:hover { background: #FFFDF7; border-color: #C8B88D; color: #2A2721; }
+    button.da2-role-card:active { transform: translateY(1px); }
+    button.da2-role-card:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; }
+    .da2-role-card.conditional { border-style: dashed; color: #8A6B2A; }
+    .da2-role-key { margin-top: 8px; color: #A39E93; font-size: 10px; }
+    .da2-side { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; height: 100%; }
+    .da2-mana-card { display: flex; flex-direction: column; height: 100%; padding: 14px 12px 12px; }
+    /* The side column stretches to the ledger's height; the curve flex-grows to absorb
+       the slack (bars are %-height, so they scale with it) instead of leaving a gap. */
+    .da2-mana-card .curve { height: auto; flex: 1 1 102px; min-height: 102px; max-height: 300px; margin-top: 2px; }
+    .da2-mana-card .curve-bar { max-width: 36px; }
+    .da2-section-rule { height: 1px; margin: 14px 0 12px; background: rgba(31,29,25,0.08); }
+    .da2-color-access { margin-top: auto; }
+    .da2-flow-summary { display: grid; grid-template-columns: auto 1fr; gap: 9px; align-items: start; margin-top: 7px; }
+    .da2-flow-score { color: #A17317; font-size: 25px; font-weight: 780; font-variant-numeric: tabular-nums; line-height: 0.95; }
+    .da2-flow-copy b { display: block; color: #57524A; font-size: 11.5px; line-height: 1.2; }
+    .da2-flow-copy span { display: block; margin-top: 3px; color: #9E9B92; font-size: 10.5px; line-height: 1.35; }
+    .da2-flow-track { display: flex; height: 7px; margin-top: 11px; overflow: hidden; border-radius: 999px; background: #EDE9E0; }
+    .da2-flow-seg.early { background: #7FA07A; } .da2-flow-seg.conditional { background: #C9A866; } .da2-flow-seg.late { background: #D4CEC1; }
+    .da2-flow-legend { display: flex; flex-wrap: wrap; gap: 7px 10px; margin-top: 7px; color: #918A7F; font-size: 10px; }
+    .da2-flow-legend i { display: inline-block; width: 6px; height: 6px; margin: 0 3px 1px 0; border-radius: 50%; vertical-align: middle; }
+    .da2-flow-legend .early { background: #7FA07A; } .da2-flow-legend .conditional { background: #C9A866; } .da2-flow-legend .late { background: #D4CEC1; }
     .da2-approx { font-size: 9.5px; font-weight: 600; color: #B0A99E; letter-spacing: 0; text-transform: none; }
 
     .da2-src { display: grid; grid-template-columns: auto 1fr auto; gap: 11px; align-items: center; padding: 6px 0; }
@@ -1538,8 +1551,8 @@
     .da2-wc-n { font-size: 19px; font-weight: 750; color: #2A2721; font-variant-numeric: tabular-nums; }
     .da2-wtag { display: inline-block; font: 600 12px/1.4 inherit; background: #F2EFEA; color: #6a5a3c; border: 1px solid #E7E0D2; padding: 5px 9px; border-radius: 7px; margin: 8px 5px 0 0; }
     .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
-    @media (max-width: 900px) { .da2-cols { grid-template-columns: 1fr; } }
-    @media (max-width: 620px) { .da2-check { grid-template-columns: 1fr; gap: 3px; } .da2-tag-add { max-width: none; } }
+    @media (max-width: 900px) { .da2-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) { .da2-role-toggle { grid-template-columns: 8px minmax(0, 1fr) auto 14px; gap: 7px; padding: 10px 12px; } .da2-role-detail { padding-left: 27px; padding-right: 12px; } .da2-ledger-hint { display: none; } }
 
     .detail-reason {
       margin: 0 0 14px;
@@ -1650,9 +1663,24 @@
       font-weight: 600;
       color: #aaa;
       flex-shrink: 0;
+      text-align: right;
     }
 
     .folder-btn.active .folder-count { color: rgba(255,255,255,0.7); }
+
+    .folder-count-maybe { color: #B9892A; font-weight: 700; }
+    .folder-btn.active .folder-count-maybe { color: #E7CE8C; }
+
+    /* Fixed-width slot reserved on every row (even All/Unsorted, which never show
+       edit icons) so .folder-count lands at the same right-aligned position everywhere. */
+    .folder-btn .folder-edit-group {
+      flex-shrink: 0;
+      width: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 2px;
+    }
 
     .folder-btn .folder-edit {
       flex-shrink: 0;
@@ -1788,6 +1816,61 @@
       font: 13px/1 inherit;
       font-weight: 600;
       cursor: pointer;
+    }
+
+    /* ── Card right-click context menu ── */
+    .context-menu {
+      position: fixed;
+      z-index: 320;
+      min-width: 190px;
+      background: #fff;
+      border: 1px solid #ececea;
+      border-radius: 12px;
+      box-shadow: 0 16px 44px rgba(0,0,0,0.18);
+      padding: 6px;
+      display: none;
+      font-size: 13px;
+    }
+    .context-menu.visible { display: block; }
+    .ctx-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      color: #333;
+      font: 13px/1.2 inherit;
+      cursor: pointer;
+    }
+    .ctx-item:hover { background: #f4f4f2; }
+    .ctx-item.danger { color: #b3261e; }
+    .ctx-item.danger:hover { background: #fdecea; }
+
+    /* ── Deck section divider (e.g. Maybeboard) ── */
+    .deck-section-divider {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #9E9B92;
+      margin: 8px 0 -2px;
+    }
+    .deck-section-divider::after { content: ""; flex: 1; height: 1px; background: rgba(31,29,25,0.12); }
+
+    /* ── Maybeboard card treatment ── */
+    .card-item.maybe img { opacity: 0.5; filter: saturate(0.7); }
+    .maybe-badge {
+      position: absolute; top: 8px; left: 8px; z-index: 3;
+      padding: 3px 8px; border-radius: 999px;
+      background: rgba(20,20,20,0.62); color: #E7CE8C;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em;
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     }
 
     @media (max-width: 1100px) {
@@ -2019,6 +2102,8 @@
             <div id="detail-oracle" class="oracle-text"></div>
             <div class="card-actions">
               <button id="detail-save-btn">Save</button>
+              <button id="detail-flip-btn" style="display:none">Flip</button>
+              <button id="detail-maybe-btn" style="display:none">Mark as Maybe</button>
               <button id="detail-combos-btn" style="display:none">Combos</button>
               <button id="detail-edhrec-btn" style="display:none">EDHREC</button>
               <button id="detail-cardmarket-btn">Cardmarket</button>
@@ -2048,7 +2133,13 @@
           <input type="password" id="anthropic-api-key-input" placeholder="sk-ant-...">
           <small class="settings-help">Leave blank to keep the saved key. Environment variables override stored keys.</small>
           <label for="anthropic-model-input">Anthropic model</label>
-          <input type="text" id="anthropic-model-input" placeholder="claude-sonnet-4-6">
+          <select id="anthropic-model-input">
+            <option value="claude-opus-4-8">claude-opus-4-8 · Opus 4.8</option>
+            <option value="claude-sonnet-5">claude-sonnet-5 · Sonnet 5</option>
+            <option value="claude-sonnet-4-6">claude-sonnet-4-6 · Sonnet 4.6</option>
+            <option value="claude-haiku-4-5">claude-haiku-4-5 · Haiku 4.5</option>
+            <option value="claude-fable-5">claude-fable-5 · Fable 5</option>
+          </select>
         </div>
         <div class="settings-provider-card">
           <h3>OpenAI <span class="settings-status" id="openai-key-status">Not set</span></h3>
@@ -2056,7 +2147,12 @@
           <input type="password" id="openai-api-key-input" placeholder="sk-proj-...">
           <small class="settings-help">Stored in the appdata folder for this Spellbook container when pasted here.</small>
           <label for="openai-model-input">OpenAI model</label>
-          <input type="text" id="openai-model-input" placeholder="gpt-4.1">
+          <select id="openai-model-input">
+            <option value="gpt-4.1">gpt-4.1</option>
+            <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+          </select>
         </div>
       </div>
       <div class="modal-actions">
@@ -2094,6 +2190,14 @@
     </form>
   </div>
 
+  <!-- Card right-click context menu -->
+  <div class="context-menu" id="card-context-menu">
+    <button class="ctx-item" data-act="details">Details</button>
+    <button class="ctx-item" data-act="commander" style="display:none">Set as commander</button>
+    <button class="ctx-item" data-act="maybe" style="display:none">Mark as Maybe</button>
+    <button class="ctx-item danger" data-act="remove" style="display:none">Remove from deck</button>
+  </div>
+
   <script>
     const state = {
       hasApiKey: false,
@@ -2112,6 +2216,7 @@
       folders: JSON.parse(localStorage.getItem("card_folders") || "[]"),
       membership: JSON.parse(localStorage.getItem("card_membership") || "null"),
       quantities: JSON.parse(localStorage.getItem("card_quantities") || "{}"),
+      maybeboard: JSON.parse(localStorage.getItem("card_maybeboard") || "{}"),
       activeFolder: "all",
       popoverCard: null,
       mode: "search",
@@ -2169,6 +2274,7 @@
     const popAddBtn = $("#pop-add-btn");
     const popAddForm = $("#pop-add-form");
     const popAddInput = $("#pop-add-input");
+    const cardContextMenu = $("#card-context-menu");
     const navCollapseBtn = $("#nav-collapse-btn");
     const detailCollapseBtn = $("#detail-collapse-btn");
     const ICON_RECENTS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>`;
@@ -2344,14 +2450,29 @@
       if (!options.migrated) hideSettings();
     }
 
+    // Select a model in a provider dropdown; if the saved value isn't a listed
+    // option (a custom or older model), add it so it still shows and persists.
+    function setModelSelect(sel, value, fallback) {
+      const el = $(sel);
+      if (!el) return;
+      const v = value || fallback;
+      if (v && !Array.from(el.options).some((o) => o.value === v)) {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v + " · custom";
+        el.insertBefore(opt, el.firstChild);
+      }
+      el.value = v;
+    }
+
     function showSettings() {
       const settings = state.aiSettings || {};
       const providers = settings.providers || {};
       $("#preferred-ai-provider").value = settings.preferredAiProvider || "anthropic";
       $("#anthropic-api-key-input").value = "";
       $("#openai-api-key-input").value = "";
-      $("#anthropic-model-input").value = providers.anthropic?.model || "claude-sonnet-4-6";
-      $("#openai-model-input").value = providers.openai?.model || "gpt-4.1";
+      setModelSelect("#anthropic-model-input", providers.anthropic?.model, "claude-sonnet-4-6");
+      setModelSelect("#openai-model-input", providers.openai?.model, "gpt-4.1");
       paintProviderStatus("#anthropic-key-status", providers.anthropic);
       paintProviderStatus("#openai-key-status", providers.openai);
       $("#settings-modal").classList.add("visible");
@@ -2599,6 +2720,7 @@
         folders: state.folders,
         membership: state.membership,
         quantities: state.quantities,
+        maybeboard: state.maybeboard,
         colorIdentity: state.colorIdentity,
         translateCache: readTranslateCache(),
         searchHistory: readSearchHistory(),
@@ -2612,6 +2734,7 @@
         (Array.isArray(data.folders) && data.folders.length) ||
         (data.membership && typeof data.membership === "object" && Object.keys(data.membership).length) ||
         (data.quantities && typeof data.quantities === "object" && Object.keys(data.quantities).length) ||
+        (data.maybeboard && typeof data.maybeboard === "object" && Object.keys(data.maybeboard).length) ||
         (Array.isArray(data.colorIdentity) && data.colorIdentity.length) ||
         data.forceAiSearch ||
         (data.translateCache && typeof data.translateCache === "object" && Object.keys(data.translateCache).length) ||
@@ -2636,6 +2759,10 @@
       if (data.quantities && typeof data.quantities === "object") {
         state.quantities = data.quantities;
         localStorage.setItem("card_quantities", JSON.stringify(state.quantities));
+      }
+      if (data.maybeboard && typeof data.maybeboard === "object") {
+        state.maybeboard = data.maybeboard;
+        localStorage.setItem("card_maybeboard", JSON.stringify(state.maybeboard));
       }
       // colorIdentity is intentionally NOT restored here — it stays session-only.
       if (typeof data.forceAiSearch === "boolean") {
@@ -2692,6 +2819,19 @@
       return merged;
     }
 
+    // Per-deck Maybeboard flags. Union folders; within a folder, b (local) wins.
+    function mergeMaybeboard(a, b) {
+      const merged = {};
+      [a, b].forEach((source) => {
+        if (!source || typeof source !== "object") return;
+        Object.entries(source).forEach(([folderId, flags]) => {
+          if (!flags || typeof flags !== "object") return;
+          merged[folderId] = { ...(merged[folderId] || {}), ...flags };
+        });
+      });
+      return merged;
+    }
+
     function mergeTranslateCache(a = {}, b = {}) {
       const merged = { ...a };
       Object.entries(b || {}).forEach(([key, value]) => {
@@ -2718,6 +2858,7 @@
         folders: mergeById(serverState.folders, localState.folders),
         membership: mergeMembership(serverState.membership, localState.membership),
         quantities: mergeQuantities(serverState.quantities, localState.quantities),
+        maybeboard: mergeMaybeboard(serverState.maybeboard, localState.maybeboard),
         colorIdentity: Array.isArray(localState.colorIdentity) && localState.colorIdentity.length
           ? localState.colorIdentity
           : (serverState.colorIdentity || []),
@@ -2744,7 +2885,7 @@
         if (putRes.ok) {
           const synced = await putRes.json();
           lastSyncedSig = JSON.stringify([
-            synced.savedCards, synced.folders, synced.membership, synced.quantities,
+            synced.savedCards, synced.folders, synced.membership, synced.quantities, synced.maybeboard,
             synced.colorIdentity, synced.forceAiSearch,
             synced.searchHistory, synced.translateCache,
           ]);
@@ -2773,7 +2914,7 @@
     function adoptServerState(serverState) {
       if (!serverState || typeof serverState !== "object") return;
       const sig = JSON.stringify([
-        serverState.savedCards, serverState.folders, serverState.membership, serverState.quantities,
+        serverState.savedCards, serverState.folders, serverState.membership, serverState.quantities, serverState.maybeboard,
         serverState.colorIdentity, serverState.forceAiSearch,
         serverState.searchHistory, serverState.translateCache,
       ]);
@@ -2941,8 +3082,10 @@
       if (!query) return;
       if (!state.hasApiKey) return showSettings();
 
+      // The button stays enabled while searching — clicking (or Enter) mid-search
+      // starts a new run that supersedes this one: startSearchRun() aborts the old
+      // controller and every await below re-checks isActiveSearch before touching UI.
       const searchRun = startSearchRun();
-      searchBtn.disabled = true;
       searchBtn.textContent = "Searching...";
       startLoadingAnimation();
       queryDisplay.classList.remove("visible");
@@ -3025,8 +3168,8 @@
         if (err.name === "AbortError" || !isActiveSearch(searchRun.run)) return;
         showStatus(err.message, true);
       } finally {
+        // Only the latest run resets the label; superseded runs leave "Searching...".
         if (isActiveSearch(searchRun.run)) {
-          searchBtn.disabled = false;
           searchBtn.textContent = "Search";
         }
       }
@@ -3245,12 +3388,14 @@
       const cards = state.savedVisible || [];
       if (!cards.length) return;
       const text = cards.map((c) => cardmarketLine(c, cardQty(state.activeFolder, c.id))).join("\n");
+      // Quantity-weighted so the flash matches what actually pastes (basics carry ×N).
+      const totalCards = cards.reduce((n, c) => n + cardQty(state.activeFolder, c.id), 0);
       const ok = await copyText(text);
       const label = savedExportBtn.querySelector(".export-label");
       clearTimeout(exportFlashTimer);
       if (ok) {
         savedExportBtn.classList.add("copied");
-        label.textContent = `Copied ${cards.length}`;
+        label.textContent = `Copied ${totalCards}`;
       } else {
         label.textContent = "Copy failed";
       }
@@ -3358,6 +3503,29 @@
       return card._reason ? `<span class="ai-mark" title="AI recommendation">${ICON_SPARKLE}</span>` : "";
     }
 
+    // ── Double-faced cards ────────────────────────────────────────────
+    // Only true two-image cards (transform/MDFC) get a flip button; split/adventure
+    // cards share one image and have nothing to flip to.
+    const ICON_FLIP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/><path d="M3 21v-5h5"/></svg>`;
+    function isDoubleFaced(card) {
+      return Boolean(card.card_faces?.length >= 2 && card.card_faces[0].image_uris?.normal && card.card_faces[1].image_uris?.normal);
+    }
+    function faceImage(card, face) {
+      return card.card_faces?.[face]?.image_uris?.normal || getCardImage(card);
+    }
+    // Shared per-tile flip wiring: toggles the tile's img between the two faces.
+    function wireFlipBtn(el, card) {
+      el.querySelector(".flip-btn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const face = el.dataset.face === "1" ? 0 : 1;
+        el.dataset.face = String(face);
+        el.querySelector("img").src = faceImage(card, face);
+      });
+    }
+    function flipBtnHtml(card) {
+      return isDoubleFaced(card) ? `<button class="icon-btn flip-btn" title="Flip card" aria-label="Flip card">${ICON_FLIP}</button>` : "";
+    }
+
     // Render results
     // ── Card-type filter chips ──────────────────────────────────────────────
     // Client-side view filter over already-loaded cards. Chips show only the
@@ -3441,11 +3609,13 @@
               <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
             </div>
             <div class="card-tools">
+              ${flipBtnHtml(card)}
               <button class="icon-btn save-btn ${isSaved ? "saved" : ""}" data-id="${card.id}" title="${isSaved ? "Saved" : "Save"}" aria-label="${isSaved ? "Remove from saved" : "Save"}">${bookmarkIcon(isSaved)}</button>
               <button class="icon-btn detail-btn" data-id="${card.id}" title="Details" aria-label="Details">${ICON_DOTS}</button>
             </div>
           </div>`;
 
+        wireFlipBtn(el, card);
         el.querySelector(".save-btn").addEventListener("click", (e) => {
           e.stopPropagation();
           openSavePopover(card, e.currentTarget);
@@ -3688,7 +3858,19 @@
         state.savedSortField,
         state.savedSortDir
       );
-      if (!cards.length) {
+      const isRealDeck = state.activeFolder !== "all" && state.activeFolder !== DEFAULT_FOLDER;
+
+      // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
+      pruneToPresent(savedTypeFilter, cards);
+      renderTypeChips(savedTypeFilterEl, cards, savedTypeFilter, (t) => { toggleSet(savedTypeFilter, t); renderSavedCards(); });
+      const visible = filterByTypes(cards, savedTypeFilter);
+
+      // Maybeboard cards stay in the deck but are excluded from the main section and
+      // everything that measures the deck (analysis, size, export) — see below.
+      const mainVisible = isRealDeck ? visible.filter((c) => !isMaybe(state.activeFolder, c.id)) : visible;
+      const maybeVisible = isRealDeck ? visible.filter((c) => isMaybe(state.activeFolder, c.id)) : [];
+
+      if (!mainVisible.length && !maybeVisible.length) {
         savedEmpty.style.display = "block";
         const anySaved = state.savedCards.length > 0;
         savedEmpty.querySelector("p").textContent = anySaved ? "Nothing in this deck" : "No saved cards yet";
@@ -3696,63 +3878,80 @@
       } else {
         savedEmpty.style.display = "none";
       }
-      // Type chips reflect the folder/text-filtered set; then narrow to selection.
-      pruneToPresent(savedTypeFilter, cards);
-      renderTypeChips(savedTypeFilterEl, cards, savedTypeFilter, (t) => { toggleSet(savedTypeFilter, t); renderSavedCards(); });
-      const visible = filterByTypes(cards, savedTypeFilter);
-      state.savedVisible = visible; // exact on-screen set, used by the export button
-      if (savedExportBtn) savedExportBtn.disabled = visible.length === 0;
+      state.savedVisible = mainVisible; // exact on-screen main-deck set, used by the export button
+      if (savedExportBtn) savedExportBtn.disabled = mainVisible.length === 0;
 
       // A designated commander (only real decks have one) sorts to the front.
       const deck = state.folders.find((f) => f.id === state.activeFolder) || null;
       const commanderId = deck ? deck.commanderId || null : null;
       if (commanderId) {
-        const ci = visible.findIndex((c) => c.id === commanderId);
-        if (ci > 0) visible.unshift(visible.splice(ci, 1)[0]);
+        const ci = mainVisible.findIndex((c) => c.id === commanderId);
+        if (ci > 0) mainVisible.unshift(mainVisible.splice(ci, 1)[0]);
       }
 
       // "All" and "Unsorted" are library buckets, not decks — analysis only for real decks.
-      if (state.activeFolder === "all" || state.activeFolder === DEFAULT_FOLDER) { dA.style.display = "none"; dA.innerHTML = ""; }
-      else renderDeckAnalysis(deck, getFolderCards(state.activeFolder)); // whole deck, not the filtered view
+      if (!isRealDeck) { dA.style.display = "none"; dA.innerHTML = ""; }
+      else renderDeckAnalysis(deck, getFolderCards(state.activeFolder).filter((c) => !isMaybe(state.activeFolder, c.id))); // whole deck minus Maybeboard, not the filtered view
 
       savedGrid.innerHTML = "";
-      visible.forEach((card) => {
-        const el = document.createElement("div");
-        el.className = "card-item";
-        const imgUrl = getCardImage(card);
-        const price = getPrice(card);
-        const isCommander = card.id === commanderId;
-        const crownBtn = (deck && isLegendaryCreature(card))
-          ? `<button class="icon-btn crown-btn ${isCommander ? "is-commander" : ""}" data-id="${card.id}" title="${isCommander ? "Commander (click to unset)" : "Set as commander"}" aria-label="${isCommander ? "Unset commander" : "Set as commander"}">${ICON_CROWN}</button>`
-          : "";
-        // Basic lands in a real deck carry an editable per-deck count.
-        const countBadge = (state.activeFolder !== "all" && isBasicLand(card))
-          ? `<button class="count-badge" title="Click to edit quantity" aria-label="Edit quantity">×${cardQty(state.activeFolder, card.id)}</button>`
-          : "";
-        el.innerHTML = `
-          <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
-          ${aiMark(card)}
-          ${countBadge}
-          ${isCommander ? `<span class="commander-badge">${ICON_CROWN}Commander</span>` : ""}
-          <div class="card-info">
-            <div class="card-text">
-              <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
-              <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
-            </div>
-            <div class="card-tools">
-              ${crownBtn}
-              <button class="icon-btn saved save-btn" data-id="${card.id}" title="Saved" aria-label="Edit decks">${bookmarkIcon(true)}</button>
-              <button class="icon-btn detail-btn" data-id="${card.id}" title="Details" aria-label="Details">${ICON_DOTS}</button>
-            </div>
-          </div>`;
-        el.querySelector(".crown-btn")?.addEventListener("click", (e) => { e.stopPropagation(); setDeckCommander(state.activeFolder, card.id); });
-        el.querySelector(".count-badge")?.addEventListener("click", (e) => { e.stopPropagation(); startQtyEdit(e.currentTarget, card.id); });
-        el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
-        el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
-        el.querySelector("img").addEventListener("click", () => showDetail(card));
-        savedGrid.appendChild(el);
-      });
+      // Divider counts are quantity-weighted (basics ×N) so they match the deck totals.
+      const qtySum = (list) => list.reduce((n, c) => n + cardQty(state.activeFolder, c.id), 0);
+      const addDivider = (label) => {
+        const divider = document.createElement("div");
+        divider.className = "deck-section-divider";
+        divider.textContent = label;
+        savedGrid.appendChild(divider);
+      };
+      if (isRealDeck && mainVisible.length) addDivider(`Main deck · ${qtySum(mainVisible)}`);
+      mainVisible.forEach((card) => renderCardTile(card, deck, commanderId, false));
+      if (maybeVisible.length) {
+        addDivider(`Maybeboard · ${qtySum(maybeVisible)}`);
+        maybeVisible.forEach((card) => renderCardTile(card, deck, commanderId, true));
+      }
       scheduleTiltInit(savedGrid);
+    }
+
+    // Builds and appends one card tile to #saved-grid. Shared by the main-deck and
+    // Maybeboard sections — `isMaybeCard` only changes styling and the badge.
+    function renderCardTile(card, deck, commanderId, isMaybeCard) {
+      const el = document.createElement("div");
+      el.className = "card-item" + (isMaybeCard ? " maybe" : "");
+      const imgUrl = getCardImage(card);
+      const price = getPrice(card);
+      const isCommander = card.id === commanderId;
+      const crownBtn = (deck && isLegendaryCreature(card))
+        ? `<button class="icon-btn crown-btn ${isCommander ? "is-commander" : ""}" data-id="${card.id}" title="${isCommander ? "Commander (click to unset)" : "Set as commander"}" aria-label="${isCommander ? "Unset commander" : "Set as commander"}">${ICON_CROWN}</button>`
+        : "";
+      // Basic lands in a real deck carry an editable per-deck count.
+      const countBadge = (state.activeFolder !== "all" && isBasicLand(card))
+        ? `<button class="count-badge" title="Click to edit quantity" aria-label="Edit quantity">×${cardQty(state.activeFolder, card.id)}</button>`
+        : "";
+      el.innerHTML = `
+        <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
+        ${aiMark(card)}
+        ${countBadge}
+        ${isCommander ? `<span class="commander-badge">${ICON_CROWN}Commander</span>` : ""}
+        ${isMaybeCard ? `<span class="maybe-badge">Maybe</span>` : ""}
+        <div class="card-info">
+          <div class="card-text">
+            <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
+            <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
+          </div>
+          <div class="card-tools">
+            ${crownBtn}
+            ${flipBtnHtml(card)}
+            <button class="icon-btn saved save-btn" data-id="${card.id}" title="Saved" aria-label="Edit decks">${bookmarkIcon(true)}</button>
+            <button class="icon-btn detail-btn" data-id="${card.id}" title="Details" aria-label="Details">${ICON_DOTS}</button>
+          </div>
+        </div>`;
+      wireFlipBtn(el, card);
+      el.querySelector(".crown-btn")?.addEventListener("click", (e) => { e.stopPropagation(); setDeckCommander(state.activeFolder, card.id); });
+      el.querySelector(".count-badge")?.addEventListener("click", (e) => { e.stopPropagation(); startQtyEdit(e.currentTarget, card.id); });
+      el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
+      el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
+      el.querySelector("img").addEventListener("click", () => showDetail(card));
+      el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY); });
+      savedGrid.appendChild(el);
     }
 
     // Swap a basic land's count badge for an inline number field; commit on Enter/blur.
@@ -3796,7 +3995,7 @@
     const AI_TARGETS = BASE_ROLE_TARGETS;
     const AI_LABEL = {
       ramp: "Ramp", draw: "Card draw", removal: "Removal", wipes: "Board wipes",
-      tutors: "Tutors", interaction: "Instant interaction", graveyardHate: "Graveyard hate", protection: "Protection",
+      tutors: "Tutors", interaction: "Responsive interaction", graveyardHate: "Graveyard hate", protection: "Protection",
     };
     const ROLE_WEIGHTS = {
       ramp: 1.25, draw: 1.35, removal: 1.2, wipes: 0.75,
@@ -3814,10 +4013,10 @@
       graveyard: {
         label: "Graveyard",
         note: "Values engines and recursion over generic hate",
-        roleTargets: { ...BASE_ROLE_TARGETS, draw: [9, null], wipes: [2, 4], tutors: [3, 8], protection: [4, null], graveyardHate: [0, null] },
+        roleTargets: { ...BASE_ROLE_TARGETS, draw: [9, null], wipes: [1, 3], tutors: [3, 8], protection: [4, null], graveyardHate: [0, null] },
         landTarget: [35, 38],
         mvTarget: [2.9, 3.6],
-        roleWeights: { ...ROLE_WEIGHTS, graveyardHate: 0.15, protection: 0.95, tutors: 0.75 },
+        roleWeights: { ...ROLE_WEIGHTS, wipes: 0.4, graveyardHate: 0.15, protection: 0.95, tutors: 0.75 },
       },
       spellslinger: {
         label: "Spellslinger",
@@ -3830,7 +4029,7 @@
       aristocrats: {
         label: "Aristocrats",
         note: "Allows lower wipes if the deck wins through engines",
-        roleTargets: { ...BASE_ROLE_TARGETS, draw: [10, null], removal: [7, 11], wipes: [2, 4], interaction: [6, null], protection: [2, null] },
+        roleTargets: { ...BASE_ROLE_TARGETS, draw: [10, null], removal: [7, 11], wipes: [1, 3], interaction: [6, null], protection: [2, null] },
         landTarget: [35, 38],
         mvTarget: [2.8, 3.45],
         roleWeights: { ...ROLE_WEIGHTS, draw: 1.45, removal: 1.25, wipes: 0.5 },
@@ -3868,26 +4067,16 @@
         roleWeights: { ...ROLE_WEIGHTS, tutors: 1.0, interaction: 1.45, ramp: 1.35, wipes: 0.25 },
       },
     };
-    const DECK_TAGS = {
-      graveyard: { label: "Graveyard", lens: "graveyard" },
-      reanimator: { label: "Reanimator", lens: "graveyard" },
-      tokens: { label: "Tokens", lens: "aristocrats" },
-      aristocrats: { label: "Aristocrats", lens: "aristocrats" },
-      sacrifice: { label: "Sacrifice", lens: "aristocrats" },
-      saprolings: { label: "Saprolings", lens: "aristocrats" },
-      spellslinger: { label: "Spellslinger", lens: "spellslinger" },
-      voltron: { label: "Voltron", lens: "aggro" },
-      lands: { label: "Lands", lens: "battlecruiser" },
-      artifacts: { label: "Artifacts", lens: "default" },
-      enchantress: { label: "Enchantress", lens: "default" },
-      battlecruiser: { label: "Battlecruiser", lens: "battlecruiser" },
-      control: { label: "Control", lens: "default" },
-      combo: { label: "Combo", lens: "cedh" },
-      highPower: { label: "High-power", lens: "cedh" },
-      casual: { label: "Casual", lens: "casual" },
+    // Identity is supplied by the AI review. Only tags that materially change healthy
+    // Commander targets are mapped to an internal lens; every other label remains descriptive.
+    const IDENTITY_TAG_LENSES = {
+      "Graveyard": "graveyard", "Reanimator": "graveyard", "Dredge": "graveyard", "Sacrifice": "aristocrats", "Aristocrats": "aristocrats", "Tokens": "aristocrats", "Saprolings": "aristocrats", "Typal: Fungi": "aristocrats", "Typal: Saproling": "aristocrats",
+      "Spellslinger": "spellslinger", "Storm": "spellslinger", "Burn": "spellslinger", "Wheels": "spellslinger",
+      "Aggro": "aggro", "Voltron": "aggro", "Combat Damage": "aggro", "Power Matters": "aggro", "Equipment": "aggro", "Auras": "aggro", "Extra Combats": "aggro", "Infect": "aggro",
+      "Battlecruiser": "battlecruiser", "Lands Matter": "battlecruiser", "Landfall": "battlecruiser", "Ramp": "battlecruiser",
+      "cEDH": "cedh", "Combo": "cedh", "Turbo": "cedh", "Farm": "cedh",
+      "Casual": "casual", "Budget": "casual", "Jank": "casual",
     };
-    const TAG_PRIORITY = ["highPower", "combo", "graveyard", "reanimator", "aristocrats", "sacrifice", "tokens", "saprolings", "spellslinger", "voltron", "lands", "artifacts", "enchantress", "control", "battlecruiser", "casual"];
-    const deckTags = JSON.parse(localStorage.getItem("deck_tags") || "{}");
     const isLandCard = (c) => cardTypes(c).has("land");
 
     function computeDeckStats(cards, folderId) {
@@ -3980,52 +4169,12 @@
       const s = new Set(); cards.forEach((c) => (c.color_identity || []).forEach((x) => s.add(x))); return [...s];
     }
     function manaPipsHtml(colors) { return `<span class="da2-pips">${WUBRG.filter((c) => colors.includes(c)).map((c) => `<span class="da2-pip da2-sb-${c.toLowerCase()}">${MANA_SVG[c.toLowerCase()]}</span>`).join("")}</span>`; }
-    function autoDeckTags(cards) {
-      const text = cards.map((c) => `${c.name} ${c.type_line || ""} ${getOracleText(c)}`).join(" ").toLowerCase();
-      const has = (re) => (text.match(re) || []).length;
-      const tags = new Set();
-      const graveyardSignals = has(/\bgraveyard\b|reanimate|return .*from your graveyard|mill\b|dredge|buried alive|stitcher's supplier|meren|slimefoot and squee/g);
-      const tokenSignals = has(/\btoken\b|saproling|aristocrat|sacrifice another|whenever .* dies|dies\b|viscera seer|skullclamp|altar of dementia/g);
-      const saprolingSignals = has(/saproling|thallid|spore|fungal|slimefoot|mycotyrant|shroofus/g);
-      const instantSignals = has(/\binstant\b|sorcery|copy target|magecraft|prowess|counter target/g);
-      const bigManaSignals = has(/\bpower 7|mana value 7|big creature|eldrazi|dragon\b|dinosaur\b|trample\b/g);
-      const artifactSignals = has(/\bartifact\b|equipment|treasure|servo|thopter|clue\b|food\b/g);
-      const enchantmentSignals = has(/\benchantment\b|aura\b|constellation|enchantress/g);
-      const landsSignals = has(/\blandfall\b|lands? you control|play an additional land|from your graveyard.*land|life from the loam/g);
-      const voltronSignals = has(/commander gets|equipped creature|enchanted creature|double strike|aura you control|equipment you control/g);
-      const controlSignals = has(/counter target|draw-go|tap target|can't attack|return target .*owner/g);
-      const comboSignals = has(/combo|infinite|you win the game|wins the game|untap .*permanent|copy .*spell/g);
-      const lowCurveSignals = cards.filter((c) => !isLandCard(c) && (c.cmc || 0) <= 2).length;
-      if (graveyardSignals >= 6) tags.add("graveyard");
-      if (has(/reanimate|animate dead|return .*from your graveyard|meren|slimefoot and squee/g) >= 2) tags.add("reanimator");
-      if (tokenSignals >= 6) tags.add("tokens");
-      if (tokenSignals >= 8 || has(/sacrifice|dies\b|viscera seer|skullclamp|altar of dementia|attrition/g) >= 5) tags.add("aristocrats");
-      if (has(/sacrifice|viscera seer|altar of dementia|culling the weak|village rites|attrition/g) >= 4) tags.add("sacrifice");
-      if (saprolingSignals >= 4) tags.add("saprolings");
-      if (instantSignals >= 10) tags.add("spellslinger");
-      if (voltronSignals >= 5) tags.add("voltron");
-      if (landsSignals >= 4) tags.add("lands");
-      if (artifactSignals >= 10) tags.add("artifacts");
-      if (enchantmentSignals >= 10) tags.add("enchantress");
-      if (bigManaSignals >= 8) tags.add("battlecruiser");
-      if (controlSignals >= 10) tags.add("control");
-      if (comboSignals >= 4) tags.add("combo");
-      if (lowCurveSignals >= 28 && (instantSignals >= 8 || comboSignals >= 3)) tags.add("highPower");
-      if (!tags.size) tags.add("casual");
-      const ordered = TAG_PRIORITY.filter((key) => tags.has(key));
-      return ordered.slice(0, 5);
-    }
-    function deckTagKeys(folderId, cards) {
-      const manual = deckTags[folderId];
-      if (Array.isArray(manual)) return manual.filter((key) => DECK_TAGS[key]);
-      return autoDeckTags(cards);
-    }
     // A deck is rarely a single archetype — blend the profiles of every archetype its
     // tags imply into one composite lens: targets are averaged, weights taken at their max
     // (so if any archetype leans hard on a role, the blended lens still cares about it).
     function blendProfiles(tags) {
       const lensKeys = [...new Set((tags || [])
-        .map((t) => DECK_TAGS[t] && DECK_TAGS[t].lens)
+        .map((tag) => IDENTITY_TAG_LENSES[tag])
         .filter((k) => k && DECK_STYLE_PROFILES[k] && k !== "default"))];
       if (!lensKeys.length) return DECK_STYLE_PROFILES.default;
       const profiles = lensKeys.map((k) => DECK_STYLE_PROFILES[k]);
@@ -4058,27 +4207,15 @@
         mvTarget: blendRange("mvTarget", true),
       };
     }
-    function effectiveDeckProfile(folderId, cards, tags = deckTagKeys(folderId, cards)) {
-      return blendProfiles(tags);
+    function effectiveDeckProfile(identityTags = []) {
+      return blendProfiles(identityTags);
     }
-    function persistDeckTags(folderId, tags) {
-      deckTags[folderId] = TAG_PRIORITY.filter((key) => tags.includes(key) && DECK_TAGS[key]);
-      localStorage.setItem("deck_tags", JSON.stringify(deckTags));
-    }
-    function resetDeckTags(folderId) {
-      delete deckTags[folderId];
-      localStorage.setItem("deck_tags", JSON.stringify(deckTags));
-    }
-    function deckTagsHtml(folderId, cards) {
-      const tags = deckTagKeys(folderId, cards);
-      const selected = new Set(tags);
-      const available = TAG_PRIORITY.filter((key) => DECK_TAGS[key] && !selected.has(key));
-      const manual = Array.isArray(deckTags[folderId]);
-      const chips = tags.map((key) => `<button class="da2-tag-chip" data-tag="${key}" title="Remove ${esc(DECK_TAGS[key].label)}" aria-label="Remove ${esc(DECK_TAGS[key].label)}">${esc(DECK_TAGS[key].label)}<span aria-hidden="true">×</span></button>`).join("");
-      const add = available.length
-        ? `<select class="da2-tag-add" id="da2-tag-add" aria-label="Add deck tag"><option value="">Add tag</option>${available.map((key) => `<option value="${key}">${esc(DECK_TAGS[key].label)}</option>`).join("")}</select>`
-        : "";
-      return `<div class="da2-tags" id="da2-tags"><span class="da2-tags-label">Tags</span>${chips}${add}${manual ? `<button class="da2-tag-reset" id="da2-tag-reset" title="Restore auto tags">Auto</button>` : ""}</div>`;
+    function deckIdentityHtml(identityTags, analyzed) {
+      if (!analyzed) return `<div class="da2-tags"><span class="da2-tags-label">Deck identity</span><span class="da2-tag-chip"><span>Appears after Analyze</span></span></div>`;
+      const chips = identityTags.length
+        ? identityTags.map((tag) => `<span class="da2-tag-chip">${esc(tag)}</span>`).join("")
+        : `<span class="da2-tag-chip"><span>No clear identity returned</span></span>`;
+      return `<div class="da2-tags"><span class="da2-tags-label">Deck identity</span>${chips}<span class="da2-approx">AI-derived</span></div>`;
     }
 
     function cardProduces(card) {
@@ -4157,33 +4294,89 @@
       }).join("");
     }
 
-    // Heuristic role detection — approximate, refined by the AI review.
-    function detectRoles(cards, folderId) {
-      const counts = { ramp: 0, draw: 0, removal: 0, wipes: 0, tutors: 0, interaction: 0, graveyardHate: 0, protection: 0 };
+    const ROLE_KEYS = ["ramp", "draw", "removal", "wipes", "tutors", "interaction", "graveyardHate", "protection"];
+    const REMOVAL_TARGET_TYPES = ["creature", "artifact", "enchantment", "planeswalker"];
+
+    // Scans every "target ..." clause (a fixed window after each occurrence, not a single
+    // greedy regex) so compound phrasing like "target creature or planeswalker" or
+    // "target artifact, creature, or enchantment" still finds every type named.
+    function removalTargetTypes(ot) {
+      const types = new Set();
+      let from = 0;
+      for (let i = ot.indexOf("target ", from); i >= 0; i = ot.indexOf("target ", from)) {
+        const window = ot.slice(i, i + 60);
+        if (/\bpermanent\b/.test(window)) REMOVAL_TARGET_TYPES.forEach((t) => types.add(t));
+        else REMOVAL_TARGET_TYPES.forEach((t) => { if (new RegExp(`\\b${t}\\b`).test(window)) types.add(t); });
+        from = i + 7;
+      }
+      if (/\bany target\b/.test(ot)) types.add("creature");
+      return types;
+    }
+
+    // The ledger intentionally keeps the heuristic's card-level evidence, even after an AI
+    // review refines a count. That makes the AI adjustment visible rather than opaque.
+    function classifyRoleCard(c) {
+      const tl = (c.type_line || "").toLowerCase();
+      const ot = getOracleText(c).toLowerCase();
+      const isLand = tl.includes("land");
+      const isInstant = tl.includes("instant") || /\bflash\b|cast .* as though .* flash|activate only as an instant/.test(ot);
+      const isActivatedAnswer = !tl.includes("sorcery") && /\}[^\n]*:\s*(destroy|exile|return|counter)/.test(ot);
+      const removal = /destroy target|exile target|return target .*to (its|their) owner|put target .* on (the top|bottom) of|deals? \d+ damage to (target|any target)|fights? target|target creature gets -|counter target activated|counter target triggered|counter target spell/.test(ot);
+      const massRemoval = /(?:destroy|exile|return) all (creatures|nonland permanents|artifacts|enchantments)|(?:destroy|exile) each (creature|nonland permanent)|deals? \d+ damage to each (other )?creature|deals? damage equal to .* to each (other )?creature|all creatures get -|each player sacrifices (all|two|three|\d+)|sacrifice all/.test(ot);
+      const friendlyMassEffect = /(exile|return|phase out) (each|all|any number of) creatures? you control/.test(ot);
+      const setupDependent = /\bsacrifice\b|\btoken\b|combat damage|\battacks?\b|\bdies\b|whenever (another |a )?creature|if .* died|each player draws|exile.*graveyard/.test(ot);
+      const roles = {};
+      const add = (role, conditional = false, note = "", extra = {}) => { roles[role] = { conditional, note, ...extra }; };
+      if (!isLand && (/\badd \{/.test(ot) || /whenever .* add \{/.test(ot) || /mana of any (one )?color/.test(ot) || /search your library for .*\bland\b/.test(ot) || /put .*\bland[s]?\b.*onto the battlefield/.test(ot) || /lands? you control.*add[s]? an additional/.test(ot) || /treasure token/.test(ot))) add("ramp", setupDependent, setupDependent ? "Setup or one-shot mana" : "Reliable mana source");
+      if (/draw (a|one|two|three|four|x|\w+) cards?/.test(ot) || /whenever .*draw a card/.test(ot) || /you may play .*from (the top of|your graveyard)/.test(ot) || /look at the top card .* you may (cast|play)/.test(ot)) add("draw", setupDependent, setupDependent ? "Needs board state or setup" : "Direct card access");
+      if (removal) add("removal", false, "Opponent-facing answer", { instant: isInstant, targets: [...removalTargetTypes(ot)] });
+      if (massRemoval && !friendlyMassEffect) add("wipes", false, "Mass removal");
+      if (/search your library for (a|an|up to)/.test(ot) && !/basic land/.test(ot)) add("tutors", false, "Finds a specific card");
+      if (removal && (isInstant || isActivatedAnswer) || /counter target spell|counter target activated|counter target triggered/.test(ot)) add("interaction", false, "Reactive opponent-facing answer");
+      if (/exile.*graveyard|graveyard.*exile|from a graveyard|can't leave graveyards|cards in graveyards can't|graveyards? are exiled/.test(ot)) add("graveyardHate", false, "Disrupts graveyards");
+      if (/hexproof|indestructible|protection from|\bward\b|\bshroud\b|can't be countered|phase out|prevent all damage|regenerate|can't lose the game|return .* you control .* to (its|their) owner's hand/.test(ot)) add("protection", false, "Protects your board or commander");
+      return roles;
+    }
+
+    function detectRoleDetails(cards, folderId) {
+      const details = Object.fromEntries(ROLE_KEYS.map((key) => [key, { count: 0, cards: [] }]));
       cards.forEach((c) => {
         if (isBasicLand(c)) return;
         const q = cardQty(folderId, c.id);
-        const tl = (c.type_line || "").toLowerCase();
-        const ot = getOracleText(c).toLowerCase();
-        const isLand = tl.includes("land");
-        const add = (k) => (counts[k] += q);
-        if (!isLand && (/\badd \{/.test(ot) || /whenever .* add \{/.test(ot) || /mana of any (one )?color/.test(ot) || /search your library for .*\bland\b/.test(ot) || /put .*\bland[s]?\b.*onto the battlefield/.test(ot) || /lands? you control.*add[s]? an additional/.test(ot) || /treasure token/.test(ot))) add("ramp");
-        if ((/draw (a|one|two|three|four|x|\w+) cards?/.test(ot) || /whenever .*draw a card/.test(ot) || /you may play .*from (the top of|your graveyard)/.test(ot) || /look at the top card .* you may (cast|play)/.test(ot)) && !/opponent draws|each player draws/.test(ot)) add("draw");
-        if (/destroy target|exile target|return target .*to (its|their) owner|put target .* on (the top|bottom) of|deals? \d+ damage to (target|any target)|fights? target|target creature gets -|counter target activated|counter target triggered|counter target spell/.test(ot)) add("removal");
-        if (/destroy all|exile all|destroy each|exile each|deals? \d+ damage to each|all creatures get -|each player sacrifices|for each creature|sacrifice all/.test(ot)) add("wipes");
-        if (/search your library for (a|an|up to)/.test(ot) && !/basic land/.test(ot)) add("tutors");
-        if (tl.includes("instant") || /\bflash\b|counter target|cast .* as though .* flash|activate only as an instant/.test(ot)) add("interaction");
-        if (/exile.*graveyard|graveyard.*exile|from a graveyard|can't leave graveyards|cards in graveyards can't|graveyards? are exiled/.test(ot)) add("graveyardHate");
-        if (/hexproof|indestructible|protection from|\bward\b|\bshroud\b|can't be countered|phase out|prevent all damage|regenerate|return .* you control .* to (its|their) owner's hand/.test(ot)) add("protection");
+        const roles = classifyRoleCard(c);
+        Object.entries(roles).forEach(([role, meta]) => {
+          details[role].count += q;
+          details[role].cards.push({ name: c.name, qty: q, cmc: Number(c.cmc || 0), ...meta });
+        });
       });
-      return counts;
+      return details;
+    }
+
+    function countsFromRoleDetails(details) {
+      return Object.fromEntries(ROLE_KEYS.map((key) => [key, details[key].count]));
+    }
+
+    function detectRoles(cards, folderId) { return countsFromRoleDetails(detectRoleDetails(cards, folderId)); }
+
+    function cardFlowStats(details) {
+      const out = { total: 0, early: 0, conditional: 0, late: 0 };
+      (details.draw?.cards || []).forEach((card) => {
+        out.total += card.qty;
+        if (card.conditional) out.conditional += card.qty;
+        else if (card.cmc <= 3) out.early += card.qty;
+        else out.late += card.qty;
+      });
+      return out;
     }
     function detectMassLandDenial(cards) {
       return cards.some((c) => /destroy all lands|each player sacrifices? (a|all|two|three|\w+) lands?|destroy target land.*for each/.test(getOracleText(c).toLowerCase()));
     }
+    // Only cards that actively END the game in your favor. "can't lose the game"
+    // (Platinum Angel, Cloudsteel Kirin) is protection/stall, and "you lose the game"
+    // is a drawback (Demonic Pact) — neither is a win condition.
     function detectWinCons(cards) {
       const names = [];
-      cards.forEach((c) => { if (isBasicLand(c)) return; if (/you win the game|wins the game|can't lose the game|each opponent loses the game|target player loses the game|you lose the game/.test(getOracleText(c).toLowerCase())) names.push(c.name); });
+      cards.forEach((c) => { if (isBasicLand(c)) return; if (/you win the game|wins the game|each opponent loses the game|target player loses the game/.test(getOracleText(c).toLowerCase())) names.push(c.name); });
       return [...new Set(names)];
     }
 
@@ -4263,6 +4456,62 @@
       if (first === "C") return "grade-c";
       return "grade-d";
     }
+    function cardFlowHtml(flow) {
+      if (!flow.total) return `<div class="da2-vsub" style="margin-top:7px">No card-advantage effects detected yet.</div>`;
+      const pct = (n) => `${Math.max(0, n / flow.total * 100)}%`;
+      return `<div class="da2-flow-summary"><div class="da2-flow-score">${flow.early}</div><div class="da2-flow-copy"><b>Early direct access</b><span>of ${flow.total} total card-advantage effects</span></div></div>
+        <div class="da2-flow-track" title="Early/direct, conditional, and late card access"><i class="da2-flow-seg early" style="width:${pct(flow.early)}"></i><i class="da2-flow-seg conditional" style="width:${pct(flow.conditional)}"></i><i class="da2-flow-seg late" style="width:${pct(flow.late)}"></i></div>
+        <div class="da2-flow-legend"><span><i class="early"></i>Early/direct ${flow.early}</span><span><i class="conditional"></i>Conditional ${flow.conditional}</span><span><i class="late"></i>Late ${flow.late}</span></div>`;
+    }
+    // Detail-only addendum for the Removal row: what permanent types it can answer, and
+    // how much of it is instant-speed. Folded into the existing note so it only costs
+    // anything once the row is expanded — nothing changes in the collapsed view.
+    function removalCoverageNote(detail) {
+      if (!detail.count) return "";
+      const instantQty = detail.cards.reduce((n, c) => n + (c.instant ? c.qty : 0), 0);
+      const covered = new Set();
+      detail.cards.forEach((c) => (c.targets || []).forEach((t) => covered.add(t)));
+      const missing = REMOVAL_TARGET_TYPES.filter((t) => !covered.has(t));
+      const bits = [];
+      if (covered.size) bits.push(missing.length ? `no coverage for ${listJoin(missing.map((t) => t + "s"))}` : "answers all permanent types");
+      bits.push(`${instantQty} of ${detail.count} instant-speed`);
+      return ` ${capitalize(bits.join("; "))}.`;
+    }
+    function roleLedgerHtml(details, counts, profile, grade, aiRead = false) {
+      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
+      const order = ["ramp", "draw", "removal", "interaction", "wipes", "protection", "tutors", "graveyardHate"];
+      const subtitles = {
+        ramp: "Mana acceleration and land development",
+        draw: "Card advantage and repeatable access",
+        removal: "Targeted opponent-facing answers",
+        interaction: "Reactive answers, not just instant-speed utility",
+        wipes: "Mass removal and reset effects",
+        protection: "Keeps your commander or board intact",
+        tutors: "Finds a specific card or engine piece",
+        graveyardHate: "Disrupts opposing graveyards",
+      };
+      const rows = order.map((key) => {
+        const [lo, hi] = targets[key];
+        const value = counts[key] || 0;
+        const item = grade.items.find((entry) => entry.key === key);
+        const status = item?.status || scoreCheck(value, lo, hi).status;
+        const detail = details[key] || { count: 0, cards: [] };
+        const conditional = detail.cards.filter((card) => card.conditional).length;
+        const aiDifference = aiRead && value !== detail.count;
+        const note = (aiDifference
+          ? `AI classified ${value}; the heuristic evidence below finds ${detail.count}.`
+          : `${detail.count} heuristic match${detail.count === 1 ? "" : "es"}${conditional ? ` · ${conditional} setup-dependent` : ""}.`
+        ) + (key === "removal" ? removalCoverageNote(detail) : "");
+        const cards = detail.cards.slice(0, 14).map((card) => `<button class="da2-role-card${card.conditional ? " conditional" : ""}" type="button" data-card="${esc(card.name)}" title="Show ${esc(card.name)} in card focus">${esc(card.name)}${card.qty > 1 ? ` ×${card.qty}` : ""}</button>`).join("");
+        const remaining = detail.cards.length - 14;
+        const open = status !== "ok";
+        return `<div class="da2-role ${status}${open ? " open" : ""}">
+          <button class="da2-role-toggle" type="button" aria-expanded="${open}" aria-controls="da2-role-${key}"><i class="da2-role-status"></i><span><span class="da2-role-title">${esc(AI_LABEL[key])}</span><span class="da2-role-sub">${esc(subtitles[key])}</span></span><span class="da2-role-value">${fmtScoreNum(value)} <small>/ ${targetLabel(lo, hi)}</small></span><svg class="da2-role-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="da2-role-detail" id="da2-role-${key}"><p class="da2-role-note">${esc(note)}</p><div class="da2-role-cards">${cards || `<span class="da2-role-card conditional">No heuristic matches</span>`}${remaining > 0 ? `<span class="da2-role-card">+${remaining} more</span>` : ""}</div>${conditional ? `<div class="da2-role-key">Dashed cards are temporary, setup-dependent, or board-state dependent.</div>` : ""}</div>
+        </div>`;
+      }).join("");
+      return `<div class="da2-ledger-head"><div class="da-h" style="margin:0">Role ledger <span class="da2-approx">· ${aiRead ? "AI-refined" : "heuristic"}</span></div><span class="da2-ledger-hint">Expand a role to inspect its cards</span></div>${rows}`;
+    }
     function deckGaps(counts, sources, profile = DECK_STYLE_PROFILES.default) {
       const g = [];
       const targets = profile.roleTargets || BASE_ROLE_TARGETS;
@@ -4274,10 +4523,11 @@
     function heuristicVerdict(counts, sources, profile = DECK_STYLE_PROFILES.default) {
       const shorts = [];
       const targets = profile.roleTargets || BASE_ROLE_TARGETS;
-      ["ramp", "draw", "removal", "wipes", "interaction"].forEach((k) => { if ((counts[k] || 0) < targets[k][0]) shorts.push(AI_LABEL[k].toLowerCase()); });
+      ["ramp", "draw", "removal", "interaction"].forEach((k) => { if ((counts[k] || 0) < targets[k][0]) shorts.push(AI_LABEL[k].toLowerCase()); });
       const shortColors = sources.filter((s) => s.have < s.need).map((s) => COLOR_FULL[s.c].toLowerCase());
       const bits = [];
       if (shorts.length) bits.push(`light on ${listJoin(shorts)}`);
+      if ((counts.wipes || 0) < targets.wipes[0]) bits.push("considering a board reset for creature-heavy tables");
       if (shortColors.length) bits.push(`${listJoin(shortColors)} under-sourced`);
       return bits.length ? `Solid ${profile.label.toLowerCase()} shell — ${listJoin(bits)}.` : `Well-rounded for ${profile.label.toLowerCase()}.`;
     }
@@ -4293,21 +4543,6 @@
       const clean = String(note || "").replace(/\s+/g, " ").trim();
       if (clean.length <= max) return clean;
       return clean.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
-    }
-    function gradeBreakdownHtml(grade) {
-      const groups = ["Core", "Core roles", "Support roles"];
-      const rows = groups.map((group) => {
-        const items = grade.items.filter((item) => item.group === group);
-        if (!items.length) return "";
-        return `<div class="da2-grade-group"><h4>${esc(group)}</h4>${items.map((item) => `
-          <div class="da2-check ${item.status}">
-            <div class="da2-check-name">${esc(item.label)}</div>
-            <div class="da2-check-val">${esc(item.valueLabel)} <span class="da2-vsub">/ ${esc(item.target)}</span></div>
-            <div class="da2-check-note">${esc(compactNote(item.note))} · weight ${item.weight.toFixed(2).replace(/\.00$/, "")}</div>
-          </div>`).join("")}</div>`;
-      }).join("");
-      const source = grade.aiRead ? "AI-read role counts" : "Heuristic role counts";
-      return `<div class="da2-grade-top"><span><b>${grade.score}%</b> weighted health score · ${source}</span><span>${esc(grade.profileLabel)} · ${esc(grade.profileNote)}</span></div>${rows}`;
     }
     function applyAiGradeContext(grade, data) {
       if (!data || !data.roleNotes) return grade;
@@ -4331,8 +4566,6 @@
         g.className = `da2-badge ${gradeTone(grade.letter)}`;
         g.title = `${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target`;
       }
-      const drawer = $("#da2-grade-drawer");
-      if (drawer) drawer.innerHTML = gradeBreakdownHtml(grade);
     }
 
     // Game Changers list (for the bracket) — fetched once, cached.
@@ -4346,10 +4579,11 @@
     }
     // folderId -> { sig, data } — persisted so an AI review survives reloads; the stored
     // sig is compared to the live deck signature on render, so it self-invalidates on edits.
+    const DECK_REVIEW_CACHE_VERSION = 3;
     const deckReviewCache = JSON.parse(localStorage.getItem("deck_reviews") || "{}");
     function persistDeckReviews() { try { localStorage.setItem("deck_reviews", JSON.stringify(deckReviewCache)); } catch (e) { /* quota — keep the in-memory copy */ } }
     let daCtx = null; // current panel context — lets AI extras recompute grade/gaps/drawer
-    function deckSig(cards, folderId) { return cards.map((c) => c.id + ":" + cardQty(folderId, c.id)).sort().join("|"); }
+    function deckSig(cards, folderId, commanderName = "") { return `${DECK_REVIEW_CACHE_VERSION}|${commanderName}|${cards.map((c) => c.id + ":" + cardQty(folderId, c.id)).sort().join("|")}`; }
 
     async function enhanceBracket(cards, folderId) {
       const gc = await loadGameChangers();
@@ -4381,28 +4615,62 @@
       } catch (e) { /* offline / no combos — leave hidden */ }
     }
 
-    // Fill the AI-only parts (verdict, refined radar, trim) from a review result.
+    // Add/Trim card chip — clicking opens that card in the focus panel.
+    function fixCardChip(raw, kind) {
+      const name = String(raw).replace(/^[\s+\-–—]+/, "").trim();
+      return `<span class="da2-chip ${kind} da2-card-chip" data-card="${esc(name)}" role="button" tabindex="0" title="Show ${esc(name)}">${esc(kind === "trim" ? "− " + name : name)}</span>`;
+    }
+    function fixRowsHtml(data) {
+      const add = Array.isArray(data.add) ? data.add : [];
+      const trim = Array.isArray(data.trim) ? data.trim : [];
+      const addChips = add.length ? add.map((n) => fixCardChip(n, "add")).join("") : `<span class="da2-chip muted">no clear adds</span>`;
+      const trimChips = trim.length ? trim.map((n) => fixCardChip(n, "trim")).join("") : `<span class="da2-chip muted">no obvious cuts</span>`;
+      return `<div class="da2-fix" id="da2-add-row"><span class="da2-fixlbl add">Add</span>${addChips}</div>
+        <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>`;
+    }
+    // Resolve a card by name (saved cards first, then Scryfall) and open its focus panel.
+    async function openCardByName(name) {
+      if (!name) return;
+      const key = String(name).toLowerCase();
+      let card = state.savedCards.find((c) => frontFaceName(c.name).toLowerCase() === key || (c.name || "").toLowerCase() === key);
+      if (!card) {
+        try {
+          let res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`);
+          if (!res.ok) res = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`);
+          if (res.ok) card = await res.json();
+        } catch (e) { /* not found / offline */ }
+      }
+      if (card) showDetail(card);
+    }
+
+    function wireRoleLedger() {
+      const ledger = $("#da2-role-ledger");
+      ledger?.querySelectorAll(".da2-role-toggle").forEach((btn) => btn.addEventListener("click", () => {
+        const role = btn.closest(".da2-role");
+        const open = !role.classList.contains("open");
+        role.classList.toggle("open", open);
+        btn.setAttribute("aria-expanded", String(open));
+      }));
+      ledger?.querySelectorAll(".da2-role-card[data-card]").forEach((chip) => chip.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openCardByName(chip.dataset.card);
+      }));
+    }
+
+    // Fill the AI-only parts (verdict, refined ledger + grade, Add/Trim card suggestions).
     function renderAiExtras(data) {
       const v = $("#da2-verdict"); if (v && data.verdict) v.textContent = data.verdict;
       if (data.counts && Object.keys(data.counts).length) {
-        const r = $("#da2-radar"); if (r) r.innerHTML = roleRadarHtml(data.counts, daCtx?.profile || DECK_STYLE_PROFILES.default);
-        const a = $("#da2-approx"); if (a) a.textContent = "· AI-read";
-        // Keep the scorecard in sync with the refined counts — otherwise the Add
-        // chips and grade (computed from heuristics) contradict the AI radar.
         if (daCtx) {
           const grade = applyAiGradeContext(computeGrade(data.counts, daCtx.sources, daCtx.stats, daCtx.profile), data);
           updateGradeUi(grade);
-          const gaps = deckGaps(data.counts, daCtx.sources, daCtx.profile);
-          const addRow = $("#da2-add-row");
-          if (addRow) addRow.innerHTML = `<span class="da2-fixlbl add">Add</span>` + (gaps.length ? gaps.map((x) => `<span class="da2-chip add">${esc(x)}</span>`).join("") : `<span class="da2-chip muted">nothing urgent</span>`);
-          const sub = $("#da2-subnote"); if (sub) sub.textContent = `Role counts are AI-classified; targets blended from your archetype tags${daCtx.profile.label && daCtx.profile.label !== "Default" ? ` (${daCtx.profile.label.toLowerCase()})` : ""}.`;
+          const ledger = $("#da2-role-ledger"); if (ledger) { ledger.innerHTML = roleLedgerHtml(daCtx.roleDetails, data.counts, daCtx.profile, grade, true); wireRoleLedger(); }
+          const flow = $("#da2-card-flow"); if (flow) flow.innerHTML = cardFlowHtml(daCtx.flow);
+          const sub = $("#da2-subnote"); if (sub) sub.textContent = "Role counts and deck identity are AI-classified; health targets adapt quietly to the deck's plan.";
         }
       }
-      const row = $("#da2-trim-row");
-      if (row) {
-        const chips = (data.trim && data.trim.length) ? data.trim.map((t) => `<span class="da2-chip trim">${esc(t)}</span>`).join("") : `<span class="da2-chip muted">no obvious cuts</span>`;
-        row.innerHTML = `<span class="da2-fixlbl trim">Trim</span>${chips}`;
-      }
+      const wrap = $("#da2-fix-wrap");
+      if (wrap) wrap.innerHTML = fixRowsHtml(data);
     }
 
     function renderDeckAnalysis(deck, cards) {
@@ -4419,37 +4687,37 @@
       if (s.total < ANALYSIS_MIN_CARDS) {
         dA.innerHTML = `
           <div class="da2-strip da2-strip-min">
-            <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)}</small></div>
+            <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
           </div>
-          <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role radar, bracket and mana checks will appear here.</div>`;
+          <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role ledger, bracket and mana checks will appear here.</div>`;
         dA.style.display = "block";
         dA.classList.remove("collapsed");
         return;
       }
-      const tags = deckTagKeys(folderId, cards);
-      const profile = effectiveDeckProfile(folderId, cards, tags);
-      const lensNote = profile.label && profile.label !== "Default" ? ` (${profile.label.toLowerCase()})` : "";
+      // The AI review persists across deck edits (stale reads beat losing the analysis
+      // on every add); only a Re-analyze — or a cache-version bump — replaces it.
+      const sig = deckSig(cards, folderId, commander?.name);
+      const reviewEntry = deckReviewCache[folderId];
+      const validEntry = reviewEntry && typeof reviewEntry.sig === "string" && reviewEntry.sig.startsWith(`${DECK_REVIEW_CACHE_VERSION}|`) ? reviewEntry : null;
+      const cached = validEntry ? validEntry.data : null;
+      const staleReview = Boolean(validEntry && validEntry.sig !== sig);
+      const identityTags = Array.isArray(cached?.identityTags) ? cached.identityTags : [];
+      const profile = effectiveDeckProfile(identityTags);
       const sources = colorSourceStats(cards, folderId, colors);
-      const roles = detectRoles(cards, folderId);
+      const roleDetails = detectRoleDetails(cards, folderId);
+      const roles = countsFromRoleDetails(roleDetails);
+      const flow = cardFlowStats(roleDetails);
       const wincons = detectWinCons(cards);
 
-      const sig = deckSig(cards, folderId);
-      const cached = deckReviewCache[folderId] && deckReviewCache[folderId].sig === sig ? deckReviewCache[folderId].data : null;
       const counts = (cached && cached.counts && Object.keys(cached.counts).length) ? cached.counts : roles;
       const grade = applyAiGradeContext(computeGrade(counts, sources, s, profile), cached);
-      const gaps = deckGaps(counts, sources, profile);
       const verdict = (cached && cached.verdict) ? cached.verdict : heuristicVerdict(roles, sources, profile);
 
-      const addChips = gaps.length ? gaps.map((g) => `<span class="da2-chip add">${esc(g)}</span>`).join("") : `<span class="da2-chip muted">nothing urgent</span>`;
-      const trimChips = (cached && cached.trim && cached.trim.length)
-        ? cached.trim.map((t) => `<span class="da2-chip trim">${esc(t)}</span>`).join("")
-        : `<span class="da2-chip muted cta" id="da2-trim-cta">Run AI Review for cut ideas →</span>`;
-
-      daCtx = { folderId, sources, stats: s, profile }; // let renderAiExtras recompute grade/gaps from AI counts
+      daCtx = { folderId, sources, stats: s, profile, roleDetails, flow }; // let AI review refine the grade while retaining card-level evidence
 
       dA.innerHTML = `
         <div class="da2-strip">
-          <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)}</small></div>
+          <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
           <div class="da2-bracket-wrap">
             <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
             <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
@@ -4459,62 +4727,49 @@
         <div class="da2-score">
           <div class="da2-gradebox">
             <div class="da2-badge ${gradeTone(grade.letter)}" id="da2-grade" title="${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target"><b>${grade.letter}</b></div>
-            <button class="da2-more-btn" id="da2-more-btn" title="Show grade details" aria-label="Show grade details" aria-expanded="false" aria-controls="da2-grade-drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>
           </div>
           <div>
-            <div class="da2-vrow"><div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div><button class="da-review-btn" id="da-review-btn">${cached ? "Re-run AI" : "AI Review"}</button></div>
-            <div class="da2-vsub" id="da2-subnote">${cached ? `Role counts are AI-classified; targets blended from your archetype tags${esc(lensNote)}.` : `Targets blended from your archetype tags${esc(lensNote)}; role counts are heuristic until you run AI Review.`}</div>
-            ${deckTagsHtml(folderId, cards)}
-            <div class="da2-fix" id="da2-add-row"><span class="da2-fixlbl add">Add</span>${addChips}</div>
-            <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>
+            <div class="da2-vrow"><div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div><button class="da-review-btn" id="da-review-btn">${ICON_SPARKLE}<span class="da-review-label">${cached ? "Re-analyze" : "Analyze"}</span></button></div>
+            <div class="da2-vsub" id="da2-subnote">${staleReview ? "Deck changed since the last analysis — showing the previous AI read. Re-analyze to refresh." : cached ? "Role counts and deck identity are AI-classified; health targets adapt quietly to the deck's plan." : "Role counts are heuristic — run Analyze to identify this deck's plan and get card-level suggestions."}</div>
+            ${deckIdentityHtml(identityTags, Boolean(cached))}
+            <div class="da2-fix-wrap" id="da2-fix-wrap">${cached ? fixRowsHtml(cached) : ""}</div>
           </div>
-          <div class="da2-grade-drawer" id="da2-grade-drawer">${gradeBreakdownHtml(grade)}</div>
         </div>
-        <div class="da2-cols">
-          <div class="da2-card da2-radar-card"><div class="da-h">Role coverage <span class="da2-approx" id="da2-approx">${cached ? "· AI-read" : "· heuristic"}</span></div><div id="da2-radar">${roleRadarHtml(counts, profile)}</div></div>
-          <div class="da2-card">
+        <div class="da2-layout">
+          <section class="da2-card da2-ledger" id="da2-role-ledger">${roleLedgerHtml(roleDetails, counts, profile, grade, Boolean(cached))}</section>
+          <div class="da2-side">
+          <div class="da2-card da2-mana-card">
             <div class="da-h">Mana curve</div>
             ${curveHtml(s.curve)}
-            <div class="da-h" style="margin-top:14px">Distribution</div>
-            ${sourcesHtml(sources)}
+            <div class="da2-section-rule"></div>
+            <div class="da-h" style="margin:0">Card-flow quality</div>
+            <div id="da2-card-flow">${cardFlowHtml(flow)}</div>
+            <div class="da2-color-access"><div class="da2-section-rule"></div>
+              <div class="da-h" style="margin:0 0 2px">Color access</div>
+              ${sourcesHtml(sources)}</div>
           </div>
-        </div>
-        <div class="da2-wc">
-          <div class="da2-wc-head"><div class="da-h" style="margin:0">Win conditions</div><div class="da2-wc-n">${wincons.length}</div></div>
-          ${wincons.length ? `<div>${wincons.slice(0, 8).map((w) => `<span class="da2-wtag">${esc(w)}</span>`).join("")}</div>` : `<div class="da2-vsub" style="margin-top:6px">No explicit game-ending card — likely wins through combat or value.</div>`}
-          <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
+          <div class="da2-wc">
+            <div class="da2-wc-head"><div class="da-h" style="margin:0">Win conditions</div><div class="da2-wc-n">${wincons.length}</div></div>
+            ${wincons.length ? `<div>${wincons.slice(0, 8).map((w) => `<span class="da2-wtag">${esc(w)}</span>`).join("")}</div>` : `<div class="da2-vsub" style="margin-top:6px">No explicit game-ending card — likely wins through combat or value.</div>`}
+            <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
+          </div>
+          </div>
         </div>
         </div>`;
       dA.style.display = "block";
       dA.classList.toggle("collapsed", collapsed);
-      $("#da2-tags")?.addEventListener("click", (e) => {
-        const chip = e.target.closest(".da2-tag-chip");
-        if (chip) {
-          persistDeckTags(folderId, deckTagKeys(folderId, cards).filter((key) => key !== chip.dataset.tag));
-          renderDeckAnalysis(deck, cards);
-          return;
-        }
-        if (e.target.closest("#da2-tag-reset")) {
-          resetDeckTags(folderId);
-          renderDeckAnalysis(deck, cards);
-        }
+      wireRoleLedger();
+      const fixWrapEl = $("#da2-fix-wrap");
+      fixWrapEl?.addEventListener("click", (e) => {
+        const chip = e.target.closest(".da2-card-chip");
+        if (chip) { e.stopPropagation(); openCardByName(chip.dataset.card); }
       });
-      $("#da2-tag-add")?.addEventListener("change", (e) => {
-        const key = e.currentTarget.value;
-        if (!key) return;
-        persistDeckTags(folderId, [...new Set([...deckTagKeys(folderId, cards), key])]);
-        renderDeckAnalysis(deck, cards);
+      fixWrapEl?.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const chip = e.target.closest(".da2-card-chip");
+        if (chip) { e.preventDefault(); openCardByName(chip.dataset.card); }
       });
-      $("#da2-more-btn")?.addEventListener("click", (e) => {
-        const drawer = $("#da2-grade-drawer");
-        const open = !drawer?.classList.contains("open");
-        drawer?.classList.toggle("open", open);
-        e.currentTarget.setAttribute("aria-expanded", String(open));
-        e.currentTarget.title = open ? "Hide grade details" : "Show grade details";
-        e.currentTarget.setAttribute("aria-label", e.currentTarget.title);
-      });
-      $("#da-review-btn").addEventListener("click", () => reviewDeckWithAI(cards, folderId));
-      $("#da2-trim-cta")?.addEventListener("click", () => reviewDeckWithAI(cards, folderId));
+      $("#da-review-btn").addEventListener("click", () => reviewDeckWithAI(cards, folderId, commander, wincons));
       $("#da2-collapse-btn")?.addEventListener("click", () => {
         const next = !dA.classList.contains("collapsed");
         dA.classList.toggle("collapsed", next);
@@ -4562,27 +4817,32 @@
         <div class="rad-legend"><span class="rad-key"><span class="rad-swatch deck"></span>This deck</span><span class="rad-key"><span class="rad-swatch target"></span>Target (minimum)</span></div></div>`;
     }
 
-    async function reviewDeckWithAI(cards, folderId) {
+    async function reviewDeckWithAI(cards, folderId, commander, winConditions) {
       if (!state.hasApiKey) return showSettings();
       const btn = $("#da-review-btn");
-      const trimRow = $("#da2-trim-row");
-      if (btn) { btn.disabled = true; btn.textContent = "Reviewing…"; }
-      if (trimRow) trimRow.innerHTML = `<span class="da2-fixlbl trim">Trim</span><span class="da2-chip muted">Reading ${cards.length} cards…</span>`;
+      const setLabel = (t) => { const l = btn && btn.querySelector(".da-review-label"); if (l) l.textContent = t; };
+      const fixWrap = $("#da2-fix-wrap");
+      if (btn) btn.disabled = true;
+      setLabel("Analyzing…");
+      if (fixWrap) fixWrap.innerHTML = `<div class="da2-fix"><span class="da2-chip muted">Analyzing ${cards.length} cards…</span></div>`;
       try {
         const payload = cards.slice(0, 120).map((c) => ({ name: c.name, type_line: c.type_line || "", oracle_text: getOracleText(c), cmc: c.cmc || 0 }));
         const res = await fetch("/api/deck-review", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cards: payload }),
+          body: JSON.stringify({ cards: payload, commander: commander?.name || "", winConditions: winConditions || [] }),
         });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Review failed"); }
         const data = await res.json();
-        deckReviewCache[folderId] = { sig: deckSig(cards, folderId), data }; // cache per deck version — no re-spend on re-open
+        deckReviewCache[folderId] = { sig: deckSig(cards, folderId, commander?.name), data }; // cache per deck version — no re-spend on re-open
         persistDeckReviews();
-        if (state.activeFolder === folderId) renderAiExtras(data);
-        if (btn) btn.textContent = "Re-run AI";
+        if (state.activeFolder === folderId) {
+          const activeDeck = state.folders.find((folder) => folder.id === folderId);
+          if (activeDeck) renderDeckAnalysis(activeDeck, cards);
+        }
+        setLabel("Re-analyze");
       } catch (err) {
-        if (trimRow) trimRow.innerHTML = `<span class="da2-fixlbl trim">Trim</span><span class="da2-chip trim">${esc(err.message || "Review failed")}</span>`;
-        if (btn) btn.textContent = "AI Review";
+        if (fixWrap) fixWrap.innerHTML = `<div class="da2-fix"><span class="da2-chip trim">${esc(err.message || "Analysis failed")}</span></div>`;
+        setLabel("Analyze");
       } finally {
         if (btn) btn.disabled = false;
       }
@@ -4617,6 +4877,16 @@
       const saveBtn = $("#detail-save-btn");
       saveBtn.textContent = isSaved ? "Saved" : "Save";
       saveBtn.className = isSaved ? "saved" : "";
+      detailFace = 0;
+      $("#detail-flip-btn").style.display = isDoubleFaced(card) ? "" : "none";
+      const maybeBtn = $("#detail-maybe-btn");
+      const detailDeck = activeDeck();
+      if (detailDeck && cardFolders(card.id).includes(detailDeck.id) && detailDeck.commanderId !== card.id) {
+        maybeBtn.textContent = isMaybe(detailDeck.id, card.id) ? "Move to main deck" : "Mark as Maybe";
+        maybeBtn.style.display = "";
+      } else {
+        maybeBtn.style.display = "none";
+      }
       detailCombosBtn.style.display = cardShowsCombos(card) ? "" : "none";
       detailEdhrecBtn.style.display = cardShowsCombos(card) ? "" : "none";
       $("#detail-panel").classList.remove("empty");
@@ -4659,6 +4929,24 @@
       openSavePopover(state.detailCard, e.currentTarget);
     });
 
+    let detailFace = 0; // which face of a double-faced card the focus panel is showing
+    $("#detail-flip-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!state.detailCard) return;
+      detailFace = detailFace === 1 ? 0 : 1;
+      $("#detail-img").src = faceImage(state.detailCard, detailFace);
+    });
+
+    $("#detail-maybe-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const card = state.detailCard;
+      const deck = activeDeck();
+      if (!card || !deck) return;
+      setMaybe(deck.id, card.id, !isMaybe(deck.id, card.id));
+      renderSavedCards();
+      showDetail(card);
+    });
+
     $("#detail-cardmarket-btn").addEventListener("click", () => {
       if (state.detailCard?.purchase_uris?.cardmarket) window.open(state.detailCard.purchase_uris.cardmarket, "_blank");
       else window.open(`https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(state.detailCard?.name || "")}`, "_blank");
@@ -4670,6 +4958,7 @@
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
+        if (cardContextMenu.classList.contains("visible")) { closeCardContextMenu(); return; }
         if (savePopover.classList.contains("visible")) { closeSavePopover(); return; }
         if (importModal.classList.contains("visible")) { hideImport(); return; }
         hideSettings();
@@ -4706,7 +4995,11 @@
     }
     function folderCount(folderId) {
       if (folderId === "all") return state.savedCards.length;
-      return state.savedCards.reduce((n, c) => n + (cardFolders(c.id).includes(folderId) ? cardQty(folderId, c.id) : 0), 0);
+      return state.savedCards.reduce((n, c) => n + (cardFolders(c.id).includes(folderId) && !isMaybe(folderId, c.id) ? cardQty(folderId, c.id) : 0), 0);
+    }
+    function folderMaybeCount(folderId) {
+      if (folderId === "all" || folderId === DEFAULT_FOLDER) return 0;
+      return state.savedCards.reduce((n, c) => n + (cardFolders(c.id).includes(folderId) && isMaybe(folderId, c.id) ? cardQty(folderId, c.id) : 0), 0);
     }
 
     // ── Basic-land quantities (per deck) ──────────────────────────────
@@ -4733,6 +5026,30 @@
       queueOp({ type: "setQuantities", quantities: state.quantities });
     }
 
+    // ── Maybeboard (per deck) ──────────────────────────────────────────
+    // A card stays a member of the deck but is set aside in its own section and
+    // excluded from deck size, analysis, and export. Only meaningful within a real
+    // deck — "all" and Unsorted never carry Maybe state.
+    function isMaybe(folderId, id) {
+      if (!folderId || folderId === "all" || folderId === DEFAULT_FOLDER) return false;
+      return Boolean(state.maybeboard[folderId] && state.maybeboard[folderId][id]);
+    }
+    function setMaybe(folderId, id, on) {
+      if (!folderId || folderId === "all" || folderId === DEFAULT_FOLDER) return;
+      if (on) {
+        if (!state.maybeboard[folderId]) state.maybeboard[folderId] = {};
+        state.maybeboard[folderId][id] = true;
+      } else if (state.maybeboard[folderId]) {
+        delete state.maybeboard[folderId][id];
+        if (!Object.keys(state.maybeboard[folderId]).length) delete state.maybeboard[folderId];
+      }
+      persistMaybeboard();
+    }
+    function persistMaybeboard() {
+      localStorage.setItem("card_maybeboard", JSON.stringify(state.maybeboard));
+      queueOp({ type: "setMaybeboard", maybeboard: state.maybeboard });
+    }
+
     // Add/remove a card to/from one collection. Auto-saves the card on first add;
     // fully unsaves it (and drops membership) when it ends up in no collection.
     function setCardFolder(card, folderId, on) {
@@ -4751,6 +5068,7 @@
           state.membership[card.id] = mem;
         }
         setCardQty(folderId, card.id, 1); // drop any stored count for the folder it left
+        setMaybe(folderId, card.id, false); // drop any Maybe flag for the folder it left
       }
       saveCardsStore();
       saveMembership();
@@ -4775,6 +5093,7 @@
       const deck = state.folders.find((f) => f.id === deckId);
       if (!deck) return;
       deck.commanderId = deck.commanderId === cardId ? null : cardId;
+      if (deck.commanderId) setMaybe(deckId, cardId, false); // the commander can never be Maybe
       saveFolders();
       queueOp({ type: "setFolders", folders: state.folders });
       renderSavedCards();
@@ -4792,7 +5111,7 @@
         state.membership[cid] = mem;
       });
       if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
-      if (deckTags[id]) { delete deckTags[id]; localStorage.setItem("deck_tags", JSON.stringify(deckTags)); }
+      if (state.maybeboard[id]) { delete state.maybeboard[id]; persistMaybeboard(); }
       if (deckReviewCache[id]) { delete deckReviewCache[id]; persistDeckReviews(); }
       saveFolders();
       saveMembership();
@@ -4807,10 +5126,12 @@
       let html = `<div class="rail-label">Decks</div>`;
       items.forEach((f) => {
         const custom = f.id !== "all" && f.id !== DEFAULT_FOLDER;
+        const maybeCount = folderMaybeCount(f.id);
+        const countLabel = `${folderCount(f.id)}${maybeCount ? ` <span class="folder-count-maybe">(${maybeCount})</span>` : ""}`;
         html += `<button class="folder-btn ${state.activeFolder === f.id ? "active" : ""}" data-folder="${f.id}">
             <span class="folder-name">${esc(f.name)}</span>
-            <span class="folder-count">${folderCount(f.id)}</span>
-            ${custom ? `<span class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename">&#9998;</span><span class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete">&#10005;</span>` : ""}
+            <span class="folder-count">${countLabel}</span>
+            <span class="folder-edit-group">${custom ? `<span class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename">&#9998;</span><span class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete">&#10005;</span>` : ""}</span>
           </button>`;
       });
       html += `<div class="rail-divider"></div><button class="folder-add" id="folder-add-btn">+ New deck</button>`;
@@ -4927,6 +5248,103 @@
       if (!savePopover.classList.contains("visible")) return;
       if (savePopover.contains(e.target)) return;
       closeSavePopover();
+    });
+
+    // ── Card right-click context menu ──
+    let contextMenuCard = null;
+
+    function activeDeck() {
+      return (state.activeFolder !== "all" && state.activeFolder !== DEFAULT_FOLDER)
+        ? state.folders.find((f) => f.id === state.activeFolder) || null
+        : null;
+    }
+
+    function openCardContextMenu(card, x, y) {
+      contextMenuCard = card;
+      const deck = activeDeck();
+      const isCommanderCard = Boolean(deck && deck.commanderId === card.id);
+      const commanderItem = cardContextMenu.querySelector('[data-act="commander"]');
+      const maybeItem = cardContextMenu.querySelector('[data-act="maybe"]');
+      const removeItem = cardContextMenu.querySelector('[data-act="remove"]');
+
+      if (deck && isLegendaryCreature(card)) {
+        commanderItem.style.display = "";
+        commanderItem.textContent = isCommanderCard ? "Unset commander" : "Set as commander";
+      } else {
+        commanderItem.style.display = "none";
+      }
+
+      if (deck && !isCommanderCard) {
+        maybeItem.style.display = "";
+        maybeItem.textContent = isMaybe(deck.id, card.id) ? "Move to main deck" : "Mark as Maybe";
+      } else {
+        maybeItem.style.display = "none";
+      }
+
+      removeItem.style.display = deck ? "" : "none";
+
+      cardContextMenu.classList.add("visible");
+      positionContextMenu(x, y);
+    }
+
+    function positionContextMenu(x, y) {
+      const vw = document.documentElement.clientWidth;
+      const vh = document.documentElement.clientHeight;
+      const w = cardContextMenu.offsetWidth || 190;
+      const h = cardContextMenu.offsetHeight || 160;
+      cardContextMenu.style.left = Math.max(8, Math.min(x, vw - w - 8)) + "px";
+      cardContextMenu.style.top = Math.max(8, Math.min(y, vh - h - 8)) + "px";
+    }
+
+    function closeCardContextMenu() {
+      if (!cardContextMenu.classList.contains("visible")) return;
+      cardContextMenu.classList.remove("visible");
+      contextMenuCard = null;
+    }
+
+    cardContextMenu.addEventListener("click", (e) => {
+      const btn = e.target.closest(".ctx-item");
+      if (!btn || !contextMenuCard) return;
+      const card = contextMenuCard;
+      const deck = activeDeck();
+      switch (btn.dataset.act) {
+        case "details":
+          showDetail(card);
+          break;
+        case "commander":
+          if (deck) setDeckCommander(deck.id, card.id);
+          break;
+        case "maybe":
+          if (deck) {
+            setMaybe(deck.id, card.id, !isMaybe(deck.id, card.id));
+            renderSavedCards();
+            if (state.detailCard && state.detailCard.id === card.id) showDetail(state.detailCard);
+          }
+          break;
+        case "remove":
+          if (deck) {
+            setCardFolder(card, deck.id, false);
+            syncSaveUI();
+            renderSavedCards();
+          }
+          break;
+      }
+      closeCardContextMenu();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!cardContextMenu.classList.contains("visible")) return;
+      if (cardContextMenu.contains(e.target)) return;
+      closeCardContextMenu();
+    });
+
+    // Clicking empty space deselects the focused card. Interactive elements and the
+    // panels that act on the focused card are exempt so acting never deselects.
+    document.addEventListener("click", (e) => {
+      if (!state.detailCard) return;
+      if (e.target.closest(".card-item, .detail-panel, .save-popover, .context-menu, .modal-overlay, button, input, select, textarea, label, a, summary")) return;
+      state.detailCard = null;
+      $("#detail-panel").classList.add("empty");
     });
 
     // Reflect save state everywhere after a membership change.

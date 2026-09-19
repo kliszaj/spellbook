@@ -21,6 +21,7 @@ const DEFAULT_APP_STATE = {
   folders: [],
   membership: null,
   quantities: {}, // { [folderId]: { [cardId]: count } } — per-deck basic-land counts
+  maybeboard: {}, // { [folderId]: { [cardId]: true } } — per-deck Maybeboard flags
   colorIdentity: [],
   translateCache: {},
   searchHistory: [],
@@ -44,6 +45,7 @@ function normalizeAppState(value = {}) {
     folders: Array.isArray(input.folders) ? input.folders : [],
     membership: plainObject(input.membership),
     quantities: plainObject(input.quantities) || {},
+    maybeboard: plainObject(input.maybeboard) || {},
     colorIdentity: Array.isArray(input.colorIdentity) ? input.colorIdentity.filter((c) => COLOR_IDS.has(c)) : [],
     translateCache: plainObject(input.translateCache) || {},
     searchHistory: Array.isArray(input.searchHistory) ? input.searchHistory : [],
@@ -124,6 +126,19 @@ function mergeQuantities(a, b) {
   return merged;
 }
 
+// Per-deck Maybeboard flags. Union folders; within a folder, incoming wins.
+function mergeMaybeboard(a, b) {
+  const merged = {};
+  [a, b].forEach((src) => {
+    if (!src || typeof src !== "object") return;
+    for (const [folderId, flags] of Object.entries(src)) {
+      if (!flags || typeof flags !== "object") continue;
+      merged[folderId] = { ...(merged[folderId] || {}), ...flags };
+    }
+  });
+  return merged;
+}
+
 function mergeTranslateCache(a = {}, b = {}) {
   const merged = { ...(a || {}) };
   for (const [k, v] of Object.entries(b || {})) {
@@ -148,6 +163,7 @@ function mergeStates(base, incoming) {
     folders: mergeById(base.folders, incoming.folders),
     membership: mergeMembership(base.membership, incoming.membership),
     quantities: mergeQuantities(base.quantities, incoming.quantities),
+    maybeboard: mergeMaybeboard(base.maybeboard, incoming.maybeboard),
     colorIdentity: Array.isArray(incoming.colorIdentity) && incoming.colorIdentity.length ? incoming.colorIdentity : base.colorIdentity,
     translateCache: mergeTranslateCache(base.translateCache, incoming.translateCache),
     searchHistory: mergeSearchHistory(base.searchHistory, incoming.searchHistory),
@@ -198,6 +214,9 @@ function applyOps(state, ops) {
         break;
       case "setQuantities":
         if (op.quantities && typeof op.quantities === "object") state.quantities = op.quantities;
+        break;
+      case "setMaybeboard":
+        if (op.maybeboard && typeof op.maybeboard === "object") state.maybeboard = op.maybeboard;
         break;
       case "setSettings":
         if (Array.isArray(op.colorIdentity)) state.colorIdentity = op.colorIdentity.filter((c) => COLOR_IDS.has(c));
@@ -740,24 +759,32 @@ ${userMessage}`;
   }
 });
 
-const DECK_REVIEW_PROMPT = `You are a Magic: The Gathering Commander (EDH) deck reviewer. You will be given a deck's cards (name, type, mana value, oracle text). Count how many cards fill each role, judging by function (not just keywords); a card may count in more than one role.
+const DECK_IDENTITY_TAGS = [
+  "+1/+1 Counters", "-1/-1 Counters", "Affinity", "Aggro", "Aikido", "Aristocrats", "Artifacts", "Attractions", "Auras", "Battlecruiser", "Birthing Pod / Pod", "Blink / Flicker", "Blue Moon", "Budget", "Burn", "Cascade", "Casual", "cEDH", "Chaos", "Clones", "Coin Flips", "Combo", "Control", "Cycling", "Death & Taxes", "Defender", "Delver", "Devotion", "Discard", "Discover", "Donation", "Dredge", "Dungeons", "Eggs", "Enchantments", "Energy", "Equipment", "Extra Combats", "Extra Turns", "Farm", "Flying", "Formula X-1", "Goad", "Goodstuff", "Group Hug", "Group Slug", "Hatebears", "Help Wanted", "Historic", "Infect", "Jank", "Kindred", "Land Destruction", "Lands Matter", "Legends Matter", "Life Bargain", "Life Gain", "Maverick", "Midrange", "Mill", "Miracles", "Modified", "Modular", "Monarch", "Morph", "Mutate", "Pillowfort", "Poison", "Primer", "Prison", "Ramp", "Reanimator", "Rock", "Rule Zero", "Snow", "Spellslinger", "Stax", "Stoneblade", "Storm", "Super Friends", "Tempo", "Thieves", "Tokens", "Toolbox", "Tron", "Turbo", "Unmaintained", "Vehicles", "Voltron", "Vorthos", "Webcam Friendly", "Wheels", "X Spells", "Zoo",
+  "Combat Damage", "ETB", "Graveyard", "Landfall", "Power Matters", "Sacrifice", "Saprolings", "Treasure", "Typal: Fungi", "Typal: Saproling",
+];
+const DECK_IDENTITY_LOOKUP = new Map(DECK_IDENTITY_TAGS.map((tag) => [tag.toLowerCase(), tag]));
+
+const DECK_REVIEW_PROMPT = `You are a Magic: The Gathering Commander (EDH) deck reviewer. You will be given a commander, possible win-condition signals, and a deck's cards (name, type, mana value, oracle text). Count how many cards fill each role, judging by function (not just keywords); a card may count in more than one role.
 
 Roles and healthy Commander targets (context only):
 - ramp: mana acceleration, mana rocks/dorks, extra lands (target 8-12)
 - draw: repeatable or net-positive card advantage (target 10+)
 - removal: single-target removal — destroy/exile/bounce/-X/fight (target 6-10)
-- wipes: board wipes / mass removal (target 3-5)
+- wipes: true board wipes / mass removal that remove multiple opposing permanents or creatures. Do not count token makers, cards whose rules text merely says "for each creature", self-blink/protection effects, or one-for-one removal.
 - tutors: search library for a specific card (target 2-8)
-- interaction: instant-speed interaction incl. counterspells (target 8+)
+- interaction: reactive, opponent-facing interaction (instant-speed removal, counterspells, disruptive activated abilities; do not count instant-speed card draw or token creation) (target 8+)
 - graveyardHate: graveyard exile/disruption (target 1+)
 - protection: protect your board/commander — hexproof, indestructible, counters, protective equipment (target 3+)
 
 Respond with ONLY minified JSON, no prose or code fences:
-{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"confidence":{"ramp":0.8,"draw":0.8,"removal":0.8,"wipes":0.8,"tutors":0.8,"interaction":0.8,"graveyardHate":0.8,"protection":0.8},"roleNotes":{"ramp":"...","draw":"...","removal":"...","wipes":"...","tutors":"...","interaction":"...","graveyardHate":"...","protection":"..."},"verdict":"...","trim":["...","..."]}
-- verdict: ONE sentence (under 140 chars) — the deck's overall standing and its biggest weakness.
-- trim: 2-4 concrete cut suggestions to make room for upgrades (Commander decks stay at 100). Prefer specific card names from the list when a card is clearly the weakest of its role, else a category (e.g. "-2 highest-MV cards with no payoff"). Each under 60 chars, start with a minus sign.
+{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"confidence":{"ramp":0.8,"draw":0.8,"removal":0.8,"wipes":0.8,"tutors":0.8,"interaction":0.8,"graveyardHate":0.8,"protection":0.8},"roleNotes":{"ramp":"...","draw":"...","removal":"...","wipes":"...","tutors":"...","interaction":"...","graveyardHate":"...","protection":"..."},"identityTags":["Tokens","Sacrifice"],"verdict":"...","add":["Card Name","..."],"trim":["-Card Name","..."]}
+- verdict: ONE sentence (under 140 chars) — the deck's overall standing and its most meaningful improvement. Do not call missing board wipes the biggest weakness by default; frame them as a consideration when the rest of the deck is healthy, especially for tokens, aristocrats, graveyard, or reanimator strategies.
+- add: 3-6 SPECIFIC real Magic card names to add that fill the deck's biggest gaps. Each must be a real, exactly-spelled card legal in this deck's color identity and on-strategy for it. Card names ONLY — no counts, categories, or prefixes. Do not suggest cards already in the list.
+- trim: 2-4 SPECIFIC card names from the list to cut to make room (Commander decks stay at 100) — the weakest / most redundant cards. Each is one exact card name, prefixed with a minus sign.
 - confidence: 0-1 estimate for how confident you are in each role count, lower for modal or synergy-dependent cards.
-- roleNotes: terse explanation for each role count. Each value under 55 chars; name 1-3 example cards at most.`;
+- roleNotes: terse explanation for each role count. Each value under 55 chars; name 1-3 example cards at most.
+- identityTags: 2-8 concise deck-identity labels chosen ONLY from this catalog: ${DECK_IDENTITY_TAGS.join(" | ")}. Describe the actual engine, plan, or payoff. Do not use Aristocrats merely because a deck sacrifices or recurs creatures; reserve it for recurring creature-death / sacrifice payoffs such as drain, damage, or dedicated death-value engines. Do not include generic format/status labels (Budget, Primer, Help Wanted, Rule Zero, Unmaintained, Webcam Friendly) unless they are clearly evidenced in the supplied deck information.`;
 
 function normalizeDeckReview(parsed = {}) {
   const roleNotes = {};
@@ -768,7 +795,11 @@ function normalizeDeckReview(parsed = {}) {
     counts: parsed.counts && typeof parsed.counts === "object" ? parsed.counts : {},
     confidence: parsed.confidence && typeof parsed.confidence === "object" ? parsed.confidence : {},
     roleNotes,
+    identityTags: Array.isArray(parsed.identityTags)
+      ? [...new Set(parsed.identityTags.map((tag) => DECK_IDENTITY_LOOKUP.get(String(tag).trim().toLowerCase())).filter(Boolean))].slice(0, 8)
+      : [],
     verdict: typeof parsed.verdict === "string" ? parsed.verdict.slice(0, 200) : "",
+    add: Array.isArray(parsed.add) ? parsed.add.slice(0, 6).map(String) : [],
     trim: Array.isArray(parsed.trim) ? parsed.trim.slice(0, 4).map(String) : [],
     notes: Array.isArray(parsed.notes) ? parsed.notes.slice(0, 4).map(String) : [],
   };
@@ -814,9 +845,14 @@ app.post("/api/deck-review", async (req, res) => {
     const list = cards
       .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${String(c.oracle_text || "").replace(/\s+/g, " ").slice(0, 240)}`)
       .join("\n");
+    const commander = String(req.body?.commander || "").replace(/\s+/g, " ").trim().slice(0, 120);
+    const winConditions = Array.isArray(req.body?.winConditions)
+      ? req.body.winConditions.slice(0, 12).map(String).map((name) => name.replace(/\s+/g, " ").trim()).filter(Boolean)
+      : [];
+    const reviewContext = `Commander: ${commander || "Unknown"}\nHeuristic win-condition signals: ${winConditions.join(", ") || "None detected; infer likely plan from the deck."}\n\n${list}`;
     const review = ai.provider === "openai"
-      ? await reviewDeckWithOpenAI({ apiKey: ai.apiKey, model: ai.model, list })
-      : await reviewDeckWithAnthropic({ apiKey: ai.apiKey, model: ai.model, list });
+      ? await reviewDeckWithOpenAI({ apiKey: ai.apiKey, model: ai.model, list: reviewContext })
+      : await reviewDeckWithAnthropic({ apiKey: ai.apiKey, model: ai.model, list: reviewContext });
     res.json({ ...review, provider: ai.provider, model: ai.model });
   } catch (err) {
     const status = err.status || 500;

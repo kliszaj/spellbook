@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "spellslinger-precon",
+  "source": "https://moxfield.com/decks/UbO_Mq2RREaIUQhbCr3lOw",
+  "capturedAt": "2026-07-12T19:30:19.338438Z",
+  "pageTitle": "Quick Draw Commander Precon Decklist // Commander (Stella Lee, Wild Card) deck list mtg // Moxfield \u2014 MTG Deck Builder",
+  "uniqueCards": 75,
+  "totalCards": 100,
+  "cards": [
+    {
+      "name": "Stella Lee, Wild Card",
+      "quantity": 1
+    },
+    {
+      "name": "Archmage Emeritus",
+      "quantity": 1
+    },
+    {
+      "name": "Bloodthirsty Adversary",
+      "quantity": 1
+    },
+    {
+      "name": "Crackling Spellslinger",
+      "quantity": 1
+    },
+    {
+      "name": "Electrostatic Field",
+      "quantity": 1
+    },
+    {
+      "name": "Eris, Roar of the Storm",
+      "quantity": 1
+    },
+    {
+      "name": "Goblin Electromancer",
+      "quantity": 1
+    },
+    {
+      "name": "Guttersnipe",
+      "quantity": 1
+    },
+    {
+      "name": "Haughty Djinn",
+      "quantity": 1
+    },
+    {
+      "name": "Kaza, Roil Chaser",
+      "quantity": 1
+    },
+    {
+      "name": "Murmuring Mystic",
+      "quantity": 1
+    },
+    {
+      "name": "Niv-Mizzet, Parun",
+      "quantity": 1
+    },
+    {
+      "name": "Octavia, Living Thesis",
+      "quantity": 1
+    },
+    {
+      "name": "Pteramander",
+      "quantity": 1
+    },
+    {
+      "name": "Storm-Kiln Artist",
+      "quantity": 1
+    },
+    {
+      "name": "Talrand, Sky Summoner",
+      "quantity": 1
+    },
+    {
+      "name": "Third Path Iconoclast",
+      "quantity": 1
+    },
+    {
+      "name": "Thunderclap Drake",
+      "quantity": 1
+    },
+    {
+      "name": "Veyran, Voice of Duality",
+      "quantity": 1
+    },
+    {
+      "name": "Young Pyromancer",
+      "quantity": 1
+    },
+    {
+      "name": "Baral's Expertise",
+      "quantity": 1
+    },
+    {
+      "name": "Curse of the Swine",
+      "quantity": 1
+    },
+    {
+      "name": "Deep Analysis",
+      "quantity": 1
+    },
+    {
+      "name": "Elemental Eruption",
+      "quantity": 1
+    },
+    {
+      "name": "Epic Experiment",
+      "quantity": 1
+    },
+    {
+      "name": "Expressive Iteration",
+      "quantity": 1
+    },
+    {
+      "name": "Faithless Looting",
+      "quantity": 1
+    },
+    {
+      "name": "Finale of Promise",
+      "quantity": 1
+    },
+    {
+      "name": "Finale of Revelation",
+      "quantity": 1
+    },
+    {
+      "name": "Lock and Load",
+      "quantity": 1
+    },
+    {
+      "name": "Mizzix's Mastery",
+      "quantity": 1
+    },
+    {
+      "name": "Ponder",
+      "quantity": 1
+    },
+    {
+      "name": "Preordain",
+      "quantity": 1
+    },
+    {
+      "name": "Pyretic Charge",
+      "quantity": 1
+    },
+    {
+      "name": "Rousing Refrain",
+      "quantity": 1
+    },
+    {
+      "name": "Serum Visions",
+      "quantity": 1
+    },
+    {
+      "name": "Tezzeret's Gambit",
+      "quantity": 1
+    },
+    {
+      "name": "Treasure Cruise",
+      "quantity": 1
+    },
+    {
+      "name": "Vandalblast",
+      "quantity": 1
+    },
+    {
+      "name": "Volcanic Torrent",
+      "quantity": 1
+    },
+    {
+      "name": "Windfall",
+      "quantity": 1
+    },
+    {
+      "name": "Arcane Denial",
+      "quantity": 1
+    },
+    {
+      "name": "Big Score",
+      "quantity": 1
+    },
+    {
+      "name": "Chaos Warp",
+      "quantity": 1
+    },
+    {
+      "name": "Dig Through Time",
+      "quantity": 1
+    },
+    {
+      "name": "Galvanic Iteration",
+      "quantity": 1
+    },
+    {
+      "name": "Opt",
+      "quantity": 1
+    },
+    {
+      "name": "Pongify",
+      "quantity": 1
+    },
+    {
+      "name": "Radical Idea",
+      "quantity": 1
+    },
+    {
+      "name": "Think Twice",
+      "quantity": 1
+    },
+    {
+      "name": "Arcane Signet",
+      "quantity": 1
+    },
+    {
+      "name": "Cursed Mirror",
+      "quantity": 1
+    },
+    {
+      "name": "Forger's Foundry",
+      "quantity": 1
+    },
+    {
+      "name": "Izzet Signet",
+      "quantity": 1
+    },
+    {
+      "name": "Leyline Dowser",
+      "quantity": 1
+    },
+    {
+      "name": "Midnight Clock",
+      "quantity": 1
+    },
+    {
+      "name": "Smoldering Stagecoach",
+      "quantity": 1
+    },
+    {
+      "name": "Sol Ring",
+      "quantity": 1
+    },
+    {
+      "name": "Winged Boots",
+      "quantity": 1
+    },
+    {
+      "name": "Arcane Bombardment",
+      "quantity": 1
+    },
+    {
+      "name": "Propaganda",
+      "quantity": 1
+    },
+    {
+      "name": "Shark Typhoon",
+      "quantity": 1
+    },
+    {
+      "name": "Cascade Bluffs",
+      "quantity": 1
+    },
+    {
+      "name": "Command Tower",
+      "quantity": 1
+    },
+    {
+      "name": "Exotic Orchard",
+      "quantity": 1
+    },
+    {
+      "name": "Ferrous Lake",
+      "quantity": 1
+    },
+    {
+      "name": "Frostboil Snarl",
+      "quantity": 1
+    },
+    {
+      "name": "Island",
+      "quantity": 14
+    },
+    {
+      "name": "Izzet Boilerworks",
+      "quantity": 1
+    },
+    {
+      "name": "Mountain",
+      "quantity": 13
+    },
+    {
+      "name": "Reliquary Tower",
+      "quantity": 1
+    },
+    {
+      "name": "Shivan Reef",
+      "quantity": 1
+    },
+    {
+      "name": "Sulfur Falls",
+      "quantity": 1
+    },
+    {
+      "name": "Temple of Epiphany",
+      "quantity": 1
+    },
+    {
+      "name": "Temple of the False God",
+      "quantity": 1
+    }
+  ]
+}

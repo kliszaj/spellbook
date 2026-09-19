@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "high-power",
+  "source": "https://moxfield.com/decks/sbt8qFFKA0KMHWn8h9pUeg",
+  "capturedAt": "2026-07-12T19:31:21.171823Z",
+  "pageTitle": "Kefka budget Competitive High Power // Commander (Kefka, Court Mage // Kefka, Ruler of Ruin) deck list mtg // Moxfield \u2014 MTG Deck Builder",
+  "uniqueCards": 87,
+  "totalCards": 100,
+  "cards": [
+    {
+      "name": "Kefka, Court Mage",
+      "quantity": 1
+    },
+    {
+      "name": "Blood Pet",
+      "quantity": 1
+    },
+    {
+      "name": "Chameleon, Master of Disguise",
+      "quantity": 1
+    },
+    {
+      "name": "Combat Celebrant",
+      "quantity": 1
+    },
+    {
+      "name": "Drift of Phantasms",
+      "quantity": 1
+    },
+    {
+      "name": "Dualcaster Mage",
+      "quantity": 1
+    },
+    {
+      "name": "Generator Servant",
+      "quantity": 1
+    },
+    {
+      "name": "Gogo, Mysterious Mime",
+      "quantity": 1
+    },
+    {
+      "name": "Goldhound",
+      "quantity": 1
+    },
+    {
+      "name": "Hoarding Broodlord",
+      "quantity": 1
+    },
+    {
+      "name": "Malevolent Hermit",
+      "quantity": 1
+    },
+    {
+      "name": "Mayhem Devil",
+      "quantity": 1
+    },
+    {
+      "name": "Naban, Dean of Iteration",
+      "quantity": 1
+    },
+    {
+      "name": "Pinnacle Monk",
+      "quantity": 1
+    },
+    {
+      "name": "Reckless Barbarian",
+      "quantity": 1
+    },
+    {
+      "name": "Rionya, Fire Dancer",
+      "quantity": 1
+    },
+    {
+      "name": "Simian Spirit Guide",
+      "quantity": 1
+    },
+    {
+      "name": "Siren Stormtamer",
+      "quantity": 1
+    },
+    {
+      "name": "Skirk Prospector",
+      "quantity": 1
+    },
+    {
+      "name": "Tinybones, Bauble Burglar",
+      "quantity": 1
+    },
+    {
+      "name": "Volatile Stormdrake",
+      "quantity": 1
+    },
+    {
+      "name": "Buried Alive",
+      "quantity": 1
+    },
+    {
+      "name": "Demonic Counsel",
+      "quantity": 1
+    },
+    {
+      "name": "Electroduplicate",
+      "quantity": 1
+    },
+    {
+      "name": "Final Parting",
+      "quantity": 1
+    },
+    {
+      "name": "Insatiable Avarice",
+      "quantity": 1
+    },
+    {
+      "name": "Lively Dirge",
+      "quantity": 1
+    },
+    {
+      "name": "Persist",
+      "quantity": 1
+    },
+    {
+      "name": "Ringsight",
+      "quantity": 1
+    },
+    {
+      "name": "Strike It Rich",
+      "quantity": 1
+    },
+    {
+      "name": "The Blades of Chaos Bond",
+      "quantity": 1
+    },
+    {
+      "name": "Abrade",
+      "quantity": 1
+    },
+    {
+      "name": "An Offer You Can't Refuse",
+      "quantity": 1
+    },
+    {
+      "name": "Arcane Denial",
+      "quantity": 1
+    },
+    {
+      "name": "Bolt Bend",
+      "quantity": 1
+    },
+    {
+      "name": "Burnt Offering",
+      "quantity": 1
+    },
+    {
+      "name": "Commandeer",
+      "quantity": 1
+    },
+    {
+      "name": "Dark Ritual",
+      "quantity": 1
+    },
+    {
+      "name": "Delay",
+      "quantity": 1
+    },
+    {
+      "name": "Dispel",
+      "quantity": 1
+    },
+    {
+      "name": "Essence Flux",
+      "quantity": 1
+    },
+    {
+      "name": "Fire Magic",
+      "quantity": 1
+    },
+    {
+      "name": "Flare of Duplication",
+      "quantity": 1
+    },
+    {
+      "name": "Ghostfire Slice",
+      "quantity": 1
+    },
+    {
+      "name": "Ghostly Flicker",
+      "quantity": 1
+    },
+    {
+      "name": "Lim-D\u00fbl's Vault",
+      "quantity": 1
+    },
+    {
+      "name": "Memory Lapse",
+      "quantity": 1
+    },
+    {
+      "name": "Miscast",
+      "quantity": 1
+    },
+    {
+      "name": "Misdirection",
+      "quantity": 1
+    },
+    {
+      "name": "Perplex",
+      "quantity": 1
+    },
+    {
+      "name": "Pongify",
+      "quantity": 1
+    },
+    {
+      "name": "Rapid Hybridization",
+      "quantity": 1
+    },
+    {
+      "name": "Resculpt",
+      "quantity": 1
+    },
+    {
+      "name": "Saw in Half",
+      "quantity": 1
+    },
+    {
+      "name": "Snapback",
+      "quantity": 1
+    },
+    {
+      "name": "Spell Pierce",
+      "quantity": 1
+    },
+    {
+      "name": "Thrum of the Vestige",
+      "quantity": 1
+    },
+    {
+      "name": "Unsubstantiate",
+      "quantity": 1
+    },
+    {
+      "name": "Arcane Signet",
+      "quantity": 1
+    },
+    {
+      "name": "Fellwar Stone",
+      "quantity": 1
+    },
+    {
+      "name": "Izzet Signet",
+      "quantity": 1
+    },
+    {
+      "name": "Pentad Prism",
+      "quantity": 1
+    },
+    {
+      "name": "Sol Ring",
+      "quantity": 1
+    },
+    {
+      "name": "Talisman of Creativity",
+      "quantity": 1
+    },
+    {
+      "name": "Talisman of Dominance",
+      "quantity": 1
+    },
+    {
+      "name": "Talisman of Indulgence",
+      "quantity": 1
+    },
+    {
+      "name": "Wishclaw Talisman",
+      "quantity": 1
+    },
+    {
+      "name": "Necromancy",
+      "quantity": 1
+    },
+    {
+      "name": "Cephalid Coliseum",
+      "quantity": 1
+    },
+    {
+      "name": "Command Tower",
+      "quantity": 1
+    },
+    {
+      "name": "Dragonskull Summit",
+      "quantity": 1
+    },
+    {
+      "name": "Exotic Orchard",
+      "quantity": 1
+    },
+    {
+      "name": "Fiery Islet",
+      "quantity": 1
+    },
+    {
+      "name": "Gemstone Mine",
+      "quantity": 1
+    },
+    {
+      "name": "Island",
+      "quantity": 5
+    },
+    {
+      "name": "Mountain",
+      "quantity": 5
+    },
+    {
+      "name": "Peat Bog",
+      "quantity": 1
+    },
+    {
+      "name": "River of Tears",
+      "quantity": 1
+    },
+    {
+      "name": "Shivan Reef",
+      "quantity": 1
+    },
+    {
+      "name": "Smoldering Marsh",
+      "quantity": 1
+    },
+    {
+      "name": "Spire of Industry",
+      "quantity": 1
+    },
+    {
+      "name": "Sulfur Falls",
+      "quantity": 1
+    },
+    {
+      "name": "Sulfurous Springs",
+      "quantity": 1
+    },
+    {
+      "name": "Sunken Hollow",
+      "quantity": 1
+    },
+    {
+      "name": "Swamp",
+      "quantity": 6
+    },
+    {
+      "name": "Tainted Peak",
+      "quantity": 1
+    },
+    {
+      "name": "Underground River",
+      "quantity": 1
+    }
+  ]
+}

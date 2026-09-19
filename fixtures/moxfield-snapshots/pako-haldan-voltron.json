@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "pako-haldan-voltron",
+  "source": "https://moxfield.com/decks/AZKbE6E6kUWW2zMfHR41sQ",
+  "capturedAt": "2026-07-12T19:30:16.758488Z",
+  "pageTitle": "[$25 Budget] My Dog and I (Voltron) // Commander (Pako, Arcane Retriever and Haldan, Avid Arcanist) deck list mtg // Moxfield \u2014 MTG Deck Builder",
+  "uniqueCards": 83,
+  "totalCards": 100,
+  "cards": [
+    {
+      "name": "Haldan, Avid Arcanist",
+      "quantity": 1
+    },
+    {
+      "name": "Pako, Arcane Retriever",
+      "quantity": 1
+    },
+    {
+      "name": "The Royal Scions",
+      "quantity": 1
+    },
+    {
+      "name": "Doc Aurlock, Grizzled Genius",
+      "quantity": 1
+    },
+    {
+      "name": "Flamebraider",
+      "quantity": 1
+    },
+    {
+      "name": "Generator Servant",
+      "quantity": 1
+    },
+    {
+      "name": "Niblis of Frost",
+      "quantity": 1
+    },
+    {
+      "name": "Orcish Lumberjack",
+      "quantity": 1
+    },
+    {
+      "name": "Party Thrasher",
+      "quantity": 1
+    },
+    {
+      "name": "Reckless Barbarian",
+      "quantity": 1
+    },
+    {
+      "name": "Satyr Hedonist",
+      "quantity": 1
+    },
+    {
+      "name": "Smokebraider",
+      "quantity": 1
+    },
+    {
+      "name": "Tam, Mindful First-Year",
+      "quantity": 1
+    },
+    {
+      "name": "Tinder Wall",
+      "quantity": 1
+    },
+    {
+      "name": "Breath of Darigaaz",
+      "quantity": 1
+    },
+    {
+      "name": "Chain Reaction",
+      "quantity": 1
+    },
+    {
+      "name": "Consuming Tide",
+      "quantity": 1
+    },
+    {
+      "name": "Dire-Strain Rampage",
+      "quantity": 1
+    },
+    {
+      "name": "Distortion Strike",
+      "quantity": 1
+    },
+    {
+      "name": "Explore",
+      "quantity": 1
+    },
+    {
+      "name": "Last Night Together",
+      "quantity": 1
+    },
+    {
+      "name": "Spry and Mighty",
+      "quantity": 1
+    },
+    {
+      "name": "Storm's Wrath",
+      "quantity": 1
+    },
+    {
+      "name": "Stump Stomp",
+      "quantity": 1
+    },
+    {
+      "name": "Sundering Eruption",
+      "quantity": 1
+    },
+    {
+      "name": "Ultimate Magic: Meteor",
+      "quantity": 1
+    },
+    {
+      "name": "Waltz of Rage",
+      "quantity": 1
+    },
+    {
+      "name": "Auroral Procession",
+      "quantity": 1
+    },
+    {
+      "name": "Biosynthic Burst",
+      "quantity": 1
+    },
+    {
+      "name": "Charge Through",
+      "quantity": 1
+    },
+    {
+      "name": "Choose Your Weapon",
+      "quantity": 1
+    },
+    {
+      "name": "Decisive Denial",
+      "quantity": 1
+    },
+    {
+      "name": "Defend the Rider",
+      "quantity": 1
+    },
+    {
+      "name": "Gaea's Gift",
+      "quantity": 1
+    },
+    {
+      "name": "Harrow",
+      "quantity": 1
+    },
+    {
+      "name": "Hunter's Insight",
+      "quantity": 1
+    },
+    {
+      "name": "Inscription of Abundance",
+      "quantity": 1
+    },
+    {
+      "name": "Invigorating Surge",
+      "quantity": 1
+    },
+    {
+      "name": "Memory Lapse",
+      "quantity": 1
+    },
+    {
+      "name": "Negate",
+      "quantity": 1
+    },
+    {
+      "name": "Origin of Metalbending",
+      "quantity": 1
+    },
+    {
+      "name": "Reclaim",
+      "quantity": 1
+    },
+    {
+      "name": "Repulsive Mutation",
+      "quantity": 1
+    },
+    {
+      "name": "Resculpt",
+      "quantity": 1
+    },
+    {
+      "name": "Road // Ruin",
+      "quantity": 1
+    },
+    {
+      "name": "Run Away Together",
+      "quantity": 1
+    },
+    {
+      "name": "Spell Rupture",
+      "quantity": 1
+    },
+    {
+      "name": "Temur Battle Rage",
+      "quantity": 1
+    },
+    {
+      "name": "Trash the Town",
+      "quantity": 1
+    },
+    {
+      "name": "Unsubstantiate",
+      "quantity": 1
+    },
+    {
+      "name": "Veil of Secrecy",
+      "quantity": 1
+    },
+    {
+      "name": "Water Wings",
+      "quantity": 1
+    },
+    {
+      "name": "Wild Shape",
+      "quantity": 1
+    },
+    {
+      "name": "You Come to a River",
+      "quantity": 1
+    },
+    {
+      "name": "You See a Guard Approach",
+      "quantity": 1
+    },
+    {
+      "name": "Blitzball Stadium",
+      "quantity": 1
+    },
+    {
+      "name": "Pentad Prism",
+      "quantity": 1
+    },
+    {
+      "name": "Psychic Paper",
+      "quantity": 1
+    },
+    {
+      "name": "Sol Ring",
+      "quantity": 1
+    },
+    {
+      "name": "Two-Handed Axe",
+      "quantity": 1
+    },
+    {
+      "name": "Cartouche of Strength",
+      "quantity": 1
+    },
+    {
+      "name": "Fae Flight",
+      "quantity": 1
+    },
+    {
+      "name": "Hunter's Talent",
+      "quantity": 1
+    },
+    {
+      "name": "Lost in the Maze",
+      "quantity": 1
+    },
+    {
+      "name": "Sidequest: Play Blitzball",
+      "quantity": 1
+    },
+    {
+      "name": "Sword Coast Sailor",
+      "quantity": 1
+    },
+    {
+      "name": "Vessel of Volatility",
+      "quantity": 1
+    },
+    {
+      "name": "Cinder Glade",
+      "quantity": 1
+    },
+    {
+      "name": "Command Tower",
+      "quantity": 1
+    },
+    {
+      "name": "Exotic Orchard",
+      "quantity": 1
+    },
+    {
+      "name": "Forest",
+      "quantity": 8
+    },
+    {
+      "name": "Frostboil Snarl",
+      "quantity": 1
+    },
+    {
+      "name": "Game Trail",
+      "quantity": 1
+    },
+    {
+      "name": "Hinterland Harbor",
+      "quantity": 1
+    },
+    {
+      "name": "Island",
+      "quantity": 6
+    },
+    {
+      "name": "Karplusan Forest",
+      "quantity": 1
+    },
+    {
+      "name": "Mountain",
+      "quantity": 6
+    },
+    {
+      "name": "Rogue's Passage",
+      "quantity": 1
+    },
+    {
+      "name": "Rootbound Crag",
+      "quantity": 1
+    },
+    {
+      "name": "Shivan Reef",
+      "quantity": 1
+    },
+    {
+      "name": "Sulfur Falls",
+      "quantity": 1
+    },
+    {
+      "name": "Vineglimmer Snarl",
+      "quantity": 1
+    },
+    {
+      "name": "Yavimaya Coast",
+      "quantity": 1
+    }
+  ]
+}

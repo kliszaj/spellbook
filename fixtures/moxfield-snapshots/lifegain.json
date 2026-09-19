@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "lifegain",
+  "source": "https://moxfield.com/decks/x9PjY9XdcU-f9giP4_oI0w",
+  "capturedAt": "2026-07-12T19:31:15.839487Z",
+  "pageTitle": "Giada, Angel Tribal // Commander (Giada, Font of Hope) deck list mtg // Moxfield \u2014 MTG Deck Builder",
+  "uniqueCards": 78,
+  "totalCards": 100,
+  "cards": [
+    {
+      "name": "Giada, Font of Hope",
+      "quantity": 1
+    },
+    {
+      "name": "Serra the Benevolent",
+      "quantity": 1
+    },
+    {
+      "name": "Angelic Field Marshal",
+      "quantity": 1
+    },
+    {
+      "name": "Angelic Sleuth",
+      "quantity": 1
+    },
+    {
+      "name": "Angel of Condemnation",
+      "quantity": 1
+    },
+    {
+      "name": "Angel of Destiny",
+      "quantity": 1
+    },
+    {
+      "name": "Angel of Jubilation",
+      "quantity": 1
+    },
+    {
+      "name": "Angel of the Ruins",
+      "quantity": 1
+    },
+    {
+      "name": "Angel of Vitality",
+      "quantity": 1
+    },
+    {
+      "name": "Archangel of Thune",
+      "quantity": 1
+    },
+    {
+      "name": "Archangel of Tithes",
+      "quantity": 1
+    },
+    {
+      "name": "Avacyn, Angel of Hope",
+      "quantity": 1
+    },
+    {
+      "name": "Battle Angels of Tyr",
+      "quantity": 1
+    },
+    {
+      "name": "Breathkeeper Seraph",
+      "quantity": 1
+    },
+    {
+      "name": "Bruna, the Fading Light",
+      "quantity": 1
+    },
+    {
+      "name": "Emeria Shepherd",
+      "quantity": 1
+    },
+    {
+      "name": "Gisela, the Broken Blade",
+      "quantity": 1
+    },
+    {
+      "name": "Herald of War",
+      "quantity": 1
+    },
+    {
+      "name": "Inspiring Overseer",
+      "quantity": 1
+    },
+    {
+      "name": "Karmic Guide",
+      "quantity": 1
+    },
+    {
+      "name": "Linvala, Keeper of Silence",
+      "quantity": 1
+    },
+    {
+      "name": "Lyra Dawnbringer",
+      "quantity": 1
+    },
+    {
+      "name": "Resplendent Angel",
+      "quantity": 1
+    },
+    {
+      "name": "Righteous Valkyrie",
+      "quantity": 1
+    },
+    {
+      "name": "Sanctuary Warden",
+      "quantity": 1
+    },
+    {
+      "name": "Segovian Angel",
+      "quantity": 1
+    },
+    {
+      "name": "Serra Paragon",
+      "quantity": 1
+    },
+    {
+      "name": "Starnheim Aspirant",
+      "quantity": 1
+    },
+    {
+      "name": "Steel Seraph",
+      "quantity": 1
+    },
+    {
+      "name": "Valkyrie Harbinger",
+      "quantity": 1
+    },
+    {
+      "name": "Youthful Valkyrie",
+      "quantity": 1
+    },
+    {
+      "name": "Cleansing Nova",
+      "quantity": 1
+    },
+    {
+      "name": "Wrath of God",
+      "quantity": 1
+    },
+    {
+      "name": "Akroma's Will",
+      "quantity": 1
+    },
+    {
+      "name": "Cloudshift",
+      "quantity": 1
+    },
+    {
+      "name": "Enlightened Tutor",
+      "quantity": 1
+    },
+    {
+      "name": "Flawless Maneuver",
+      "quantity": 1
+    },
+    {
+      "name": "Generous Gift",
+      "quantity": 1
+    },
+    {
+      "name": "Heliod's Intervention",
+      "quantity": 1
+    },
+    {
+      "name": "Path to Exile",
+      "quantity": 1
+    },
+    {
+      "name": "Rally of Wings",
+      "quantity": 1
+    },
+    {
+      "name": "Swords to Plowshares",
+      "quantity": 1
+    },
+    {
+      "name": "Teferi's Protection",
+      "quantity": 1
+    },
+    {
+      "name": "Aetherflux Reservoir",
+      "quantity": 1
+    },
+    {
+      "name": "Arcane Signet",
+      "quantity": 1
+    },
+    {
+      "name": "Archaeomancer's Map",
+      "quantity": 1
+    },
+    {
+      "name": "Endless Atlas",
+      "quantity": 1
+    },
+    {
+      "name": "Halo Fountain",
+      "quantity": 1
+    },
+    {
+      "name": "Herald's Horn",
+      "quantity": 1
+    },
+    {
+      "name": "Lightning Greaves",
+      "quantity": 1
+    },
+    {
+      "name": "Mind Stone",
+      "quantity": 1
+    },
+    {
+      "name": "Pearl Medallion",
+      "quantity": 1
+    },
+    {
+      "name": "Sol Ring",
+      "quantity": 1
+    },
+    {
+      "name": "Sword of the Animist",
+      "quantity": 1
+    },
+    {
+      "name": "The Book of Exalted Deeds",
+      "quantity": 1
+    },
+    {
+      "name": "Urza's Incubator",
+      "quantity": 1
+    },
+    {
+      "name": "Wayfarer's Bauble",
+      "quantity": 1
+    },
+    {
+      "name": "Angelic Accord",
+      "quantity": 1
+    },
+    {
+      "name": "Aura of Silence",
+      "quantity": 1
+    },
+    {
+      "name": "Blind Obedience",
+      "quantity": 1
+    },
+    {
+      "name": "Land Tax",
+      "quantity": 1
+    },
+    {
+      "name": "Luminarch Ascension",
+      "quantity": 1
+    },
+    {
+      "name": "Sigarda's Splendor",
+      "quantity": 1
+    },
+    {
+      "name": "Smothering Tithe",
+      "quantity": 1
+    },
+    {
+      "name": "Bonders' Enclave",
+      "quantity": 1
+    },
+    {
+      "name": "Cavern of Souls",
+      "quantity": 1
+    },
+    {
+      "name": "Eiganjo, Seat of the Empire",
+      "quantity": 1
+    },
+    {
+      "name": "Emeria, the Sky Ruin",
+      "quantity": 1
+    },
+    {
+      "name": "Kor Haven",
+      "quantity": 1
+    },
+    {
+      "name": "Lotus Field",
+      "quantity": 1
+    },
+    {
+      "name": "Myriad Landscape",
+      "quantity": 1
+    },
+    {
+      "name": "Nykthos, Shrine to Nyx",
+      "quantity": 1
+    },
+    {
+      "name": "Path of Ancestry",
+      "quantity": 1
+    },
+    {
+      "name": "Plains",
+      "quantity": 23
+    },
+    {
+      "name": "Scavenger Grounds",
+      "quantity": 1
+    },
+    {
+      "name": "Seraph Sanctuary",
+      "quantity": 1
+    },
+    {
+      "name": "Strip Mine",
+      "quantity": 1
+    },
+    {
+      "name": "War Room",
+      "quantity": 1
+    }
+  ]
+}

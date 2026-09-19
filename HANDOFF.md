@@ -6,7 +6,10 @@ manager. The backend lives in `server.js`; most UI and client state logic lives 
 
 ## Current Status
 
-Branch: `deck-analysis-2-and-land-quantities`
+Branch: `main`
+
+The user prefers keeping Spellbook work directly on `main` rather than using
+feature branches unless they explicitly ask for one.
 
 This branch contains the current Spellbook work:
 
@@ -31,6 +34,13 @@ Settings now supports both providers:
 - Anthropic API key and model.
 - OpenAI API key and model.
 - Preferred provider selector.
+
+The model fields are **dropdowns** (`<select>`), not free text — Anthropic:
+`claude-opus-4-8` / `claude-sonnet-5` / `claude-sonnet-4-6` / `claude-haiku-4-5` /
+`claude-fable-5`; OpenAI: `gpt-4.1` / `gpt-4.1-mini` / `gpt-4o` / `gpt-4o-mini`.
+`setModelSelect()` injects a saved value that isn't a listed option as a `· custom`
+entry so older/custom models still show and persist. (Model IDs verified against the
+claude-api skill — the `claude-sonnet-4-6` default is a valid, active ID.)
 
 Stored keys are kept in the appdata-backed `state.json` and are never returned by
 public state endpoints. Key inputs in the modal are write-only and blank on open.
@@ -109,14 +119,33 @@ Deck Analysis is heuristic-first and AI-assisted:
 
 - Heuristics compute deck health, role coverage, mana curve, color sources, tags,
   and profile/lens adjustments instantly.
-- The AI Review button refines role counts, verdict, and trim suggestions.
+- The **Analyze** button (formerly "AI Review" — now labelled "Analyze"/"Re-analyze"
+  with a sparkle icon, `ICON_SPARKLE`) refines role counts and writes the verdict.
 - AI review output is cached per deck signature in `localStorage` (`deck_reviews`), so
   it survives reloads and only re-spends tokens when the deck actually changes.
 
-Deck archetype tags are multi-select and localStorage-backed. There is **no single
-health-lens dropdown** — the tags' archetypes are blended into one composite profile
-(`blendProfiles`: targets averaged, role weights taken at their max), so a deck that
-is several archetypes at once is judged against all of them. Editing tags re-blends.
+The **Add/Trim ("fix") section is hidden until Analyze is run** — it's an empty
+`#da2-fix-wrap` (`.da2-fix-wrap:empty{display:none}`) that `renderAiExtras` fills via
+`fixRowsHtml`. Both Add and Trim are **specific card names** now (the server prompt
+returns an `add: [...]` array alongside `trim`), not category chips like "+2 wipes".
+Each chip is a `.da2-card-chip` with `data-card`; clicking (or Enter/Space) calls
+`openCardByName` → looks the card up (saved cards first, then Scryfall `cards/named`
+exact→fuzzy) → `showDetail` opens it in the focus panel. `deckGaps`/`heuristicVerdict`
+still exist but the heuristic Add chips are gone (fix section is AI-only).
+
+The **Win conditions** block is now the **3rd column** inside `.da2-cols`
+(`grid-template-columns: … 3 tracks`; wraps full-width at ≤1040px, stacks at ≤900px),
+not a full-width row below.
+
+Deck identity is **AI-derived and read-only**. Analyze sends the commander, the
+card list, and heuristic win-condition signals to the chosen provider; the provider
+returns 2-8 labels from Moxfield's 94-theme catalog plus a small Spellbook extension
+(for example, `Graveyard`, `Sacrifice`, `Landfall`, `Treasure`, or `Power Matters`).
+There is no manual tag picker. A small, internal map sends only tags that materially
+change healthy Commander targets into a blended profile (`blendProfiles`: targets
+averaged, role weights taken at their max); all other labels are descriptive only.
+The review cache includes the commander name as well as deck contents, and cache
+version 3 invalidates prior manual/heuristic tag reviews.
 
 Deck analysis and the bracket are **hidden until a deck has `ANALYSIS_MIN_CARDS` (60)**
 cards; below that only the identity strip + a "keep building" prompt show, since
@@ -182,3 +211,36 @@ docker compose up -d --build
 - The appdata `state.json` is runtime data and should not be committed.
 - Do not include `.claude/settings.local.json` unless the user explicitly wants
   local Claude permission changes committed.
+
+## Deck-Analysis Calibration Corpus
+
+`fixtures/deck-analysis-calibration.json` records the intended archetypes and
+human-reviewed expectations for the sample decks shared by the user. It is
+validated with:
+
+```powershell
+npm run test:calibration
+```
+
+`npm run test:board-wipes` executes source-linked regression cases against the
+same wipe and friendly-mass-effect patterns used by the client. It covers real
+wipes (including bounce wipes) and false positives such as token makers,
+self-protection, and damage-only spells. Run both with `npm run test:deck-analysis`.
+
+`npm run test:deck-identity` checks the AI-derived, read-only identity contract:
+the permitted catalog, the commander-aware cache signature, the internal lens map,
+and the absence of the old manual tag controls.
+
+Public Moxfield decklists can be captured as versioned local snapshots without
+depending on an undocumented API:
+
+```powershell
+$env:VIRTUAL_ENV = "$env:TEMP\spellbook-calibration-venv"
+& "$env:VIRTUAL_ENV\Scripts\python.exe" -m pip install -r scripts\requirements-calibration.txt
+& "$env:VIRTUAL_ENV\Scripts\python.exe" scripts\snapshot_moxfield_fixtures.py --id pako-haldan-voltron
+```
+
+The script uses an installed Edge/Chrome instance through Playwright, waits for
+the public Moxfield page to hydrate, and writes card-name/quantity snapshots to
+`fixtures/moxfield-snapshots/`. Run it against all Moxfield fixtures once the
+single-deck capture has been validated.

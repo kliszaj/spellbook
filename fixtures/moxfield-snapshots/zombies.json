@@ -1,0 +1,335 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "zombies",
+  "source": "https://moxfield.com/decks/TTWtzdt3qkyYR4TcSxsJlA",
+  "capturedAt": "2026-07-12T19:31:18.530906Z",
+  "pageTitle": "Mono Black Zombies // Commander (Mikaeus, the Unhallowed) deck list mtg // Moxfield \u2014 MTG Deck Builder",
+  "uniqueCards": 81,
+  "totalCards": 100,
+  "cards": [
+    {
+      "name": "Mikaeus, the Unhallowed",
+      "quantity": 1
+    },
+    {
+      "name": "Liliana, Death's Majesty",
+      "quantity": 1
+    },
+    {
+      "name": "Liliana of the Dark Realms",
+      "quantity": 1
+    },
+    {
+      "name": "Cemetery Reaper",
+      "quantity": 1
+    },
+    {
+      "name": "Corpse Harvester",
+      "quantity": 1
+    },
+    {
+      "name": "Cryptbreaker",
+      "quantity": 1
+    },
+    {
+      "name": "Crypt Ghast",
+      "quantity": 1
+    },
+    {
+      "name": "Death Baron",
+      "quantity": 1
+    },
+    {
+      "name": "Diregraf Colossus",
+      "quantity": 1
+    },
+    {
+      "name": "Fleshbag Marauder",
+      "quantity": 1
+    },
+    {
+      "name": "Ghoulcaller Gisa",
+      "quantity": 1
+    },
+    {
+      "name": "Graveborn Muse",
+      "quantity": 1
+    },
+    {
+      "name": "Gravecrawler",
+      "quantity": 1
+    },
+    {
+      "name": "Gravespawn Sovereign",
+      "quantity": 1
+    },
+    {
+      "name": "Grave Titan",
+      "quantity": 1
+    },
+    {
+      "name": "Gray Merchant of Asphodel",
+      "quantity": 1
+    },
+    {
+      "name": "Lord of the Undead",
+      "quantity": 1
+    },
+    {
+      "name": "Noxious Ghoul",
+      "quantity": 1
+    },
+    {
+      "name": "Relentless Dead",
+      "quantity": 1
+    },
+    {
+      "name": "Shepherd of Rot",
+      "quantity": 1
+    },
+    {
+      "name": "Sidisi, Undead Vizier",
+      "quantity": 1
+    },
+    {
+      "name": "Undead Warchief",
+      "quantity": 1
+    },
+    {
+      "name": "Vengeful Dead",
+      "quantity": 1
+    },
+    {
+      "name": "Vindictive Lich",
+      "quantity": 1
+    },
+    {
+      "name": "Zombie Master",
+      "quantity": 1
+    },
+    {
+      "name": "Zulaport Cutthroat",
+      "quantity": 1
+    },
+    {
+      "name": "Buried Alive",
+      "quantity": 1
+    },
+    {
+      "name": "Demonic Tutor",
+      "quantity": 1
+    },
+    {
+      "name": "Diabolic Intent",
+      "quantity": 1
+    },
+    {
+      "name": "Dread Return",
+      "quantity": 1
+    },
+    {
+      "name": "Exsanguinate",
+      "quantity": 1
+    },
+    {
+      "name": "Kindred Dominance",
+      "quantity": 1
+    },
+    {
+      "name": "Living Death",
+      "quantity": 1
+    },
+    {
+      "name": "Reanimate",
+      "quantity": 1
+    },
+    {
+      "name": "Rise of the Dark Realms",
+      "quantity": 1
+    },
+    {
+      "name": "Torment of Hailfire",
+      "quantity": 1
+    },
+    {
+      "name": "Victimize",
+      "quantity": 1
+    },
+    {
+      "name": "Zombie Apocalypse",
+      "quantity": 1
+    },
+    {
+      "name": "Dark Ritual",
+      "quantity": 1
+    },
+    {
+      "name": "Entomb",
+      "quantity": 1
+    },
+    {
+      "name": "Go for the Throat",
+      "quantity": 1
+    },
+    {
+      "name": "Hero's Downfall",
+      "quantity": 1
+    },
+    {
+      "name": "Sudden Spoiling",
+      "quantity": 1
+    },
+    {
+      "name": "Tragic Slip",
+      "quantity": 1
+    },
+    {
+      "name": "Ashnod's Altar",
+      "quantity": 1
+    },
+    {
+      "name": "Bontu's Monument",
+      "quantity": 1
+    },
+    {
+      "name": "Caged Sun",
+      "quantity": 1
+    },
+    {
+      "name": "Coat of Arms",
+      "quantity": 1
+    },
+    {
+      "name": "Door of Destinies",
+      "quantity": 1
+    },
+    {
+      "name": "Expedition Map",
+      "quantity": 1
+    },
+    {
+      "name": "Herald's Horn",
+      "quantity": 1
+    },
+    {
+      "name": "Jet Medallion",
+      "quantity": 1
+    },
+    {
+      "name": "Lightning Greaves",
+      "quantity": 1
+    },
+    {
+      "name": "Nevinyrral's Disk",
+      "quantity": 1
+    },
+    {
+      "name": "Phyrexian Altar",
+      "quantity": 1
+    },
+    {
+      "name": "Skullclamp",
+      "quantity": 1
+    },
+    {
+      "name": "Sol Ring",
+      "quantity": 1
+    },
+    {
+      "name": "Thornbite Staff",
+      "quantity": 1
+    },
+    {
+      "name": "Vanquisher's Banner",
+      "quantity": 1
+    },
+    {
+      "name": "Animate Dead",
+      "quantity": 1
+    },
+    {
+      "name": "Black Market",
+      "quantity": 1
+    },
+    {
+      "name": "Call to the Grave",
+      "quantity": 1
+    },
+    {
+      "name": "Dictate of Erebos",
+      "quantity": 1
+    },
+    {
+      "name": "Endless Ranks of the Dead",
+      "quantity": 1
+    },
+    {
+      "name": "Phyrexian Arena",
+      "quantity": 1
+    },
+    {
+      "name": "Ancient Tomb",
+      "quantity": 1
+    },
+    {
+      "name": "Bojuka Bog",
+      "quantity": 1
+    },
+    {
+      "name": "Buried Ruin",
+      "quantity": 1
+    },
+    {
+      "name": "Cabal Coffers",
+      "quantity": 1
+    },
+    {
+      "name": "Castle Locthwain",
+      "quantity": 1
+    },
+    {
+      "name": "Cavern of Souls",
+      "quantity": 1
+    },
+    {
+      "name": "Crypt of Agadeem",
+      "quantity": 1
+    },
+    {
+      "name": "High Market",
+      "quantity": 1
+    },
+    {
+      "name": "Myriad Landscape",
+      "quantity": 1
+    },
+    {
+      "name": "Nykthos, Shrine to Nyx",
+      "quantity": 1
+    },
+    {
+      "name": "Phyrexian Tower",
+      "quantity": 1
+    },
+    {
+      "name": "Reliquary Tower",
+      "quantity": 1
+    },
+    {
+      "name": "Swamp",
+      "quantity": 20
+    },
+    {
+      "name": "Temple of the False God",
+      "quantity": 1
+    },
+    {
+      "name": "Unholy Grotto",
+      "quantity": 1
+    },
+    {
+      "name": "Urborg, Tomb of Yawgmoth",
+      "quantity": 1
+    }
+  ]
+}
