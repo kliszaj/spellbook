@@ -394,9 +394,10 @@ plan, or syncing the collection produces a fresh ranking.
   non-basic-land main-deck cards. Both hidden without a collection.
 - **Color filter**: the mana-symbol picker plus a **Colorless** toggle beside the
   type chips. **Contains**: a card shows if its `color_identity` includes any
-  selected color; Colorless matches empty identity. Display-only — analysis, counts,
-  and export still use the whole deck; header shows "Showing 23 of 94" while active.
-  Session-only.
+  selected color; Colorless matches empty identity. Behaves like the existing
+  type-chip filter — deck analysis and the "Own X of Y" count still use the whole
+  deck, but Export copies the visible cards, as it already does for the text and
+  type filters; header shows "Showing 23 of 94" while active. Session-only.
 
 ## Cost (uses the Settings provider/model)
 

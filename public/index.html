@@ -1987,7 +1987,9 @@
     .deck-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 10px 0; font-size: 12px; color: #7A766C; }
     .deck-tools .deck-owned { font-weight: 700; color: #3F7D5C; }
     .deck-tools #deck-gameplan-btn { margin-left: auto; }
-    .owned-chip { position: absolute; top: 8px; left: 8px; padding: 2px 7px; border-radius: 999px; background: rgba(63,125,92,0.9); color: #fff; font-size: 11px; font-weight: 700; }
+    .owned-chip { position: absolute; top: 8px; left: 8px; z-index: 3; padding: 2px 7px; border-radius: 999px; background: rgba(63,125,92,0.9); color: #fff; font-size: 11px; font-weight: 700; }
+    /* .maybe-badge / .commander-badge occupy the same top-left spot (top:8px, ~19px tall); stack below them instead of hiding underneath. */
+    .owned-chip.stacked { top: 34px; }
     #gameplan-input { width: 100%; min-height: 240px; }
     #gameplan-count.over { color: #B3261E; font-weight: 700; }
   </style>
@@ -4083,7 +4085,7 @@
         ${countBadge}
         ${isCommander ? `<span class="commander-badge">${ICON_CROWN}Commander</span>` : ""}
         ${isMaybeCard ? `<span class="maybe-badge">Maybe</span>` : ""}
-        ${ownedQty(collectionIndex, card) > 0 ? `<span class="owned-chip">Owned</span>` : ""}
+        ${ownedQty(collectionIndex, card) > 0 ? `<span class="owned-chip${isCommander || isMaybeCard ? " stacked" : ""}">Owned</span>` : ""}
         <div class="card-info">
           <div class="card-text">
             <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
