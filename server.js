@@ -1,9 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
 import express from "express";
-import { callOpenAIJsonRaw, parseJsonObject } from "./lib/ai-client.js";
+import { callOpenAIJsonRaw, parseJsonObject, createAiClient } from "./lib/ai-client.js";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { mergeDeckNotes, normalizeDeckNotes } from "./lib/deck-notes.js";
+import { createCollectionStore, PreviewExpiredError, ScryfallError } from "./lib/collection-store.js";
+import { CollectionFormatError } from "./lib/collection.js";
+import { createUsageLog } from "./lib/ai-usage.js";
+import { createProfileStore } from "./lib/profiles.js";
+import { createEmbeddingStore, createLocalEmbedder } from "./lib/embeddings.js";
+import { createRankingCache } from "./lib/swaps.js";
+import { createSwapsService } from "./lib/swaps-service.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -23,6 +31,7 @@ const DEFAULT_APP_STATE = {
   membership: null,
   quantities: {}, // { [folderId]: { [cardId]: count } } — per-deck basic-land counts
   maybeboard: {}, // { [folderId]: { [cardId]: true } } — per-deck Maybeboard flags
+  deckNotes: {}, // { [folderId]: string } — per-deck Game plan used by View Swaps
   colorIdentity: [],
   translateCache: {},
   searchHistory: [],
@@ -47,6 +56,7 @@ function normalizeAppState(value = {}) {
     membership: plainObject(input.membership),
     quantities: plainObject(input.quantities) || {},
     maybeboard: plainObject(input.maybeboard) || {},
+    deckNotes: normalizeDeckNotes(input.deckNotes),
     colorIdentity: Array.isArray(input.colorIdentity) ? input.colorIdentity.filter((c) => COLOR_IDS.has(c)) : [],
     translateCache: plainObject(input.translateCache) || {},
     searchHistory: Array.isArray(input.searchHistory) ? input.searchHistory : [],
@@ -165,6 +175,7 @@ function mergeStates(base, incoming) {
     membership: mergeMembership(base.membership, incoming.membership),
     quantities: mergeQuantities(base.quantities, incoming.quantities),
     maybeboard: mergeMaybeboard(base.maybeboard, incoming.maybeboard),
+    deckNotes: mergeDeckNotes(base.deckNotes, incoming.deckNotes),
     colorIdentity: Array.isArray(incoming.colorIdentity) && incoming.colorIdentity.length ? incoming.colorIdentity : base.colorIdentity,
     translateCache: mergeTranslateCache(base.translateCache, incoming.translateCache),
     searchHistory: mergeSearchHistory(base.searchHistory, incoming.searchHistory),
@@ -218,6 +229,9 @@ function applyOps(state, ops) {
         break;
       case "setMaybeboard":
         if (op.maybeboard && typeof op.maybeboard === "object") state.maybeboard = op.maybeboard;
+        break;
+      case "setDeckNotes":
+        if (op.deckNotes && typeof op.deckNotes === "object") state.deckNotes = normalizeDeckNotes(op.deckNotes);
         break;
       case "setSettings":
         if (Array.isArray(op.colorIdentity)) state.colorIdentity = op.colorIdentity.filter((c) => COLOR_IDS.has(c));
@@ -901,6 +915,82 @@ app.get("/api/combos", async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(502).json({ error: "Couldn't reach Commander Spellbook" });
+  }
+});
+
+// ── Collection & swaps ─────────────────────────────────────────────
+const collectionStore = createCollectionStore({ dataDir: DATA_DIR });
+let embedderPromise = null;
+const swapsService = createSwapsService({
+  collectionStore,
+  profileStore: createProfileStore({ dataDir: DATA_DIR }),
+  embeddingStore: createEmbeddingStore({ dataDir: DATA_DIR }),
+  rankingCache: createRankingCache({ dataDir: DATA_DIR }),
+  usageLog: createUsageLog({ dataDir: DATA_DIR }),
+  getAi: async () => {
+    const ai = activeAiConfig(await readAppState());
+    return ai.apiKey ? createAiClient(ai) : null;
+  },
+  getEmbedder: () => (embedderPromise ||= createLocalEmbedder({ cacheDir: join(DATA_DIR, "models") })
+    .catch((err) => { embedderPromise = null; throw err; })),
+});
+
+app.get("/api/collection", async (req, res) => {
+  try {
+    res.json(await collectionStore.payload());
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Couldn't load the collection" });
+  }
+});
+
+app.post("/api/collection/preview", async (req, res) => {
+  try {
+    res.json(await collectionStore.preview(String(req.body?.csv || "")));
+  } catch (err) {
+    res.status(err instanceof CollectionFormatError ? 400 : 500).json({ error: err.message || "Couldn't read that file" });
+  }
+});
+
+app.post("/api/collection/apply", async (req, res) => {
+  const mode = req.body?.mode === "add" ? "add" : "sync";
+  try {
+    const result = await collectionStore.apply(String(req.body?.previewId || ""), mode);
+    swapsService.afterSync().catch(() => {});
+    res.json(result);
+  } catch (err) {
+    const status = err instanceof PreviewExpiredError ? 410 : err instanceof ScryfallError ? 502 : 500;
+    res.status(status).json({ error: err.message || "Sync failed" });
+  }
+});
+
+app.get("/api/swaps/status", async (req, res) => {
+  try {
+    res.json(await swapsService.status());
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Couldn't read swap status" });
+  }
+});
+
+app.post("/api/swaps/prepare", async (req, res) => {
+  try {
+    res.json(await swapsService.prepare());
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Couldn't start preparing swaps" });
+  }
+});
+
+app.post("/api/swaps", async (req, res) => {
+  const card = req.body?.card;
+  if (!card || !card.name) return res.status(400).json({ error: "Missing card" });
+  try {
+    const { httpStatus, body } = await swapsService.swaps({
+      card,
+      colorIdentity: Array.isArray(req.body?.colorIdentity) ? req.body.colorIdentity : card.color_identity || [],
+      deck: req.body?.deck && typeof req.body.deck === "object" ? req.body.deck : null,
+    });
+    res.status(httpStatus).json(body);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Swaps failed" });
   }
 });
 
