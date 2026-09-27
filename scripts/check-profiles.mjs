@@ -134,4 +134,18 @@ test("estimateProfileUsd uses the per-card token constants", () => {
   assert.equal(estimateProfileUsd(1000, "gpt-4.1"), null);
 });
 
+test("concurrent cold access to the store doesn't lose writes", async () => {
+  const dataDir = await tempDir();
+  const store = createProfileStore({ dataDir });
+  // A second cold read lands mid-sequence (mirrors a concurrent status() check racing a
+  // job's own snapshot() on a store neither has touched yet) while several batches are
+  // saved meanwhile; none of this is awaited until the end.
+  const background = new Promise((resolve) => setImmediate(resolve)).then(() => store.pending(["bg"]));
+  const entries = Array.from({ length: 20 }, (_, i) => [`o${i}`, { summary: `Profile ${i}.`, mechanics: [], synergies: [] }]);
+  for (const [id, profile] of entries) await store.saveMany({ [id]: profile });
+  await background;
+  const reloaded = createProfileStore({ dataDir });
+  for (const [id, profile] of entries) assert.deepEqual(await reloaded.get(id), profile);
+});
+
 await run("Card profiles");

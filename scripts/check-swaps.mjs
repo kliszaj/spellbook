@@ -126,4 +126,18 @@ test("the ranking prompt names no deck", () => {
   assert.doesNotMatch(RANK_SYSTEM_PROMPT, /hei bai|shrine|kynaios|mikaeus|giada/i);
 });
 
+test("concurrent cold access to the cache doesn't lose entries", async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), "spellbook-rank-"));
+  const cache = createRankingCache({ dataDir });
+  // A second cold read lands mid-sequence (mirrors a concurrent status() check racing a
+  // job's own snapshot() on a cache neither has touched yet) while several entries are
+  // set meanwhile; none of this is awaited until the end.
+  const background = new Promise((resolve) => setImmediate(resolve)).then(() => cache.get("bg"));
+  const keys = Array.from({ length: 20 }, (_, i) => `k${i}`);
+  for (const k of keys) await cache.set(k, [{ match: 1, id: k }]);
+  await background;
+  const reloaded = createRankingCache({ dataDir });
+  for (const k of keys) assert.deepEqual(await reloaded.get(k), [{ match: 1, id: k }]);
+});
+
 await run("Swaps ranking");

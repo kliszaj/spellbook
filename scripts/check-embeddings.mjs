@@ -63,4 +63,21 @@ test("vectors from a different model are discarded", async () => {
   assert.equal(await createEmbeddingStore({ dataDir }).get("o1"), null);
 });
 
+test("concurrent cold access to the store doesn't lose vectors", async () => {
+  const dataDir = await tempDir();
+  const store = createEmbeddingStore({ dataDir });
+  // A second cold read lands mid-sequence (mirrors a concurrent status() check racing a
+  // job's own snapshot() on a store neither has touched yet) while several vectors are
+  // saved meanwhile; none of this is awaited until the end.
+  const background = new Promise((resolve) => setImmediate(resolve)).then(() => store.get("bg"));
+  const entries = Array.from({ length: 20 }, (_, i) => [`o${i}`, Float32Array.from([i, i + 1, i + 2, i + 3])]);
+  for (const [id, vector] of entries) {
+    await store.putMany([{ oracleId: id, hash: `h${id}`, vector }]);
+    await store.save();
+  }
+  await background;
+  const reloaded = createEmbeddingStore({ dataDir });
+  for (const [id, vector] of entries) assert.deepEqual((await reloaded.get(id)).v, vector);
+});
+
 await run("Embeddings");
