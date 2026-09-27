@@ -10,7 +10,7 @@
     "test:board-wipes": "node scripts/check-board-wipe-regressions.mjs",
     "test:deck-identity": "node scripts/check-deck-identity-contract.mjs",
     "test:deck-analysis": "npm run test:calibration && npm run test:board-wipes && npm run test:deck-identity",
-    "test:collection": "node scripts/check-collection.mjs && node scripts/check-collection-store.mjs && node scripts/check-collection-ui.mjs",
+    "test:collection": "node scripts/check-collection.mjs && node scripts/check-collection-store.mjs && node scripts/check-collection-ui.mjs && node scripts/check-scryfall.mjs",
     "test:swaps": "node scripts/check-ai-client.mjs && node scripts/check-profiles.mjs && node scripts/check-embeddings.mjs && node scripts/check-swaps.mjs && node scripts/check-swaps-service.mjs && node scripts/check-deck-notes.mjs",
     "test:swaps:model": "node scripts/check-swaps-model.mjs",
     "test": "npm run test:collection && npm run test:swaps && npm run test:deck-analysis",

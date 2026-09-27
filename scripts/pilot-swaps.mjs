@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createCollectionStore } from "../lib/collection-store.js";
+import { postCardCollection } from "../lib/scryfall.js";
 import { createProfileStore, oracleIdOf } from "../lib/profiles.js";
 import { createEmbeddingStore, createLocalEmbedder } from "../lib/embeddings.js";
 import { createRankingCache } from "../lib/swaps.js";
@@ -55,12 +56,8 @@ const ai = apiKey ? createAiClient({ provider: "anthropic", apiKey, model }) : n
 async function scryfallByName(names) {
   const out = [];
   for (let i = 0; i < names.length; i += 75) {
-    const res = await fetch("https://api.scryfall.com/cards/collection", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "Spellbook/0.1" },
-      body: JSON.stringify({ identifiers: names.slice(i, i + 75).map((name) => ({ name })) }),
-    });
-    out.push(...((await res.json()).data || []));
+    const json = await postCardCollection(names.slice(i, i + 75).map((name) => ({ name })));
+    out.push(...(json.data || []));
     await new Promise((r) => setTimeout(r, 100));
   }
   return out;

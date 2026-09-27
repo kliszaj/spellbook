@@ -13,14 +13,21 @@ const tempDir = () => mkdtemp(join(tmpdir(), "spellbook-collection-"));
 const exists = (p) => access(p).then(() => true, () => false);
 const noSleep = async () => {};
 
-function fakeScryfall({ fail = false, notFound = [] } = {}) {
+function fakeScryfall({ fail = false, notFound = [], rateLimitFirst = false } = {}) {
   const requests = [];
+  let rateLimited = false;
   const fetchImpl = async (url, init) => {
     const ids = JSON.parse(init.body).identifiers.map((i) => i.id);
     requests.push(ids);
-    if (fail) return { ok: false, status: 503, json: async () => ({}) };
+    if (fail) return { ok: false, status: 503, headers: { get: () => null }, json: async () => ({}) };
+    if (rateLimitFirst && !rateLimited) {
+      rateLimited = true;
+      return { ok: false, status: 429, headers: { get: (h) => (h === "Retry-After" ? "1" : null) }, json: async () => ({}) };
+    }
     return {
       ok: true,
+      status: 200,
+      headers: { get: () => null },
       json: async () => ({
         data: ids.filter((id) => !notFound.includes(id)).map((id) => ({
           id, oracle_id: `o-${id}`, name: `Card ${id}`, type_line: "Instant", color_identity: [], artist: "Someone",
@@ -56,6 +63,19 @@ test("a Scryfall failure writes nothing", async () => {
   await assert.rejects(store.apply(p.previewId, "sync"), ScryfallError);
   assert.equal(await exists(join(dataDir, "collection.json")), false);
   assert.equal(await exists(join(dataDir, "collection-cards.json")), false);
+});
+
+test("a rate-limited first request retries and still applies", async () => {
+  const dataDir = await tempDir();
+  const scry = fakeScryfall({ rateLimitFirst: true });
+  const sleeps = [];
+  const store = createCollectionStore({ dataDir, fetchImpl: scry.fetchImpl, sleep: async (ms) => { sleeps.push(ms); } });
+  const p = await store.preview(csv(row("a")));
+  const result = await store.apply(p.previewId, "sync");
+  assert.deepEqual(Object.keys(result.cards), ["a"]);
+  assert.ok(sleeps.includes(1000));
+  const saved = JSON.parse(await readFile(join(dataDir, "collection.json"), "utf8"));
+  assert.ok(saved.entries["a|normal|Main"]);
 });
 
 test("an expired or unknown preview is rejected", async () => {
