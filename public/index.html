@@ -2471,7 +2471,7 @@
       $("#preferred-ai-provider").value = settings.preferredAiProvider || "anthropic";
       $("#anthropic-api-key-input").value = "";
       $("#openai-api-key-input").value = "";
-      setModelSelect("#anthropic-model-input", providers.anthropic?.model, "claude-sonnet-4-6");
+      setModelSelect("#anthropic-model-input", providers.anthropic?.model, "claude-sonnet-5");
       setModelSelect("#openai-model-input", providers.openai?.model, "gpt-4.1");
       paintProviderStatus("#anthropic-key-status", providers.anthropic);
       paintProviderStatus("#openai-key-status", providers.openai);

@@ -198,15 +198,19 @@ random `previewId` (15-minute expiry), and returns:
 
 ### `GET /api/swaps/status`
 ```json
-{ "phase": "idle|profiling|embedding|ready|error",
+{ "phase": "idle|awaiting-confirmation|profiling|embedding|ready|error",
   "profiled": 640, "embedded": 0, "total": 1925,
-  "aiAvailable": true, "error": null }
+  "pending": 1925, "estimate": { "usd": 2.10, "model": "claude-sonnet-5" },
+  "aiAvailable": true, "spend": { "monthUsd": 0.42 }, "error": null }
 ```
-`aiAvailable` is false when the active provider has no API key.
+`aiAvailable` is false when the active provider has no API key. `pending` and
+`estimate` describe the cards still needing profiles (`estimate` is `null` when the
+model has no known price).
 
 ### `POST /api/swaps/prepare`
-Starts (or resumes) the prepare job — used by the **Retry** button and by the
-Collection tab's "Prepare for swaps" action after adding an API key.
+Starts (or resumes) the prepare job. This is the **Start** button's action when
+`awaiting-confirmation`, and the **Retry** action after an error. Embedding-only work
+(no AI) never needs confirmation.
 
 ### `POST /api/swaps` — body `{ card, deck }`
 - `card`: the original card (slim fields; may not be in the collection).
@@ -243,9 +247,12 @@ Collection tab's "Prepare for swaps" action after adding an API key.
   - `synergies` — up to 4 short phrases naming what the card rewards or enables.
 - Output via a JSON-returning tool (Anthropic) / JSON mode (OpenAI), validated; a card
   missing from a response is retried once in the next batch, then left unprofiled.
-- The job runs in the background after each apply, only for `oracle_id`s without a
-  profile at the current `promptVersion`. Progress is written to disk after every
-  batch, so a restart resumes where it stopped.
+- The job only covers `oracle_id`s without a profile at the current `promptVersion`.
+  It **never starts a bulk run on its own**: when more than `PROFILE_AUTO_LIMIT = 50`
+  cards need profiles, status becomes `awaiting-confirmation` with a cost estimate,
+  and nothing is spent until the user presses **Start** (see *Spend controls*). At or
+  below 50 cards (e.g. a pack scan) it runs automatically after apply. Progress is
+  written to disk after every batch, so a restart resumes where it stopped.
 - No API key → profiling is skipped (`aiAvailable: false`); swaps fall back to local
   mode (below).
 - The original card in a View Swaps request is profiled on demand if it has no profile
@@ -320,8 +327,10 @@ plan, or syncing the collection produces a fresh ranking.
   `setActiveTab` gains a third branch showing `#collection-section`.
 - Header: unique cards · total copies · total value (€, `prices.eur`, falling back to
   `eur_foil` for foils) · "Synced <date>" · swap-readiness line from
-  `/api/swaps/status` ("Profiling cards for swaps… 640 / 1,925", "Ready for swaps",
-  or "Add an API key in Settings for deck-aware swaps").
+  `/api/swaps/status` ("Profile 1,925 cards for swaps (≈ $2.10 on claude-sonnet-5)"
+  with a **Start** button, "Profiling cards for swaps… 640 / 1,925", "Ready for
+  swaps", or "Add an API key in Settings for deck-aware swaps") · "AI spend this
+  month: $0.42".
 - Controls: name search, mana-symbol color picker (same component as Search, **fits
   within**: `color_identity ⊆ selected`), binder dropdown ("All binders" + trimmed
   names), sort by name / price / mana value, **Upload** button.
@@ -378,12 +387,55 @@ plan, or syncing the collection produces a fresh ranking.
 
 ## Cost (uses the Settings provider/model)
 
-Estimates at the currently configured model (Claude Sonnet 4.6, $3 / $15 per MTok):
-- Profiling ~1,900 cards once: ≈ 300K input + 150K output tokens ≈ **$3**
-  (≈ $1 on Haiku 4.5, ≈ $2 on Sonnet 5, ≈ $5 on Opus 5).
-- Profiling new cards after a sync: cents.
-- One View Swaps ranking: ≈ 3–5K input + ~1K output ≈ **$0.02–0.03**, then cached.
-Real token usage is measured during implementation and recorded in the README.
+Rough estimates (Anthropic list prices, $ per MTok input / output):
+
+| Model | Price | Profile ~1,900 cards (once) | One ranking (then cached) |
+|---|---|---|---|
+| Sonnet 4.6 (previous setting) | 3 / 15 | ≈ $3 | ≈ $0.02–0.03 |
+| **Sonnet 5 (chosen)** | 2 / 10 | ≈ $2 | ≈ $0.01–0.02 |
+| Opus 5 | 5 / 25 | ≈ $5 | ≈ $0.04–0.05 |
+| Haiku 4.5 | 1 / 5 | ≈ $1 | ≈ $0.01 |
+
+Model: **Claude Sonnet 5** (`claude-sonnet-5`), chosen by the user on 2026-09-27 and
+set as the Anthropic default (`DEFAULT_ANTHROPIC_MODEL`) and in Settings. Real token
+usage is measured in the pilot and recorded in the README.
+
+## Spend controls
+
+The user must not pay for AI work they didn't ask for or that isn't good enough.
+
+- **No surprise bulk runs.** Profiling more than 50 cards waits for an explicit
+  **Start**, shown in the Collection tab as "Profile 1,925 cards for swaps
+  (≈ $2.10 on claude-sonnet-5)". The estimate = cards pending × measured average
+  tokens per card (constants set from the pilot) × the model's price.
+- **Rankings only on demand.** An AI ranking happens only when the user opens View
+  Swaps, and is cached (see *Ranking*); nothing ranks in the background.
+- **Every AI result is cached** — profiles by `oracle_id` (kept across syncs and model
+  switches), rankings by deck version / game plan / collection / model.
+- **Bounded retries.** A failed batch is retried once, then its cards are left
+  unprofiled and reported; no retry loops.
+- **Spend tracking.** `lib/ai-usage.js` records each profiling/ranking call's
+  `{ at, feature, provider, model, inputTokens, outputTokens, usd }` to
+  `data/ai-usage.json`, pricing tokens with an `AI_PRICES` table (Claude Sonnet 5,
+  Sonnet 4.6, Opus 5, Haiku 4.5; unknown models record tokens only). The Collection
+  tab shows "AI spend this month: $0.42".
+- **Tests never call a real AI** — the provider is injected and faked.
+- Not used: the Message Batches API (50% cheaper, but it would save ~$1 once while
+  adding a second code path and hours-long delays).
+
+## Rollout: pilot before the full run
+
+Before any bulk profiling of the real collection:
+1. Pick ~30 cards: a sample of the Hei Bai deck plus the collection's flicker,
+   exile-removal, Shrine, and Spirit cards.
+2. Profile them with **Sonnet 5** and rank swaps for 3–4 Hei Bai cards (the deck's
+   Game plan filled in from the primer).
+3. Show the user the profiles, rankings, reasons, and measured cost.
+4. Go/no-go: only if the user is satisfied is the full collection profiled. If not,
+   the prompt is adjusted (bumping `promptVersion`) or another model is tried on the
+   same ~30 cards — never on the full collection first. Measured tokens per card
+   become the estimate constants.
+Expected pilot cost: under $0.50.
 
 ## Docker
 
