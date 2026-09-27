@@ -106,11 +106,11 @@ test("finalizeLocal uses the shortlist score with the same threshold", () => {
   assert.deepEqual(out.map((r) => [r.card.name, r.match, r.reason]), [["Hi", 80, ""]]);
 });
 
-test("rankingCacheKey changes with the deck version, game plan, collection sync and model", () => {
+test("rankingCacheKey changes with the deck version, game plan, collection sync, model and prompt version", () => {
   const base = { originalOracleId: "o", deckSignature: "sig", gamePlan: "plan", syncedAt: "t1", model: "m" };
   const key = rankingCacheKey(base);
   assert.equal(rankingCacheKey({ ...base }), key);
-  for (const change of [{ deckSignature: "sig2" }, { gamePlan: "plan2" }, { syncedAt: "t2" }, { model: "m2" }]) {
+  for (const change of [{ deckSignature: "sig2" }, { gamePlan: "plan2" }, { syncedAt: "t2" }, { model: "m2" }, { promptVersion: 99 }]) {
     assert.notEqual(rankingCacheKey({ ...base, ...change }), key);
   }
 });
@@ -124,6 +124,11 @@ test("ranking cache persists across instances", async () => {
 
 test("the ranking prompt names no deck", () => {
   assert.doesNotMatch(RANK_SYSTEM_PROMPT, /hei bai|shrine|kynaios|mikaeus|giada/i);
+});
+
+test("the rank prompt allows budget stand-ins, even if weaker", () => {
+  assert.match(RANK_SYSTEM_PROMPT, /budget/i);
+  assert.match(RANK_SYSTEM_PROMPT, /even if (it is )?weaker/i);
 });
 
 test("concurrent cold access to the cache doesn't lose entries", async () => {
