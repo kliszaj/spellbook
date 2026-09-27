@@ -3,7 +3,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test, run } from "./lib/tiny-test.mjs";
-import { priceUsd, supportsEffort, parseJsonObject, createAiClient } from "../lib/ai-client.js";
+import { priceUsd, supportsEffort, parseJsonObject, createAiClient, AiResponseError } from "../lib/ai-client.js";
 import { createUsageLog } from "../lib/ai-usage.js";
 
 const close = (a, b) => Math.abs(a - b) < 1e-9;
@@ -56,11 +56,42 @@ test("anthropic json() omits effort for models that reject it", async () => {
   assert.deepEqual(anthropic.calls[0].system, [{ type: "text", text: "S" }]);
 });
 
-test("anthropic json() throws on refusal or truncation", async () => {
+const RESULT_SCHEMA = { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"], additionalProperties: false };
+
+test("anthropic json() sends schema as structured output, merged with effort when supported", async () => {
+  const anthropic = fakeAnthropic(okReply);
+  await createAiClient({ provider: "anthropic", apiKey: "k", model: "claude-sonnet-5", anthropic }).json({ system: "S", user: "U", effort: "low", schema: RESULT_SCHEMA });
+  assert.deepEqual(anthropic.calls[0].output_config, { effort: "low", format: { type: "json_schema", schema: RESULT_SCHEMA } });
+});
+
+test("anthropic json() sends schema without effort for models that reject it", async () => {
+  const anthropic = fakeAnthropic(okReply);
+  await createAiClient({ provider: "anthropic", apiKey: "k", model: "claude-haiku-4-5", anthropic }).json({ system: "S", user: "U", effort: "low", schema: RESULT_SCHEMA });
+  assert.deepEqual(anthropic.calls[0].output_config, { format: { type: "json_schema", schema: RESULT_SCHEMA } });
+});
+
+test("anthropic json() throws AiResponseError with billed usage on refusal or truncation", async () => {
   for (const stop_reason of ["refusal", "max_tokens"]) {
     const ai = createAiClient({ provider: "anthropic", apiKey: "k", model: "claude-sonnet-5", anthropic: fakeAnthropic({ ...okReply, stop_reason }) });
-    await assert.rejects(ai.json({ system: "S", user: "U" }));
+    await assert.rejects(ai.json({ system: "S", user: "U" }), (err) => {
+      assert.ok(err instanceof AiResponseError, stop_reason);
+      assert.deepEqual(err.usage, { inputTokens: 1000, outputTokens: 200, cacheWriteTokens: 500, cacheReadTokens: 0 }, stop_reason);
+      assert.ok(close(err.usd, (1000 * 2 + 500 * 1.25 * 2 + 200 * 10) / 1e6), stop_reason);
+      if (stop_reason === "refusal") assert.equal(err.status, 422);
+      return true;
+    });
   }
+});
+
+test("anthropic json() throws AiResponseError with billed usage on unparseable text", async () => {
+  const badReply = { ...okReply, content: [{ type: "text", text: '{"a": "x"y"}' }] };
+  const ai = createAiClient({ provider: "anthropic", apiKey: "k", model: "claude-sonnet-5", anthropic: fakeAnthropic(badReply) });
+  await assert.rejects(ai.json({ system: "S", user: "U" }), (err) => {
+    assert.ok(err instanceof AiResponseError);
+    assert.deepEqual(err.usage, { inputTokens: 1000, outputTokens: 200, cacheWriteTokens: 500, cacheReadTokens: 0 });
+    assert.ok(err.usd > 0);
+    return true;
+  });
 });
 
 test("openai json() folds the deck context into the system prompt and reports usage", async () => {

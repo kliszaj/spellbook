@@ -38,10 +38,11 @@ function fakeAi({ failProfiles = false, failRank = false, skipAlways = [] } = {}
   const calls = { profile: 0, rank: 0 };
   return {
     provider: "anthropic", model: "claude-sonnet-5", calls,
-    async json({ user }) {
+    async json({ user, schema }) {
       if (user.includes("CARD TO REPLACE")) {
         calls.rank++;
-        if (failRank) throw new Error("rank down");
+        calls.rankSchema = schema;
+        if (failRank) throw Object.assign(new Error("rank down"), { usage: { inputTokens: 5, outputTokens: 2 }, usd: 0.001 });
         const ids = [...user.matchAll(/^(k\d+):/gm)].map((m) => m[1]);
         return { data: { results: ids.map((id, i) => ({ id, match: 90 - i * 10, fits: true, reason: `Reason ${id}` })) }, usage: { inputTokens: 1, outputTokens: 1 }, usd: 0.01 };
       }
@@ -146,13 +147,18 @@ test("AI swaps exclude deck cards, are cached, and re-rank when the game plan ch
   assert.equal(ai.calls.rank, 2);
 });
 
-test("an AI ranking failure falls back to local matches with the error", async () => {
-  const { service } = await setup({ cards: cardsN(5), ai: fakeAi({ failRank: true }) });
+test("an AI ranking failure falls back to local matches with the error, and the billed call is still recorded", async () => {
+  const ai = fakeAi({ failRank: true });
+  const { service, usage } = await setup({ cards: cardsN(5), ai });
   await service.status();
   await service.idle();
   const r = await service.swaps({ card: original, colorIdentity: ["W"], deck: deck() });
   assert.equal(r.body.mode, "local");
   assert.equal(r.body.aiError, "rank down");
+  const rankEntries = usage.entries.filter((e) => e.feature === "rank");
+  assert.equal(rankEntries.length, 1);
+  assert.equal(rankEntries[0].inputTokens, 5);
+  assert.ok(ai.calls.rankSchema?.properties?.results);
 });
 
 test("a profiling failure is sticky until Retry — no automatic re-spend", async () => {

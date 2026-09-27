@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test, run } from "./lib/tiny-test.mjs";
 import {
-  MECHANICS, PROFILE_SYSTEM_PROMPT, PROMPT_VERSION, cardPromptLine, buildProfileRequest, normalizeProfile,
-  parseProfileResponse, estimateProfileUsd, createProfileStore, runProfileJob, profileOne,
+  MECHANICS, PROFILE_SCHEMA, PROFILE_SYSTEM_PROMPT, PROMPT_VERSION, cardPromptLine, buildProfileRequest,
+  normalizeProfile, parseProfileResponse, estimateProfileUsd, createProfileStore, runProfileJob, profileOne,
 } from "../lib/profiles.js";
 
 const tempDir = () => mkdtemp(join(tmpdir(), "spellbook-profiles-"));
@@ -13,14 +13,19 @@ const card = (n) => ({ id: `s${n}`, oracle_id: `o${n}`, name: `Card ${n}`, mana_
 const usageLog = () => { const entries = []; return { entries, record: async (e) => { entries.push(e); } }; };
 
 // Answers profile requests by reading the "cN: Name" lines back out of the prompt.
-function fakeAi({ skipOnce = [], skipAlways = [], failTimes = 0, failStatus } = {}) {
+function fakeAi({ skipOnce = [], skipAlways = [], failTimes = 0, failStatus, billedFailTimes = 0 } = {}) {
   const calls = [];
   const skipped = new Set();
   let fails = failTimes;
+  let billedFails = billedFailTimes;
   return {
     provider: "anthropic", model: "claude-sonnet-5", calls,
     async json(req) {
       calls.push(req);
+      if (billedFails > 0) {
+        billedFails--;
+        throw Object.assign(new Error("billed parse failure"), { usage: { inputTokens: 10, outputTokens: 5 }, usd: 0.002 });
+      }
       if (fails > 0) { fails--; throw Object.assign(new Error("boom"), { status: failStatus }); }
       const cards = [...req.user.matchAll(/^(c\d+): ([^|\n]+)/gm)]
         .map(([, id, name]) => ({ id, name: name.trim() }))
@@ -91,6 +96,25 @@ test("runProfileJob profiles in batches of 25, records spend and saves progress"
   assert.deepEqual(saved.profiles.o1.mechanics, ["card-draw"]);
 });
 
+test("runProfileJob sends the profile schema with the mechanics enum", async () => {
+  const ai = fakeAi();
+  await runProfileJob({ cards: [card(1)], store: createProfileStore({ dataDir: await tempDir() }), ai, usageLog: usageLog() });
+  assert.equal(ai.calls[0].schema, PROFILE_SCHEMA);
+  assert.deepEqual(ai.calls[0].schema.properties.cards.items.properties.mechanics.items.enum, MECHANICS);
+});
+
+test("a billed parse failure is recorded even though the attempt is discarded and retried", async () => {
+  const ai = fakeAi({ billedFailTimes: 1 });
+  const log = usageLog();
+  const result = await runProfileJob({ cards: [card(1)], store: createProfileStore({ dataDir: await tempDir() }), ai, usageLog: log });
+  assert.deepEqual(result, { profiled: 1, failed: [] });
+  assert.equal(ai.calls.length, 2);
+  assert.equal(log.entries.length, 2);
+  assert.equal(log.entries[0].feature, "profile");
+  assert.equal(log.entries[0].inputTokens, 10);
+  assert.equal(log.entries[0].usd, 0.002);
+});
+
 test("a card the AI skips once is retried once; skipped twice it is reported as failed", async () => {
   const cards = Array.from({ length: 30 }, (_, i) => card(i + 1));
   const once = await runProfileJob({ cards, store: createProfileStore({ dataDir: await tempDir() }), ai: fakeAi({ skipOnce: ["Card 3"] }), usageLog: usageLog() });
@@ -119,7 +143,7 @@ test("profiles from an older prompt version are ignored", async () => {
   assert.deepEqual(await store.pending(["o1"]), ["o1"]);
 });
 
-test("profileOne uses the cache before calling the AI", async () => {
+test("profileOne uses the cache before calling the AI, and sends the profile schema", async () => {
   const store = createProfileStore({ dataDir: await tempDir() });
   const ai = fakeAi();
   const first = await profileOne(card(7), { store, ai, usageLog: usageLog() });
@@ -127,6 +151,17 @@ test("profileOne uses the cache before calling the AI", async () => {
   assert.equal(first.summary, "Profile of Card 7.");
   assert.deepEqual(second, first);
   assert.equal(ai.calls.length, 1);
+  assert.equal(ai.calls[0].schema, PROFILE_SCHEMA);
+});
+
+test("profileOne records a billed failure before rethrowing", async () => {
+  const store = createProfileStore({ dataDir: await tempDir() });
+  const ai = fakeAi({ billedFailTimes: 1 });
+  const log = usageLog();
+  await assert.rejects(profileOne(card(8), { store, ai, usageLog: log }));
+  assert.equal(log.entries.length, 1);
+  assert.equal(log.entries[0].feature, "profile");
+  assert.equal(log.entries[0].inputTokens, 10);
 });
 
 test("estimateProfileUsd uses the per-card token constants", () => {
