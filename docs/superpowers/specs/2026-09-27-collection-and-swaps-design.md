@@ -1,7 +1,7 @@
 # Collection Tab & View Swaps — Design
 
 Date: 2026-09-27
-Status: Approved (pending spec review)
+Status: Approved
 
 ## Goal
 
@@ -13,9 +13,12 @@ flicker deck), each with a match % and a one-line reason (layout modelled on
 mtgreplace.com). Decks also gain **Owned** badges, a color filter, and a **Game plan**
 note that feeds the swap ranking.
 
-First real use: a Hei Bai, Forest Guardian five-color flicker deck
-(moxfield.com/decks/iOjVZsUJDE-obopPqMbrPA, primer at
-moxfield.com/decks/If9oCujb9kGFIoPNrLnZpA/primer).
+**Deck-agnostic.** Everything works for any Commander deck: the ranking is driven by
+that deck's commander, Game plan, and decklist. No prompt, constant, or code path may
+mention a specific deck or commander. The first deck the user will use it on is a Hei
+Bai, Forest Guardian five-color flicker deck (moxfield.com/decks/iOjVZsUJDE-obopPqMbrPA,
+primer at moxfield.com/decks/If9oCujb9kGFIoPNrLnZpA/primer); the pilot deliberately
+also covers unrelated archetypes (see *Rollout*).
 
 ## Scope
 
@@ -242,8 +245,10 @@ Starts (or resumes) the prepare job. This is the **Start** button's action when
     `death-trigger`, `lifegain`, `drain`, `evasion`, `combat-trick`, `anthem`,
     `copy`, `theft`, `stax`, `graveyard-hate`, `extra-turn`, `wincon`,
     `enchantment-matters`, `artifact-matters`, `legends-matter`, `tribal`,
-    `spellslinger`, `landfall`, `untap`, `cost-reduction`, `land`, `vanilla`). The
-    full list lives in one constant; tags outside it are dropped.
+    `spellslinger`, `landfall`, `untap`, `cost-reduction`, `fast-mana`,
+    `trigger-doubling`, `bounce`, `pillowfort`, `land`, `vanilla`). The full list
+    lives in one constant; tags outside it are dropped. The vocabulary is generic —
+    no set-, deck-, or commander-specific tags.
   - `synergies` — up to 4 short phrases naming what the card rewards or enables.
 - Output via a JSON-returning tool (Anthropic) / JSON mode (OpenAI), validated; a card
   missing from a response is retried once in the next batch, then left unprofiled.
@@ -302,6 +307,13 @@ Take the top `SWAP_SHORTLIST = 15`.
 - the deck: name, commander (+ its text), Game plan (if set), identity tags, and the
   main-deck card names,
 - the 15 shortlisted cards (full text + profile).
+
+Prompt layout for cost: the stable part (instructions, then the deck context — Game
+plan, commander, decklist) comes first and is marked for prompt caching
+(`cache_control`, Anthropic); the per-request part (original card + shortlist)
+comes last. Checking several cards from the same deck in one sitting then re-reads
+the deck context from cache instead of paying for it again. The Game plan is sent as
+pasted; the prompt notes it may contain website boilerplate to ignore.
 
 The prompt asks the model to judge each candidate as a replacement *in this deck*:
 does it do the same job, and does it work with the commander and game plan? It
@@ -371,7 +383,8 @@ plan, or syncing the collection produces a fresh ranking.
 ### Decks tab
 - **Game plan**: a "Game plan" button in the deck header (real decks only) opens a
   modal with a textarea — "Paste the deck's primer or describe how it wins" —
-  8,000-character limit with a live counter (no silent truncation). Stored in
+  20,000-character limit with a live counter (no silent truncation; a full Moxfield
+  primer pasted with page text is ~13,000 characters). Stored in
   `state.deckNotes[folderId]`, synced like `maybeboard`: localStorage key
   `deck_notes`, op `{ type: "setDeckNotes", deckNotes }`, `DEFAULT_APP_STATE`,
   `normalizeAppState`, a `mergeDeckNotes` in `mergeStates` (per-folder; newer local
@@ -426,16 +439,22 @@ The user must not pay for AI work they didn't ask for or that isn't good enough.
 ## Rollout: pilot before the full run
 
 Before any bulk profiling of the real collection:
-1. Pick ~30 cards: a sample of the Hei Bai deck plus the collection's flicker,
-   exile-removal, Shrine, and Spirit cards.
-2. Profile them with **Sonnet 5** and rank swaps for 3–4 Hei Bai cards (the deck's
-   Game plan filled in from the primer).
+1. Profile a sample of ~60 collection cards with **Sonnet 5**, chosen to cover
+   several archetypes: flicker, exile removal, Shrines/Spirits, landfall, zombies /
+   aristocrats, lifegain, and plain goodstuff.
+2. Rank swaps (shortlists drawn from those ~60 profiled cards) for:
+   - 3–4 cards of the Hei Bai deck **with** its Game plan (primer saved locally at
+     `data/pilot/hei-bai-primer.md`, git-ignored — third-party text is not committed);
+   - 1–2 cards each from three unrelated test decks in `fixtures/moxfield-snapshots/`
+     **without** a Game plan: Kynaios and Tiro (landfall), Mikaeus (mono-black
+     zombies), Giada (angel lifegain).
+   This checks the ranking generalizes beyond one deck and works with no Game plan.
 3. Show the user the profiles, rankings, reasons, and measured cost.
 4. Go/no-go: only if the user is satisfied is the full collection profiled. If not,
    the prompt is adjusted (bumping `promptVersion`) or another model is tried on the
    same ~30 cards — never on the full collection first. Measured tokens per card
    become the estimate constants.
-Expected pilot cost: under $0.50.
+Expected pilot cost: under $1.
 
 ## Docker
 
