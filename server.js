@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import express from "express";
+import { callOpenAIJsonRaw, parseJsonObject } from "./lib/ai-client.js";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -627,48 +628,14 @@ app.put("/api/settings", async (req, res) => {
   }
 });
 
-function parseJsonObject(text) {
-  const raw = String(text || "").trim();
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw);
-  } catch {
-    const start = raw.indexOf("{");
-    const end = raw.lastIndexOf("}");
-    return start >= 0 && end > start ? JSON.parse(raw.slice(start, end + 1)) : {};
-  }
-}
-
 function normalizeRecommendedCards(value) {
   return Array.isArray(value)
     ? value.filter((c) => c && c.name).map((c) => ({ name: String(c.name), reason: String(c.reason || "") }))
     : [];
 }
 
-async function callOpenAIJson({ apiKey, model, system, user, maxTokens = 2048 }) {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: maxTokens,
-    }),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const err = new Error(data?.error?.message || `OpenAI request failed (${response.status})`);
-    err.status = response.status;
-    throw err;
-  }
-  return parseJsonObject(data?.choices?.[0]?.message?.content || "");
+async function callOpenAIJson(args) {
+  return (await callOpenAIJsonRaw(args)).data;
 }
 
 async function translateWithAnthropic({ apiKey, model, userMessage, colorIdentity }) {

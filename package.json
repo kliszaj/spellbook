@@ -10,7 +10,8 @@
     "test:board-wipes": "node scripts/check-board-wipe-regressions.mjs",
     "test:deck-identity": "node scripts/check-deck-identity-contract.mjs",
     "test:deck-analysis": "npm run test:calibration && npm run test:board-wipes && npm run test:deck-identity",
-    "test:collection": "node scripts/check-collection.mjs && node scripts/check-collection-store.mjs"
+    "test:collection": "node scripts/check-collection.mjs && node scripts/check-collection-store.mjs",
+    "test:swaps": "node scripts/check-ai-client.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
