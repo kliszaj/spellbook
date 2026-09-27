@@ -1982,6 +1982,14 @@
       .swaps-original { flex-direction: column; }
       .swaps-original img { width: 150px; }
     }
+
+    /* ── Deck tools ─────────────────────────────────── */
+    .deck-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 10px 0; font-size: 12px; color: #7A766C; }
+    .deck-tools .deck-owned { font-weight: 700; color: #3F7D5C; }
+    .deck-tools #deck-gameplan-btn { margin-left: auto; }
+    .owned-chip { position: absolute; top: 8px; left: 8px; padding: 2px 7px; border-radius: 999px; background: rgba(63,125,92,0.9); color: #fff; font-size: 11px; font-weight: 700; }
+    #gameplan-input { width: 100%; min-height: 240px; }
+    #gameplan-count.over { color: #B3261E; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -2091,6 +2099,12 @@
         <div class="saved-section" id="saved-section">
           <div class="saved-main">
           <div id="deck-analysis" class="deck-analysis" style="display:none"></div>
+          <div class="deck-tools" id="deck-tools" style="display:none">
+            <div class="color-toggles" id="deck-colors" aria-label="Filter deck by color"></div>
+            <span class="deck-showing" id="deck-showing"></span>
+            <span class="deck-owned" id="deck-owned"></span>
+            <button class="export-btn" id="deck-gameplan-btn" type="button">Game plan</button>
+          </div>
           <div class="search-bar">
             <input type="text" id="saved-filter" placeholder="Filter saved cards...">
           </div>
@@ -2285,6 +2299,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="gameplan-modal">
+    <div class="modal">
+      <h2 id="gameplan-title">Game plan</h2>
+      <label for="gameplan-input">Paste the deck's primer or describe how it wins</label>
+      <textarea id="gameplan-input" rows="14"></textarea>
+      <small class="settings-help"><span id="gameplan-count">0</span> / 20,000 characters · View Swaps uses this to judge replacements for this deck.</small>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="gameplan-cancel" type="button">Cancel</button>
+        <button class="btn-save" id="gameplan-save" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Save-to-folder popover -->
   <div class="save-popover" id="save-popover">
     <div class="pop-title">Save to</div>
@@ -2324,6 +2351,7 @@
       membership: JSON.parse(localStorage.getItem("card_membership") || "null"),
       quantities: JSON.parse(localStorage.getItem("card_quantities") || "{}"),
       maybeboard: JSON.parse(localStorage.getItem("card_maybeboard") || "{}"),
+      deckNotes: JSON.parse(localStorage.getItem("deck_notes") || "{}"),
       activeFolder: "all",
       popoverCard: null,
       mode: "search",
@@ -2829,6 +2857,7 @@
         membership: state.membership,
         quantities: state.quantities,
         maybeboard: state.maybeboard,
+        deckNotes: state.deckNotes,
         colorIdentity: state.colorIdentity,
         translateCache: readTranslateCache(),
         searchHistory: readSearchHistory(),
@@ -2843,6 +2872,7 @@
         (data.membership && typeof data.membership === "object" && Object.keys(data.membership).length) ||
         (data.quantities && typeof data.quantities === "object" && Object.keys(data.quantities).length) ||
         (data.maybeboard && typeof data.maybeboard === "object" && Object.keys(data.maybeboard).length) ||
+        (data.deckNotes && typeof data.deckNotes === "object" && Object.keys(data.deckNotes).length) ||
         (Array.isArray(data.colorIdentity) && data.colorIdentity.length) ||
         data.forceAiSearch ||
         (data.translateCache && typeof data.translateCache === "object" && Object.keys(data.translateCache).length) ||
@@ -2871,6 +2901,10 @@
       if (data.maybeboard && typeof data.maybeboard === "object") {
         state.maybeboard = data.maybeboard;
         localStorage.setItem("card_maybeboard", JSON.stringify(state.maybeboard));
+      }
+      if (data.deckNotes && typeof data.deckNotes === "object") {
+        state.deckNotes = data.deckNotes;
+        localStorage.setItem("deck_notes", JSON.stringify(state.deckNotes));
       }
       // colorIdentity is intentionally NOT restored here — it stays session-only.
       if (typeof data.forceAiSearch === "boolean") {
@@ -2967,6 +3001,7 @@
         membership: mergeMembership(serverState.membership, localState.membership),
         quantities: mergeQuantities(serverState.quantities, localState.quantities),
         maybeboard: mergeMaybeboard(serverState.maybeboard, localState.maybeboard),
+        deckNotes: { ...(serverState.deckNotes || {}), ...(localState.deckNotes || {}) },
         colorIdentity: Array.isArray(localState.colorIdentity) && localState.colorIdentity.length
           ? localState.colorIdentity
           : (serverState.colorIdentity || []),
@@ -2993,7 +3028,7 @@
         if (putRes.ok) {
           const synced = await putRes.json();
           lastSyncedSig = JSON.stringify([
-            synced.savedCards, synced.folders, synced.membership, synced.quantities, synced.maybeboard,
+            synced.savedCards, synced.folders, synced.membership, synced.quantities, synced.maybeboard, synced.deckNotes,
             synced.colorIdentity, synced.forceAiSearch,
             synced.searchHistory, synced.translateCache,
           ]);
@@ -3022,7 +3057,7 @@
     function adoptServerState(serverState) {
       if (!serverState || typeof serverState !== "object") return;
       const sig = JSON.stringify([
-        serverState.savedCards, serverState.folders, serverState.membership, serverState.quantities, serverState.maybeboard,
+        serverState.savedCards, serverState.folders, serverState.membership, serverState.quantities, serverState.maybeboard, serverState.deckNotes,
         serverState.colorIdentity, serverState.forceAiSearch,
         serverState.searchHistory, serverState.translateCache,
       ]);
@@ -3978,12 +4013,13 @@
       // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
       pruneToPresent(savedTypeFilter, cards);
       renderTypeChips(savedTypeFilterEl, cards, savedTypeFilter, (t) => { toggleSet(savedTypeFilter, t); renderSavedCards(); });
-      const visible = filterByTypes(cards, savedTypeFilter);
+      const visible = filterByTypes(cards, savedTypeFilter).filter((c) => deckColorMatch(c, deckColorFilter));
 
       // Maybeboard cards stay in the deck but are excluded from the main section and
       // everything that measures the deck (analysis, size, export) — see below.
       const mainVisible = isRealDeck ? visible.filter((c) => !isMaybe(state.activeFolder, c.id)) : visible;
       const maybeVisible = isRealDeck ? visible.filter((c) => isMaybe(state.activeFolder, c.id)) : [];
+      renderDeckTools(isRealDeck, mainVisible);
 
       if (!mainVisible.length && !maybeVisible.length) {
         savedEmpty.style.display = "block";
@@ -4047,6 +4083,7 @@
         ${countBadge}
         ${isCommander ? `<span class="commander-badge">${ICON_CROWN}Commander</span>` : ""}
         ${isMaybeCard ? `<span class="maybe-badge">Maybe</span>` : ""}
+        ${ownedQty(collectionIndex, card) > 0 ? `<span class="owned-chip">Owned</span>` : ""}
         <div class="card-info">
           <div class="card-text">
             <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
@@ -5283,6 +5320,7 @@
       });
       if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
       if (state.maybeboard[id]) { delete state.maybeboard[id]; persistMaybeboard(); }
+      if (state.deckNotes[id]) { delete state.deckNotes[id]; persistDeckNotes(); }
       if (deckReviewCache[id]) { delete deckReviewCache[id]; persistDeckReviews(); }
       saveFolders();
       saveMembership();
@@ -6220,6 +6258,61 @@
     }
 
     $("#swaps-back-btn").addEventListener("click", exitSwaps);
+
+    // ── Decks tab: Game plan, Owned count, color filter ────────────────
+    const DECK_NOTES_MAX_UI = 20000;
+
+    function persistDeckNotes() {
+      localStorage.setItem("deck_notes", JSON.stringify(state.deckNotes));
+      queueOp({ type: "setDeckNotes", deckNotes: state.deckNotes });
+    }
+    function setDeckNotes(folderId, text) {
+      const value = String(text || "").trim();
+      if (value) state.deckNotes[folderId] = value;
+      else delete state.deckNotes[folderId];
+      persistDeckNotes();
+    }
+
+    function renderDeckTools(isRealDeck, mainVisible) {
+      $("#deck-tools").style.display = "flex";
+      const qty = (list) => list.reduce((n, c) => n + cardQty(state.activeFolder, c.id), 0);
+      const allMain = getFolderCards(state.activeFolder).filter((c) => !isMaybe(state.activeFolder, c.id));
+      $("#deck-showing").textContent = deckColorFilter.size ? `Showing ${qty(mainVisible)} of ${qty(allMain)}` : "";
+      const own = isRealDeck && hasCollection() ? ownCount(collectionIndex, allMain.filter((c) => !isBasicLand(c))) : null;
+      $("#deck-owned").textContent = own ? `Own ${own.owned} of ${own.total}` : "";
+      const planBtn = $("#deck-gameplan-btn");
+      planBtn.style.display = isRealDeck ? "" : "none";
+      planBtn.textContent = state.deckNotes[state.activeFolder] ? "Game plan ✓" : "Game plan";
+    }
+
+    buildColorPicker($("#deck-colors"), deckColorFilter, () => renderSavedCards(), { colorless: true });
+
+    const gameplanModal = $("#gameplan-modal");
+    function updateGameplanCount() {
+      const n = $("#gameplan-input").value.length;
+      const counter = $("#gameplan-count");
+      counter.textContent = n.toLocaleString();
+      counter.classList.toggle("over", n > DECK_NOTES_MAX_UI);
+      $("#gameplan-save").disabled = n > DECK_NOTES_MAX_UI;
+    }
+    $("#deck-gameplan-btn").addEventListener("click", () => {
+      const deck = activeDeck();
+      if (!deck) return;
+      $("#gameplan-title").textContent = `Game plan · ${deck.name}`;
+      $("#gameplan-input").value = state.deckNotes[deck.id] || "";
+      updateGameplanCount();
+      gameplanModal.classList.add("visible");
+      setTimeout(() => $("#gameplan-input").focus(), 0);
+    });
+    $("#gameplan-input").addEventListener("input", updateGameplanCount);
+    $("#gameplan-cancel").addEventListener("click", () => gameplanModal.classList.remove("visible"));
+    gameplanModal.addEventListener("click", (e) => { if (e.target === gameplanModal) gameplanModal.classList.remove("visible"); });
+    $("#gameplan-save").addEventListener("click", () => {
+      const deck = activeDeck();
+      if (deck) setDeckNotes(deck.id, $("#gameplan-input").value);
+      gameplanModal.classList.remove("visible");
+      renderSavedCards();
+    });
   </script>
 </body>
 </html>
