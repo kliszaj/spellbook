@@ -11,10 +11,12 @@
     "test:deck-identity": "node scripts/check-deck-identity-contract.mjs",
     "test:deck-analysis": "npm run test:calibration && npm run test:board-wipes && npm run test:deck-identity",
     "test:collection": "node scripts/check-collection.mjs && node scripts/check-collection-store.mjs",
-    "test:swaps": "node scripts/check-ai-client.mjs && node scripts/check-profiles.mjs"
+    "test:swaps": "node scripts/check-ai-client.mjs && node scripts/check-profiles.mjs && node scripts/check-embeddings.mjs",
+    "test:swaps:model": "node scripts/check-swaps-model.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
+    "@huggingface/transformers": "^3.8.1",
     "express": "^4.21.0"
   }
 }
