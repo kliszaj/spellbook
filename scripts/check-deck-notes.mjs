@@ -9,8 +9,12 @@ test("normalizeDeckNotes keeps non-empty strings per deck, capped at the limit",
   assert.deepEqual(normalizeDeckNotes(["x"]), {});
 });
 
-test("mergeDeckNotes lets the incoming note win per deck", () => {
-  assert.deepEqual(mergeDeckNotes({ a: "old", b: "keep" }, { a: "new" }), { a: "new", b: "keep" });
+test("mergeDeckNotes lets the existing (server) note win per deck", () => {
+  assert.deepEqual(mergeDeckNotes({ a: "old", b: "keep" }, { a: "new" }), { a: "old", b: "keep" });
+});
+
+test("mergeDeckNotes adds a key from incoming that the base doesn't have", () => {
+  assert.deepEqual(mergeDeckNotes({ a: "old" }, { a: "new", c: "added" }), { a: "old", c: "added" });
 });
 
 await run("Deck notes");

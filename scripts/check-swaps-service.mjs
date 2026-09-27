@@ -3,7 +3,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test, run } from "./lib/tiny-test.mjs";
-import { createSwapsService, PROFILE_AUTO_LIMIT } from "../lib/swaps-service.js";
+import { capSwapsRequest, createSwapsService, PROFILE_AUTO_LIMIT } from "../lib/swaps-service.js";
 import { createProfileStore } from "../lib/profiles.js";
 import { createEmbeddingStore } from "../lib/embeddings.js";
 import { createRankingCache } from "../lib/swaps.js";
@@ -188,6 +188,59 @@ test("cards the AI never profiles are not retried automatically", async () => {
   await service.status();
   await service.idle();
   assert.equal(ai.calls.profile, calls);
+});
+
+test("a mid-flight jump past the auto limit between status() and start() must not auto-profile", async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), "spellbook-service-"));
+  const ai = fakeAi();
+  let calls = 0;
+  const collectionStore = {
+    load: async () => ({ syncedAt: "2026-09-27T00:00:00.000Z", entries: {}, importedRows: [] }),
+    // status() sees 10 cards (<= the auto limit); start()'s re-snapshot sees 60 (a whole-collection
+    // apply landed in between) — auto-profiling must still not fire past the limit.
+    loadCards: async () => {
+      calls++;
+      const n = calls <= 1 ? 10 : 60;
+      return Object.fromEntries(cardsN(n).map((c) => [c.id, c]));
+    },
+  };
+  const usage = { entries: [], record: async (e) => { usage.entries.push(e); }, monthUsd: async () => 0 };
+  const service = createSwapsService({
+    collectionStore, usageLog: usage,
+    profileStore: createProfileStore({ dataDir }),
+    embeddingStore: createEmbeddingStore({ dataDir }),
+    rankingCache: createRankingCache({ dataDir }),
+    getAi: async () => ai,
+    getEmbedder: async () => fakeEmbedder(),
+  });
+  await service.status();
+  await service.idle();
+  assert.equal(ai.calls.profile, 0);
+  const st = await service.status();
+  assert.equal(st.phase, "awaiting-confirmation");
+});
+
+test("capSwapsRequest caps unauthenticated-route input to reasonable sizes", () => {
+  const bigCard = {
+    name: "n".repeat(5000), type_line: "t".repeat(5000), oracle_text: "o".repeat(5000), mana_cost: "m".repeat(5000),
+    card_faces: [{ name: "f".repeat(5000), oracle_text: "g".repeat(5000) }],
+  };
+  const bigDeck = {
+    gamePlan: "p".repeat(30000),
+    cardNames: Array.from({ length: 300 }, (_, i) => `Card ${i} ${"x".repeat(300)}`),
+    identityTags: Array.from({ length: 30 }, (_, i) => `tag${i}`),
+  };
+  const { card: cappedCard, deck: cappedDeck } = capSwapsRequest({ card: bigCard, deck: bigDeck });
+  assert.equal(cappedCard.name.length, 4000);
+  assert.equal(cappedCard.type_line.length, 4000);
+  assert.equal(cappedCard.oracle_text.length, 4000);
+  assert.equal(cappedCard.mana_cost.length, 4000);
+  assert.equal(cappedCard.card_faces[0].name.length, 4000);
+  assert.equal(cappedCard.card_faces[0].oracle_text.length, 4000);
+  assert.equal(cappedDeck.gamePlan.length, 20000);
+  assert.equal(cappedDeck.cardNames.length, 250);
+  assert.ok(cappedDeck.cardNames.every((n) => n.length <= 200));
+  assert.equal(cappedDeck.identityTags.length, 16);
 });
 
 await run("Swaps service");

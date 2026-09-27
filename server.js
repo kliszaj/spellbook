@@ -5,13 +5,13 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { mergeDeckNotes, normalizeDeckNotes } from "./lib/deck-notes.js";
-import { createCollectionStore, PreviewExpiredError, ScryfallError } from "./lib/collection-store.js";
+import { createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "./lib/collection-store.js";
 import { CollectionFormatError } from "./lib/collection.js";
 import { createUsageLog } from "./lib/ai-usage.js";
 import { createProfileStore } from "./lib/profiles.js";
 import { createEmbeddingStore, createLocalEmbedder } from "./lib/embeddings.js";
 import { createRankingCache } from "./lib/swaps.js";
-import { createSwapsService } from "./lib/swaps-service.js";
+import { capSwapsRequest, createSwapsService } from "./lib/swaps-service.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -952,13 +952,16 @@ app.post("/api/collection/preview", async (req, res) => {
 });
 
 app.post("/api/collection/apply", async (req, res) => {
-  const mode = req.body?.mode === "add" ? "add" : "sync";
+  const mode = req.body?.mode;
+  if (mode !== "sync" && mode !== "add") return res.status(400).json({ error: "Unknown upload mode" });
   try {
     const result = await collectionStore.apply(String(req.body?.previewId || ""), mode);
     swapsService.afterSync().catch(() => {});
     res.json(result);
   } catch (err) {
-    const status = err instanceof PreviewExpiredError ? 410 : err instanceof ScryfallError ? 502 : 500;
+    const status = err instanceof PreviewStaleError ? 409
+      : err instanceof PreviewExpiredError ? 410
+      : err instanceof ScryfallError ? 502 : 500;
     res.status(status).json({ error: err.message || "Sync failed" });
   }
 });
@@ -980,13 +983,16 @@ app.post("/api/swaps/prepare", async (req, res) => {
 });
 
 app.post("/api/swaps", async (req, res) => {
-  const card = req.body?.card;
-  if (!card || !card.name) return res.status(400).json({ error: "Missing card" });
+  if (!req.body?.card || !req.body.card.name) return res.status(400).json({ error: "Missing card" });
+  const { card, deck } = capSwapsRequest({
+    card: req.body.card,
+    deck: req.body?.deck && typeof req.body.deck === "object" ? req.body.deck : null,
+  });
   try {
     const { httpStatus, body } = await swapsService.swaps({
       card,
       colorIdentity: Array.isArray(req.body?.colorIdentity) ? req.body.colorIdentity : card.color_identity || [],
-      deck: req.body?.deck && typeof req.body.deck === "object" ? req.body.deck : null,
+      deck,
     });
     res.status(httpStatus).json(body);
   } catch (err) {

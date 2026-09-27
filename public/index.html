@@ -3003,7 +3003,10 @@
         membership: mergeMembership(serverState.membership, localState.membership),
         quantities: mergeQuantities(serverState.quantities, localState.quantities),
         maybeboard: mergeMaybeboard(serverState.maybeboard, localState.maybeboard),
-        deckNotes: { ...(serverState.deckNotes || {}), ...(localState.deckNotes || {}) },
+        // Server-authoritative: edits already reach the server via the setDeckNotes op, so a
+        // stale device merging here must never revert a newer Game plan or resurrect a cleared
+        // one. Local notes only seed an empty/new server (first-device migration).
+        deckNotes: hasUsefulAppState(serverState) ? (serverState.deckNotes || {}) : (localState.deckNotes || {}),
         colorIdentity: Array.isArray(localState.colorIdentity) && localState.colorIdentity.length
           ? localState.colorIdentity
           : (serverState.colorIdentity || []),
@@ -6133,7 +6136,7 @@
       await requestSwaps(run);
     }
 
-    function setSwapsState(text, { retry = false, start = false } = {}) {
+    function setSwapsState(text, { retry = false, start = false, reprepare = false } = {}) {
       $("#swaps-grid").replaceChildren();
       const note = $("#swaps-note");
       note.replaceChildren();
@@ -6145,7 +6148,7 @@
       btn.textContent = start ? "Start" : "Retry";
       btn.addEventListener("click", async () => {
         btn.disabled = true;
-        if (start) await fetch("/api/swaps/prepare", { method: "POST" }).catch(() => {});
+        if (start || reprepare) await fetch("/api/swaps/prepare", { method: "POST" }).catch(() => {});
         requestSwaps(swapsRun);
       });
       note.appendChild(btn);
@@ -6178,7 +6181,13 @@
         setSwapsState(`${swapsStatusText(data.status)} first.`, { start: true });
         return;
       }
-      if (!res.ok) { setSwapsState(data.error || "Swaps failed.", { retry: true }); return; }
+      if (!res.ok) {
+        // A failed prepare job leaves /api/swaps returning 503 forever until preparation is
+        // restarted — Retry here must re-run prepare, not just re-request the same error.
+        const reprepare = res.status === 503 && data.status?.phase === "error";
+        setSwapsState(data.error || "Swaps failed.", { retry: true, reprepare });
+        return;
+      }
       renderSwapsResults(data);
     }
 

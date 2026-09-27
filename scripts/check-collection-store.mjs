@@ -3,7 +3,7 @@ import { access, mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test, run } from "./lib/tiny-test.mjs";
-import { createCollectionStore, PreviewExpiredError, ScryfallError } from "../lib/collection-store.js";
+import { createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "../lib/collection-store.js";
 
 const HEADER = "Binder Name,Name,Set code,Collector number,Foil,Quantity,Scryfall ID,Condition,Language,Added";
 const row = (id, qty = 1, binder = "Main", added = "2026-01-01T00:00:00.000Z") =>
@@ -125,6 +125,29 @@ test("sync drops cards no longer referenced from the card cache", async () => {
   await store.apply((await store.preview(csv(row("a")))).previewId, "sync");
   const cards = JSON.parse(await readFile(join(dataDir, "collection-cards.json"), "utf8"));
   assert.deepEqual(Object.keys(cards), ["a"]);
+});
+
+test("applying a preview after another apply already changed the collection is rejected as stale", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  const p1 = await store.preview(csv(row("a")));
+  const p2 = await store.preview(csv(row("b")));
+  await store.apply(p1.previewId, "sync");
+  await assert.rejects(store.apply(p2.previewId, "sync"), PreviewStaleError);
+  const saved = JSON.parse(await readFile(join(dataDir, "collection.json"), "utf8"));
+  assert.deepEqual(Object.keys(saved.entries), ["a|normal|Main"]);
+  const cards = JSON.parse(await readFile(join(dataDir, "collection-cards.json"), "utf8"));
+  assert.deepEqual(Object.keys(cards), ["a"]);
+});
+
+test("previews are capped at 5; the oldest is evicted", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  const previewIds = [];
+  for (let i = 0; i < 6; i++) previewIds.push((await store.preview(csv(row(`c${i}`)))).previewId);
+  await assert.rejects(store.apply(previewIds[0], "sync"), PreviewExpiredError);
+  const result = await store.apply(previewIds[5], "sync");
+  assert.deepEqual(Object.keys(result.cards), ["c5"]);
 });
 
 await run("Collection store");
