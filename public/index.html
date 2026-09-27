@@ -1959,6 +1959,29 @@
     .upload-warning { color: #B3261E; font-size: 13px; margin-bottom: 6px; }
     .upload-details { max-height: 240px; overflow: auto; font-size: 12px; margin-bottom: 10px; }
     .upload-details ul { margin: 4px 0 8px 18px; padding: 0; }
+
+    /* ── Swaps view ─────────────────────────────────── */
+    .swaps-view { display: none; }
+    .swaps-view.visible { display: block; }
+    .swaps-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .swaps-header h2 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
+    .swaps-original { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 14px; }
+    .swaps-original img { width: 190px; border-radius: 10px; flex: 0 0 auto; }
+    .swaps-original-text { flex: 1 1 auto; min-width: 0; font-size: 13px; color: #504B42; }
+    .swaps-original-type { font-weight: 700; margin-bottom: 6px; }
+    .swaps-original-price, .swaps-deck { margin-top: 8px; }
+    .swaps-summary { font-size: 14px; font-weight: 700; margin: 6px 0; }
+    .swaps-note { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #7A766C; margin-bottom: 12px; min-height: 16px; }
+    .swap-meta { padding: 8px 10px 10px; font-size: 12px; color: #504B42; }
+    .swap-bar { height: 6px; border-radius: 999px; background: rgba(31,29,25,0.1); overflow: hidden; margin-bottom: 6px; }
+    .swap-bar span { display: block; height: 100%; background: #3F7D5C; }
+    .swap-match { font-weight: 700; }
+    .swap-reason { margin-top: 4px; line-height: 1.35; }
+    .swap-links { margin-top: 6px; }
+    @media (max-width: 640px) {
+      .swaps-original { flex-direction: column; }
+      .swaps-original img { width: 150px; }
+    }
   </style>
 </head>
 <body>
@@ -2127,6 +2150,17 @@
             <button id="collection-more-btn" type="button">Show more</button>
           </div>
         </div>
+
+        <div class="swaps-view" id="swaps-view">
+          <div class="swaps-header">
+            <button class="combo-back-btn" id="swaps-back-btn" type="button">&larr; Back</button>
+            <h2 id="swaps-title"></h2>
+          </div>
+          <div class="swaps-original" id="swaps-original"></div>
+          <div class="swaps-summary" id="swaps-summary"></div>
+          <div class="swaps-note" id="swaps-note"></div>
+          <div id="swaps-grid" class="results-grid"></div>
+        </div>
       </section>
 
       <aside class="detail-panel empty" id="detail-panel" aria-label="Card details">
@@ -2150,6 +2184,7 @@
             <div class="detail-row"><span class="detail-label">Set</span><span id="detail-set"></span></div>
             <div class="detail-row"><span class="detail-label">Rarity</span><span id="detail-rarity"></span></div>
             <div class="detail-row" id="detail-pt-row"><span class="detail-label">P/T</span><span id="detail-pt"></span></div>
+            <div class="detail-row" id="detail-owned-row" style="display:none"><span class="detail-label">Owned</span><span id="detail-owned"></span></div>
             <div class="detail-row"><span class="detail-label">Market</span><span id="detail-price"></span></div>
             <div class="detail-row"><span class="detail-label">Foil</span><span id="detail-foil-price"></span></div>
             <div id="detail-oracle" class="oracle-text"></div>
@@ -2159,6 +2194,7 @@
               <button id="detail-maybe-btn" style="display:none">Mark as Maybe</button>
               <button id="detail-combos-btn" style="display:none">Combos</button>
               <button id="detail-edhrec-btn" style="display:none">EDHREC</button>
+              <button id="detail-swaps-btn" style="display:none">View Swaps</button>
               <button id="detail-download-btn" title="Save the print-resolution image for proxies">Download</button>
               <button id="detail-scryfall-btn">Scryfall</button>
             </div>
@@ -4953,6 +4989,10 @@
         $("#detail-pt").textContent = `${card.power}/${card.toughness}`;
         $("#detail-pt-row").style.display = ""; // fall back to .detail-row's grid so P/T aligns with the other rows
       } else { $("#detail-pt-row").style.display = "none"; }
+      const owned = ownedQty(collectionIndex, card);
+      $("#detail-owned").textContent = `×${owned}`;
+      $("#detail-owned-row").style.display = owned ? "" : "none";
+      $("#detail-swaps-btn").style.display = hasCollection() && !isBasicLand(card) ? "" : "none";
       const saveBtn = $("#detail-save-btn");
       saveBtn.textContent = isSaved ? "Saved" : "Save";
       saveBtn.className = isSaved ? "saved" : "";
@@ -4999,6 +5039,9 @@
     });
     detailEdhrecBtn.addEventListener("click", () => {
       if (state.detailCard) window.open(`https://edhrec.com/cards/${edhrecSlug(state.detailCard.name)}`, "_blank");
+    });
+    $("#detail-swaps-btn").addEventListener("click", () => {
+      if (state.detailCard) openSwaps(state.detailCard);
     });
     comboBackBtn.addEventListener("click", exitCombos);
 
@@ -5995,6 +6038,188 @@
         if (state.detailCard) showDetail(state.detailCard);
       })
       .catch(() => {});
+
+    // ── View Swaps ──────────────────────────────────────────────────────
+    let swapsContext = null; // { card, payload, prev: { tab, activeFolder, scrollY } }
+    let swapsRun = 0;        // cancels stale requests when the view changes
+
+    // Deck context is sent only when the card belongs to the active deck.
+    function swapsDeckPayload(card) {
+      const deck = activeDeck();
+      if (!deck || !cardFolders(card.id).includes(deck.id)) return { colorIdentity: card.color_identity || [], deck: null };
+      const cards = getFolderCards(deck.id).filter((c) => !isMaybe(deck.id, c.id));
+      const commander = deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
+      const review = deckReviewCache[deck.id]?.data;
+      return {
+        colorIdentity: commander ? commander.color_identity || [] : card.color_identity || [],
+        deck: {
+          id: deck.id,
+          name: deck.name,
+          commander: commander ? { name: commander.name, typeLine: commander.type_line || "", text: getOracleText(commander) } : null,
+          gamePlan: (state.deckNotes || {})[deck.id] || "",
+          identityTags: Array.isArray(review?.identityTags) ? review.identityTags : [],
+          cardNames: cards.map((c) => c.name),
+          signature: deckSig(cards, deck.id, commander?.name),
+        },
+      };
+    }
+
+    function closeSwapsView() {
+      if (!swapsContext) return;
+      swapsContext = null;
+      swapsRun++;
+      $("#swaps-view").classList.remove("visible");
+    }
+
+    function exitSwaps() {
+      const prev = swapsContext?.prev;
+      closeSwapsView();
+      if (!prev) return;
+      state.activeFolder = prev.activeFolder;
+      setActiveTab(prev.tab);
+      requestAnimationFrame(() => window.scrollTo(0, prev.scrollY || 0));
+    }
+
+    async function openSwaps(card) {
+      const prev = swapsContext?.prev || { tab: state.activeTab, activeFolder: state.activeFolder, scrollY: window.scrollY };
+      swapsContext = { card, payload: swapsDeckPayload(card), prev };
+      const run = ++swapsRun;
+      $("#search-content").classList.add("hidden");
+      $("#saved-section").classList.remove("visible");
+      $("#collection-section").classList.remove("visible");
+      $("#swaps-view").classList.add("visible");
+      window.scrollTo(0, 0);
+      renderSwapsOriginal(card, swapsContext.payload.deck);
+      await requestSwaps(run);
+    }
+
+    function setSwapsState(text, { retry = false, start = false } = {}) {
+      $("#swaps-grid").replaceChildren();
+      const note = $("#swaps-note");
+      note.replaceChildren();
+      $("#swaps-summary").textContent = text;
+      if (!retry && !start) return;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "export-btn";
+      btn.textContent = start ? "Start" : "Retry";
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        if (start) await fetch("/api/swaps/prepare", { method: "POST" }).catch(() => {});
+        requestSwaps(swapsRun);
+      });
+      note.appendChild(btn);
+    }
+
+    async function requestSwaps(run) {
+      if (!swapsContext) return;
+      const { card, payload } = swapsContext;
+      setSwapsState(payload.deck ? `Matching against ${payload.deck.name}'s game plan…` : "Finding swaps in your collection…");
+      let res;
+      let data;
+      try {
+        res = await fetch("/api/swaps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ card, colorIdentity: payload.colorIdentity, deck: payload.deck }),
+        });
+        data = await res.json();
+      } catch {
+        if (run === swapsRun) setSwapsState("Couldn't reach Spellbook.", { retry: true });
+        return;
+      }
+      if (run !== swapsRun) return;
+      if (res.status === 202) {
+        setSwapsState(swapsStatusText(data.status) || "Preparing your collection for swaps…");
+        setTimeout(() => { if (run === swapsRun) requestSwaps(run); }, 2000);
+        return;
+      }
+      if (res.status === 409 && data.needsConfirmation) {
+        setSwapsState(`${swapsStatusText(data.status)} first.`, { start: true });
+        return;
+      }
+      if (!res.ok) { setSwapsState(data.error || "Swaps failed.", { retry: true }); return; }
+      renderSwapsResults(data);
+    }
+
+    function renderSwapsOriginal(card, deck) {
+      $("#swaps-title").textContent = `Swaps for ${card.name}`;
+      const price = getPrice(card);
+      $("#swaps-original").innerHTML = `
+        <img src="${getCardImage(card)}" alt="${esc(card.name)}">
+        <div class="swaps-original-text">
+          <div class="swaps-original-type">${esc(card.type_line || "")}</div>
+          <div class="oracle-text">${esc(getOracleText(card))}</div>
+          <div class="swaps-original-price">${price ? esc(price) : "No price"}</div>
+          ${deck ? `<div class="swaps-deck">In ${esc(deck.name)}${deck.gamePlan ? "" : " · add a Game plan to this deck for better matches"}</div>` : ""}
+        </div>`;
+    }
+
+    const cardEur = (card) => { const p = card?.prices || {}; return Number(p.eur || p.eur_foil || 0); };
+
+    function swapTile(r, originalPrice) {
+      const card = r.card;
+      const el = document.createElement("div");
+      el.className = "card-item swap-item";
+      const price = getPrice(card);
+      const saves = originalPrice - cardEur(card);
+      const owned = ownedQty(collectionIndex, card) || 1;
+      const isSaved = isCardSaved(card.id);
+      const scryfall = card.scryfall_uri || `https://scryfall.com/search?q=${encodeURIComponent(`!"${card.name}"`)}`;
+      el.innerHTML = `
+        <img src="${getCardImage(card)}" alt="${esc(card.name)}" loading="lazy">
+        <div class="card-info">
+          <div class="card-text">
+            <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
+            <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}${saves > 0 ? ` · saves €${saves.toFixed(2)}` : ""}</div>
+          </div>
+          <div class="card-tools">
+            <button class="icon-btn save-btn ${isSaved ? "saved" : ""}" data-id="${card.id}" title="Add to a deck" aria-label="Add to a deck">${bookmarkIcon(isSaved)}</button>
+            <button class="icon-btn detail-btn" title="Details" aria-label="Details">${ICON_DOTS}</button>
+          </div>
+        </div>
+        <div class="swap-meta">
+          <div class="swap-bar" role="meter" aria-label="Match" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${r.match}"><span style="width:${r.match}%"></span></div>
+          <div class="swap-match">${r.match}% match · Owned ×${owned}</div>
+          ${r.reason ? `<div class="swap-reason">${esc(r.reason)}</div>` : ""}
+          <div class="swap-links"><a href="${esc(scryfall)}" target="_blank" rel="noopener">Scryfall</a> · <a href="https://edhrec.com/cards/${edhrecSlug(card.name)}" target="_blank" rel="noopener">EDHREC</a></div>
+        </div>`;
+      el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
+      el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
+      el.querySelector("img").addEventListener("click", () => showDetail(card));
+      return el;
+    }
+
+    function renderSwapsResults(data) {
+      const { card } = swapsContext;
+      const grid = $("#swaps-grid");
+      grid.replaceChildren();
+      const note = $("#swaps-note");
+      note.replaceChildren();
+      $("#swaps-summary").textContent = data.results.length
+        ? `${data.results.length} card${data.results.length === 1 ? "" : "s"} from your collection can replace ${card.name}.`
+        : "No match found in your collection.";
+      if (data.mode === "local") {
+        const msg = document.createElement("span");
+        msg.textContent = data.aiError
+          ? `AI ranking failed (${data.aiError}) — showing text-based matches.`
+          : "Deck-aware matching is off — add an API key in Settings.";
+        note.appendChild(msg);
+        if (data.aiError) {
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "export-btn";
+          retry.textContent = "Retry";
+          retry.addEventListener("click", () => requestSwaps(swapsRun));
+          note.appendChild(retry);
+        }
+      }
+      const originalPrice = cardEur(card);
+      data.results.forEach((r) => grid.appendChild(swapTile(r, originalPrice)));
+      scheduleTiltInit(grid);
+    }
+
+    $("#swaps-back-btn").addEventListener("click", exitSwaps);
   </script>
 </body>
 </html>
