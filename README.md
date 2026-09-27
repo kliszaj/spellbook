@@ -55,6 +55,40 @@ Heuristic-first and instant (no tokens), with an optional AI pass:
   [Commander Spellbook](https://commanderspellbook.com/) API — pieces, steps, and a
   link to the full combo.
 
+### Collection & Swaps
+- **Import your collection** — In ManaBox, open the Collection tab and use the
+  top-right menu to export the whole collection as CSV (or export a single binder/list
+  for new scans). In Spellbook's **Collection** tab, choose **Upload CSV** and pick the
+  file. The preview offers two modes:
+  - **Full collection** — Spellbook matches the file exactly (adds, updates, removes).
+    Use this for whole-collection exports.
+  - **New cards** — adds the file's cards on top and never removes anything. Use this
+    for a freshly scanned binder. Rows already imported are skipped, so uploading the
+    same file twice doesn't double-count.
+  Card details are looked up on Scryfall (only new cards on later syncs); if Scryfall
+  rate-limits, Spellbook waits and retries.
+- **View Swaps** — Select any card and press **View Swaps** in the focus panel to see
+  cards you own that could replace it, each with a match % and a one-line reason.
+  Matches are budget stand-ins: a weaker card that does the same job still counts, and
+  the % says how close it is. Inside a deck, matches respect the commander's colors and
+  the deck's **Game plan** — paste the deck's primer (or describe how it wins) via the
+  **Game plan** button on the deck (up to 20,000 characters).
+- **Decks tab extras** — Cards you own show an **Owned** chip, the deck shows "Own X of
+  Y", and a color filter (including Colorless) narrows the grid. Like the type chips,
+  Export copies the visible cards; deck analysis always uses the whole deck.
+- **AI cost** — Swaps use the AI provider and model from Settings (default
+  `claude-sonnet-5`). Every card in the collection is profiled once (what it does, its
+  mechanics, what it works with); Spellbook asks before profiling more than 50 cards
+  and shows an estimate. Measured on Sonnet 5 (2026-09-27 pilot): about **$0.0012 per
+  card**, so **≈ $2.40 for ~1,900 unique cards**, once. New pack scans (≤ 50 cards)
+  are profiled automatically for a few cents. Each View Swaps ranking costs
+  **≈ $0.015–0.03** and is cached per deck version and game plan. The Collection tab
+  shows this month's AI spend. Without an API key, swaps fall back to text-based
+  matching.
+- **Local model** — Matching uses a small local embedding model
+  (`Xenova/all-MiniLM-L6-v2`, ~23 MB) that downloads into the data folder (`models/`)
+  on first use.
+
 ## AI providers
 
 Both providers are supported; pick a preferred one in Settings.
@@ -98,12 +132,19 @@ stay consistent.
 docker build -t kliszaj/spellbook:latest .
 ```
 
+The image is based on `node:22-slim` (glibc, required by the local model runtime) and
+is about **407 MB**; unused GPU and non-Linux model-runtime files are removed at build
+time.
+
 Mount a volume for the data dir so state survives restarts:
 
 ```yaml
 volumes:
   - /mnt/user/appdata/spellbook/data:/app/data
 ```
+
+The embedding model is cached under the data volume in `models/`, so it downloads only
+once.
 
 The container listens on `3000` unless `PORT` is set. Deploying changes to a running
 container requires an image rebuild (`docker compose up -d --build`).
