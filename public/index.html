@@ -1937,6 +1937,28 @@
       .nav-pills { margin-right: 8px; }
       .detail-panel .card-actions { grid-template-columns: 1fr; }
     }
+    /* ── Collection tab ─────────────────────────────── */
+    .collection-section { display: none; }
+    .collection-section.visible { display: block; }
+    .side-menu.collection-mode .workspace-section,
+    .side-menu.collection-mode .folders-section,
+    .side-menu.collection-mode .history-section,
+    .side-menu.collection-mode .cache-section { display: none; }
+    .collection-header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .collection-stats { flex: 1 1 auto; font-size: 13px; color: #504B42; }
+    .collection-stats .collection-notice { display: block; color: #9A5B13; margin-top: 2px; }
+    .collection-swaps-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 12px; color: #7A766C; margin-bottom: 12px; min-height: 18px; }
+    .collection-swaps-status .swaps-spend { margin-left: auto; }
+    .collection-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .collection-controls input[type="text"] { flex: 1 1 180px; min-width: 0; }
+    .color-toggle.colorless-toggle { font-weight: 800; font-size: 13px; }
+    .qty-chip { position: absolute; top: 8px; right: 8px; padding: 2px 7px; border-radius: 999px; background: rgba(31,29,25,0.78); color: #fff; font-size: 11px; font-weight: 700; }
+    .upload-mode label { display: block; margin-bottom: 8px; font-size: 13px; }
+    .upload-mode small { display: block; margin-left: 22px; color: #7A766C; }
+    .upload-summary { font-weight: 700; margin: 10px 0 6px; }
+    .upload-warning { color: #B3261E; font-size: 13px; margin-bottom: 6px; }
+    .upload-details { max-height: 240px; overflow: auto; font-size: 12px; margin-bottom: 10px; }
+    .upload-details ul { margin: 4px 0 8px 18px; padding: 0; }
   </style>
 </head>
 <body>
@@ -1946,6 +1968,7 @@
       <div class="nav-pills">
         <button class="tab-btn active" data-tab="search">Search</button>
         <button class="tab-btn" data-tab="saved">Decks</button>
+        <button class="tab-btn" data-tab="collection">Collection</button>
       </div>
       <button id="settings-btn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.36a1.7 1.7 0 0 0-1 .92l-.03.09a2 2 0 0 1-3.86 0l-.03-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-.92-1l-.09-.03a2 2 0 0 1 0-3.86l.09-.03A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1-.92l.03-.09a2 2 0 0 1 3.86 0l.03.09a1.7 1.7 0 0 0 1 .92 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.12.4.45.74.92 1l.09.03a2 2 0 0 1 0 3.86l-.09.03a1.7 1.7 0 0 0-.88 1.08Z"/></svg></button>
     </div>
@@ -1966,6 +1989,9 @@
           </button>
           <button class="rail-tab" data-tab="saved">
             <span>Decks</span>
+          </button>
+          <button class="rail-tab" data-tab="collection">
+            <span>Collection</span>
           </button>
         </div>
 
@@ -2074,6 +2100,33 @@
           <div id="saved-grid" class="results-grid"></div>
           </div>
         </div>
+
+        <div class="collection-section" id="collection-section">
+          <div class="collection-header">
+            <div class="collection-stats" id="collection-stats"></div>
+            <button class="export-btn" id="collection-upload-btn" type="button">Upload CSV</button>
+            <input type="file" id="collection-file" accept=".csv,text/csv" hidden>
+          </div>
+          <div class="collection-swaps-status" id="collection-swaps-status"></div>
+          <div class="collection-controls">
+            <div class="color-toggles" id="collection-colors" aria-label="Filter by color identity"></div>
+            <input type="text" id="collection-filter" placeholder="Filter by name...">
+            <select id="collection-binder" aria-label="Binder"></select>
+            <select id="collection-sort" aria-label="Sort">
+              <option value="name">Name</option>
+              <option value="price">Price</option>
+              <option value="cmc">Mana value</option>
+            </select>
+          </div>
+          <div id="collection-empty" class="empty-state">
+            <p>No collection yet</p>
+            <small>In ManaBox, open the Collection tab, use the top-right menu to export your whole collection (or a single binder) as CSV, then upload it here.</small>
+          </div>
+          <div id="collection-grid" class="results-grid"></div>
+          <div class="pagination" id="collection-more-wrap" style="display:none">
+            <button id="collection-more-btn" type="button">Show more</button>
+          </div>
+        </div>
       </section>
 
       <aside class="detail-panel empty" id="detail-panel" aria-label="Card details">
@@ -2178,6 +2231,24 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="collection-upload-modal">
+    <div class="modal">
+      <h2>Upload collection</h2>
+      <div class="upload-mode" role="radiogroup" aria-label="Upload mode">
+        <label><input type="radio" name="upload-mode" value="sync"> <strong>Full collection</strong> <small>Match the file exactly: adds, updates, and removes cards.</small></label>
+        <label><input type="radio" name="upload-mode" value="add"> <strong>New cards</strong> <small>Add this file's cards on top; never removes anything.</small></label>
+      </div>
+      <div class="upload-summary" id="upload-summary"></div>
+      <div class="upload-warning" id="upload-warning"></div>
+      <div class="upload-details" id="upload-details"></div>
+      <div class="import-status" id="upload-status"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="upload-cancel" type="button">Cancel</button>
+        <button class="btn-save" id="upload-confirm" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Save-to-folder popover -->
   <div class="save-popover" id="save-popover">
     <div class="pop-title">Save to</div>
@@ -2233,6 +2304,9 @@
     let comboRun = 0; // cancels stale combo loads when a newer action supersedes them
     let comboListEl = null; // the .combo-list currently in the results area
     let comboMoreBtn = null; // the "Load more combos" button, if shown
+    let collectionData = null;   // /api/collection payload
+    let collectionIndex = null;  // buildCollectionIndex(collectionData)
+    const deckColorFilter = new Set(); // Decks tab color filter (session-only), used in Task 11
 
     const $ = (sel) => document.querySelector(sel);
     const appShell = $("#app-shell");
@@ -2332,14 +2406,14 @@
     function updateIdentityDisplay() {
       const id = state.colorIdentity.join("").toUpperCase();
       identityDisplay.textContent = id;
-      document.querySelectorAll(".color-toggle").forEach((btn) => {
+      document.querySelectorAll(".search-section .color-toggle").forEach((btn) => {
         const on = state.colorIdentity.includes(btn.dataset.color);
         btn.classList.toggle("active", on);
         btn.setAttribute("aria-pressed", String(on));
       });
     }
 
-    document.querySelectorAll(".color-toggle").forEach((btn) => {
+    document.querySelectorAll(".search-section .color-toggle").forEach((btn) => {
       const svg = MANA_SVG[btn.dataset.color];
       if (svg) btn.innerHTML = svg;
       btn.addEventListener("click", () => {
@@ -2358,17 +2432,15 @@
       state.activeTab = tab;
       document.querySelectorAll("[data-tab]").forEach((b) => b.classList.remove("active"));
       document.querySelectorAll(`[data-tab="${tab}"]`).forEach((b) => b.classList.add("active"));
-      sideMenu.classList.remove("search-mode", "saved-mode");
-      sideMenu.classList.add(state.activeTab === "saved" ? "saved-mode" : "search-mode");
+      sideMenu.classList.remove("search-mode", "saved-mode", "collection-mode");
+      sideMenu.classList.add(tab === "saved" ? "saved-mode" : tab === "collection" ? "collection-mode" : "search-mode");
       updateRailIcon();
-      if (state.activeTab === "search") {
-        $("#search-content").classList.remove("hidden");
-        $("#saved-section").classList.remove("visible");
-      } else {
-        $("#search-content").classList.add("hidden");
-        $("#saved-section").classList.add("visible");
-        renderSavedCards();
-      }
+      if (typeof closeSwapsView === "function") closeSwapsView();
+      $("#search-content").classList.toggle("hidden", tab !== "search");
+      $("#saved-section").classList.toggle("visible", tab === "saved");
+      $("#collection-section").classList.toggle("visible", tab === "collection");
+      if (tab === "saved") renderSavedCards();
+      if (tab === "collection") openCollectionTab();
     }
 
     document.querySelectorAll(".tab-btn, .rail-tab").forEach((btn) => {
@@ -5417,7 +5489,7 @@
     }
 
     function refreshResultsSaveState() {
-      resultsEl.querySelectorAll(".save-btn").forEach((btn) => {
+      document.querySelectorAll("#results .save-btn, #collection-grid .save-btn, #swaps-grid .save-btn").forEach((btn) => {
         const id = btn.dataset.id;
         const saved = isCardSaved(id);
         btn.innerHTML = bookmarkIcon(saved);
@@ -5594,6 +5666,335 @@
         });
       });
     }
+
+    // ── Collection (ManaBox import) ─────────────────────────────────────
+    // @testable collection-helpers begin
+    function buildCollectionIndex(data) {
+      const byOracle = new Map();
+      for (const e of Object.values(data?.entries || {})) {
+        const card = data.cards?.[e.scryfallId];
+        const oid = card && (card.oracle_id || card.card_faces?.[0]?.oracle_id);
+        if (!oid) continue;
+        let item = byOracle.get(oid);
+        if (!item) { item = { oracleId: oid, card, qty: 0, scryfallIds: [], binders: new Set() }; byOracle.set(oid, item); }
+        item.qty += e.qty;
+        if (!item.scryfallIds.includes(e.scryfallId)) item.scryfallIds.push(e.scryfallId);
+        const binder = String(e.binder || "").trim();
+        if (binder) item.binders.add(binder);
+      }
+      return { byOracle, list: [...byOracle.values()] };
+    }
+    function ownedQty(index, card) {
+      if (!index || !card) return 0;
+      const oid = card.oracle_id || card.card_faces?.[0]?.oracle_id;
+      return (oid && index.byOracle.get(oid)?.qty) || 0;
+    }
+    function itemEur(card) { const p = card?.prices || {}; return Number(p.eur || p.eur_foil || 0); }
+    function filterCollectionItems(items, { query = "", colors = [], binder = "" } = {}) {
+      const q = query.trim().toLowerCase();
+      const allowed = new Set([...colors].map((c) => c.toUpperCase()));
+      return items.filter((it) =>
+        (!q || it.card.name.toLowerCase().includes(q))
+        && (!allowed.size || (it.card.color_identity || []).every((c) => allowed.has(c)))
+        && (!binder || it.binders.has(binder)));
+    }
+    function sortCollectionItems(items, field) {
+      const byName = (a, b) => a.card.name.localeCompare(b.card.name);
+      const compare = field === "price" ? (a, b) => itemEur(b.card) - itemEur(a.card) || byName(a, b)
+        : field === "cmc" ? (a, b) => (a.card.cmc || 0) - (b.card.cmc || 0) || byName(a, b)
+        : byName;
+      return items.slice().sort(compare);
+    }
+    function collectionTotals(data, index) {
+      let copies = 0;
+      let value = 0;
+      for (const e of Object.values(data?.entries || {})) {
+        const card = data.cards?.[e.scryfallId];
+        if (!card) continue;
+        const p = card.prices || {};
+        copies += e.qty;
+        value += e.qty * (Number(e.foil === "normal" ? (p.eur ?? p.eur_foil) : (p.eur_foil ?? p.eur)) || 0);
+      }
+      return { unique: index ? index.list.length : 0, copies, value };
+    }
+    // Decks tab filter: a card shows if its identity contains any selected color; "C" = colorless.
+    function deckColorMatch(card, selected) {
+      if (!selected.size) return true;
+      const ci = card.color_identity || [];
+      if (!ci.length) return selected.has("C");
+      return ci.some((c) => selected.has(c));
+    }
+    function ownCount(index, cards) {
+      const distinct = new Map();
+      for (const c of cards) distinct.set(c.oracle_id || c.card_faces?.[0]?.oracle_id || c.name, c);
+      let owned = 0;
+      for (const c of distinct.values()) if (ownedQty(index, c) > 0) owned++;
+      return { owned, total: distinct.size };
+    }
+    // @testable collection-helpers end
+
+    const COLLECTION_PAGE = 60;
+    const COLOR_NAMES = { w: "White", u: "Blue", b: "Black", r: "Red", g: "Green", c: "Colorless" };
+    const collectionUi = { colors: new Set(), query: "", binder: "", sort: "name", shown: 0, notice: "" };
+    let collectionLoading = null;
+    let swapsStatusTimer = null;
+
+    function loadCollection(force = false) {
+      if (collectionLoading && !force) return collectionLoading;
+      collectionLoading = fetch("/api/collection")
+        .then((r) => { if (!r.ok) throw new Error("Couldn't load your collection"); return r.json(); })
+        .then((data) => { collectionData = data; collectionIndex = buildCollectionIndex(data); return data; })
+        .catch((err) => { collectionLoading = null; throw err; });
+      return collectionLoading;
+    }
+    const hasCollection = () => Boolean(collectionIndex && collectionIndex.list.length);
+
+    function buildColorPicker(container, selected, onChange, { colorless = false } = {}) {
+      container.replaceChildren();
+      (colorless ? ["w", "u", "b", "r", "g", "c"] : ["w", "u", "b", "r", "g"]).forEach((c) => {
+        const key = c.toUpperCase();
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "color-toggle" + (c === "c" ? " colorless-toggle" : "");
+        btn.dataset.color = c;
+        btn.title = COLOR_NAMES[c];
+        btn.setAttribute("aria-label", COLOR_NAMES[c]);
+        btn.innerHTML = MANA_SVG[c] || "C";
+        const sync = () => { const on = selected.has(key); btn.classList.toggle("active", on); btn.setAttribute("aria-pressed", String(on)); };
+        btn.addEventListener("click", () => { if (selected.has(key)) selected.delete(key); else selected.add(key); sync(); onChange(); });
+        sync();
+        container.appendChild(btn);
+      });
+    }
+
+    async function openCollectionTab() {
+      try { await loadCollection(); } catch (err) { $("#collection-stats").textContent = err.message; return; }
+      renderCollection(true);
+      refreshSwapsStatus();
+    }
+
+    function renderCollectionHeader() {
+      const stats = $("#collection-stats");
+      if (!hasCollection()) { stats.textContent = "No collection uploaded yet"; return; }
+      const t = collectionTotals(collectionData, collectionIndex);
+      const synced = collectionData.syncedAt ? ` · Synced ${new Date(collectionData.syncedAt).toLocaleDateString()}` : "";
+      stats.textContent = `${t.unique.toLocaleString()} unique · ${t.copies.toLocaleString()} copies · €${t.value.toFixed(2)}${synced}`;
+      if (collectionUi.notice) {
+        const note = document.createElement("span");
+        note.className = "collection-notice";
+        note.textContent = collectionUi.notice;
+        stats.appendChild(note);
+      }
+    }
+
+    function renderBinderOptions() {
+      const sel = $("#collection-binder");
+      const binders = [...new Set(collectionIndex ? collectionIndex.list.flatMap((it) => [...it.binders]) : [])].sort();
+      const current = collectionUi.binder;
+      sel.replaceChildren(new Option("All binders", ""), ...binders.map((b) => new Option(b, b)));
+      sel.value = binders.includes(current) ? current : "";
+      collectionUi.binder = sel.value;
+      sel.style.display = binders.length ? "" : "none";
+    }
+
+    function collectionTile(it) {
+      const card = it.card;
+      const el = document.createElement("div");
+      el.className = "card-item";
+      const price = getPrice(card);
+      const isSaved = isCardSaved(card.id);
+      el.innerHTML = `
+        <img src="${getCardImage(card)}" alt="${esc(card.name)}" loading="lazy">
+        ${it.qty > 1 ? `<span class="qty-chip">×${it.qty}</span>` : ""}
+        <div class="card-info">
+          <div class="card-text">
+            <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
+            <div class="card-price ${price ? "" : "no-price"}">${price || "No price"}</div>
+          </div>
+          <div class="card-tools">
+            ${flipBtnHtml(card)}
+            <button class="icon-btn save-btn ${isSaved ? "saved" : ""}" data-id="${card.id}" title="${isSaved ? "Saved" : "Save"}" aria-label="Save to a deck">${bookmarkIcon(isSaved)}</button>
+            <button class="icon-btn detail-btn" title="Details" aria-label="Details">${ICON_DOTS}</button>
+          </div>
+        </div>`;
+      wireFlipBtn(el, card);
+      el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
+      el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
+      el.querySelector("img").addEventListener("click", () => showDetail(card));
+      return el;
+    }
+
+    function renderCollection(reset) {
+      const grid = $("#collection-grid");
+      renderCollectionHeader();
+      renderBinderOptions();
+      $("#collection-empty").style.display = hasCollection() ? "none" : "block";
+      const items = hasCollection()
+        ? sortCollectionItems(filterCollectionItems(collectionIndex.list, { query: collectionUi.query, colors: [...collectionUi.colors], binder: collectionUi.binder }), collectionUi.sort)
+        : [];
+      if (reset) { grid.replaceChildren(); collectionUi.shown = 0; }
+      const next = items.slice(collectionUi.shown, collectionUi.shown + COLLECTION_PAGE);
+      next.forEach((it) => grid.appendChild(collectionTile(it)));
+      collectionUi.shown += next.length;
+      $("#collection-more-wrap").style.display = collectionUi.shown < items.length ? "flex" : "none";
+      scheduleTiltInit(grid);
+    }
+
+    async function fetchSwapsStatus() {
+      const r = await fetch("/api/swaps/status");
+      if (!r.ok) throw new Error("Couldn't load swap status");
+      return r.json();
+    }
+
+    function swapsStatusText(st) {
+      switch (st.phase) {
+        case "awaiting-confirmation":
+          return `Profile ${st.pending.toLocaleString()} cards for swaps${st.estimate ? ` (≈ $${st.estimate.usd.toFixed(2)} on ${st.estimate.model})` : ""}`;
+        case "profiling": return `Profiling cards for swaps… ${(st.total - st.pending).toLocaleString()} / ${st.total.toLocaleString()}`;
+        case "embedding": return `Preparing matching… ${st.embedded.toLocaleString()} cards`;
+        case "ready": return st.aiAvailable ? "Ready for swaps" : "Ready for swaps · add an API key in Settings for deck-aware matches";
+        case "error": return `Preparing swaps failed: ${st.error}`;
+        default: return "";
+      }
+    }
+
+    async function refreshSwapsStatus() {
+      clearTimeout(swapsStatusTimer);
+      const el = $("#collection-swaps-status");
+      let st;
+      try { st = await fetchSwapsStatus(); } catch (err) { el.textContent = err.message; return; }
+      el.replaceChildren();
+      const text = document.createElement("span");
+      text.textContent = swapsStatusText(st);
+      el.appendChild(text);
+      if (st.phase === "awaiting-confirmation" || st.phase === "error") {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "export-btn";
+        btn.textContent = st.phase === "error" ? "Retry" : "Start";
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          await fetch("/api/swaps/prepare", { method: "POST" }).catch(() => {});
+          refreshSwapsStatus();
+        });
+        el.appendChild(btn);
+      }
+      const spend = document.createElement("span");
+      spend.className = "swaps-spend";
+      spend.textContent = `AI spend this month: $${(st.spend?.monthUsd || 0).toFixed(2)}`;
+      el.appendChild(spend);
+      if ((st.phase === "profiling" || st.phase === "embedding") && state.activeTab === "collection") {
+        swapsStatusTimer = setTimeout(refreshSwapsStatus, 2000);
+      }
+    }
+
+    buildColorPicker($("#collection-colors"), collectionUi.colors, () => renderCollection(true));
+    $("#collection-filter").addEventListener("input", (e) => { collectionUi.query = e.target.value; renderCollection(true); });
+    $("#collection-binder").addEventListener("change", (e) => { collectionUi.binder = e.target.value; renderCollection(true); });
+    $("#collection-sort").addEventListener("change", (e) => { collectionUi.sort = e.target.value; renderCollection(true); });
+    $("#collection-more-btn").addEventListener("click", () => renderCollection(false));
+
+    // Upload: pick file → server preview → choose mode → confirm.
+    const uploadModal = $("#collection-upload-modal");
+    let uploadPreview = null;
+    const uploadMode = () => document.querySelector('input[name="upload-mode"]:checked')?.value || "sync";
+    function closeUploadModal() { uploadModal.classList.remove("visible"); uploadPreview = null; }
+
+    function renderUploadPreview() {
+      if (!uploadPreview) return;
+      const mode = uploadMode();
+      const p = uploadPreview[mode];
+      const s = p.summary;
+      $("#upload-summary").textContent = mode === "sync"
+        ? `+${s.added} new · ${s.changed} quantity changes · ${s.removed} removed → ${s.totalAfter.toLocaleString()} cards`
+        : `+${s.added} new · ${s.increased} more copies${s.skipped ? ` · ${s.skipped} cards already imported, skipped` : ""} → ${s.totalAfter.toLocaleString()} cards`;
+      $("#upload-warning").textContent = mode === "sync" ? p.warning || "" : "";
+      const groups = mode === "sync"
+        ? [["New", p.details.added], ["Quantity changes", p.details.changed], ["Removed", p.details.removed]]
+        : [["New", p.details.added], ["More copies", p.details.increased], ["Already imported (skipped)", p.details.skipped]];
+      const wrap = $("#upload-details");
+      wrap.replaceChildren();
+      groups.filter(([, list]) => list.length).forEach(([label, list]) => {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = `${label} (${list.length})`;
+        details.appendChild(summary);
+        const ul = document.createElement("ul");
+        list.slice(0, 500).forEach((r) => {
+          const li = document.createElement("li");
+          const qty = r.qtyAfter != null ? `${r.qtyBefore} → ${r.qtyAfter}` : `${r.qty}×`;
+          li.textContent = `${qty} ${r.name} (${r.set} #${r.number}${r.foil !== "normal" ? `, ${r.foil}` : ""})${r.binder ? ` · ${r.binder}` : ""}`;
+          ul.appendChild(li);
+        });
+        if (list.length > 500) { const li = document.createElement("li"); li.textContent = `…and ${list.length - 500} more`; ul.appendChild(li); }
+        details.appendChild(ul);
+        wrap.appendChild(details);
+      });
+    }
+
+    $("#collection-upload-btn").addEventListener("click", () => $("#collection-file").click());
+    $("#collection-file").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      uploadPreview = null;
+      ["#upload-summary", "#upload-warning", "#upload-details"].forEach((s) => { $(s).textContent = ""; });
+      $("#upload-status").textContent = "Reading file…";
+      $("#upload-confirm").disabled = true;
+      uploadModal.classList.add("visible");
+      try {
+        const res = await fetch("/api/collection/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csv: await file.text() }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Couldn't read that file");
+        uploadPreview = data;
+        document.querySelector(`input[name="upload-mode"][value="${data.defaultMode}"]`).checked = true;
+        $("#upload-status").textContent = "";
+        renderUploadPreview();
+        $("#upload-confirm").disabled = false;
+      } catch (err) {
+        $("#upload-status").textContent = err.message;
+      }
+    });
+    document.querySelectorAll('input[name="upload-mode"]').forEach((r) => r.addEventListener("change", renderUploadPreview));
+    $("#upload-cancel").addEventListener("click", closeUploadModal);
+    uploadModal.addEventListener("click", (e) => { if (e.target === uploadModal) closeUploadModal(); });
+    $("#upload-confirm").addEventListener("click", async () => {
+      if (!uploadPreview) return;
+      const btn = $("#upload-confirm");
+      btn.disabled = true;
+      $("#upload-status").textContent = "Looking up new cards on Scryfall…";
+      try {
+        const res = await fetch("/api/collection/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ previewId: uploadPreview.previewId, mode: uploadMode() }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Sync failed");
+        collectionData = data;
+        collectionIndex = buildCollectionIndex(data);
+        collectionLoading = Promise.resolve(data);
+        collectionUi.notice = data.unmatched?.length ? `${data.unmatched.length} cards couldn't be matched on Scryfall` : "";
+        closeUploadModal();
+        renderCollection(true);
+        refreshSwapsStatus();
+      } catch (err) {
+        $("#upload-status").textContent = err.message;
+        btn.disabled = false;
+      }
+    });
+
+    // Load the collection in the background so badges and View Swaps know about it.
+    loadCollection()
+      .then(() => {
+        if (state.activeTab === "saved") renderSavedCards();
+        if (state.detailCard) showDetail(state.detailCard);
+      })
+      .catch(() => {});
   </script>
 </body>
 </html>
