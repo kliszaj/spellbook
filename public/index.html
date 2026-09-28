@@ -2491,14 +2491,14 @@
     function updateIdentityDisplay() {
       const id = state.colorIdentity.join("").toUpperCase();
       identityDisplay.textContent = id;
-      document.querySelectorAll(".search-section .color-toggle").forEach((btn) => {
+      document.querySelectorAll("#search-content .color-toggle").forEach((btn) => {
         const on = state.colorIdentity.includes(btn.dataset.color);
         btn.classList.toggle("active", on);
         btn.setAttribute("aria-pressed", String(on));
       });
     }
 
-    document.querySelectorAll(".search-section .color-toggle").forEach((btn) => {
+    document.querySelectorAll("#search-content .color-toggle").forEach((btn) => {
       const svg = MANA_SVG[btn.dataset.color];
       if (svg) btn.innerHTML = svg;
       btn.addEventListener("click", () => {
