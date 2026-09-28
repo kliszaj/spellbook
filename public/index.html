@@ -3803,6 +3803,18 @@
       const subtypeOk = !filter.subtypes.size || [...filter.subtypes].some((s) => subtypes.has(s));
       return typeOk && subtypeOk;
     }
+
+    // Which subtype facets to render: the top `limit` by count/name, plus — when
+    // collapsed — any selected subtype that fell outside that top slice, appended
+    // in facet order, so an active filter never loses its visible chip.
+    function visibleSubtypes(facets, selected, expanded, limit) {
+      if (expanded) return facets;
+      const top = facets.slice(0, limit);
+      if (!selected || !selected.size) return top;
+      const shown = new Set(top.map((f) => f.value));
+      const extraSelected = facets.filter((f) => selected.has(f.value) && !shown.has(f.value));
+      return extraSelected.length ? [...top, ...extraSelected] : top;
+    }
     // @testable type-helpers end
 
     function makeTypeFilterState() { return { types: new Set(), subtypes: new Set(), expanded: false }; }
@@ -3852,7 +3864,7 @@
       if (showSubtypesRow) {
         const row = document.createElement("div");
         row.className = "type-row";
-        const visible = filter.expanded ? facets.subtypes : facets.subtypes.slice(0, SUBTYPES_SHOWN);
+        const visible = visibleSubtypes(facets.subtypes, filter.subtypes, filter.expanded, SUBTYPES_SHOWN);
         visible.forEach(({ value, count }) => {
           row.appendChild(typeChip(`${value} ${count}`, filter.subtypes.has(value), () => { toggleSet(filter.subtypes, value); onChange(); }));
         });
@@ -5980,11 +5992,21 @@
       const manualOnly = item.binders.size === 1 && item.binders.has(MANUAL_BINDER);
       return { state: manualOnly ? "manual" : "manabox", qty: item.qty };
     }
+    // Oracle ids (or card id fallback) with an owned-toggle POST in flight, so a
+    // double-click (or a fast repeat click on the context menu) can't fire twice.
+    const ownedToggleInFlight = new Set();
+
     // POST the owned toggle, then refresh whatever's currently showing this card.
     async function toggleOwned(card) {
       const info = ownedInfo(card);
       if (info.state === "manabox") return;
       const oracleId = card.oracle_id || card.card_faces?.[0]?.oracle_id;
+      const key = oracleId || card.id;
+      if (ownedToggleInFlight.has(key)) return;
+      ownedToggleInFlight.add(key);
+      const ownedToggleBtn = $("#detail-owned-toggle");
+      const disablingDetailBtn = Boolean(state.detailCard && state.detailCard.id === card.id);
+      if (disablingDetailBtn) ownedToggleBtn.disabled = true;
       try {
         const res = await fetch("/api/collection/owned", {
           method: "POST",
@@ -5995,11 +6017,20 @@
         if (!res.ok) throw new Error(data.error || "Couldn't update the collection");
         collectionData = data;
         collectionIndex = buildCollectionIndex(data);
+        collectionLoading = Promise.resolve(data);
         if (state.activeTab === "saved") renderSavedCards();
-        if (state.activeTab === "collection") renderCollection(true);
+        if (state.activeTab === "collection") { renderCollection(true); refreshSwapsStatus(); }
         if (state.detailCard) showDetail(state.detailCard);
+        updateSwapTilesOwned(card);
       } catch (err) {
-        showStatus(err.message, true);
+        // #status lives inside #search-content — invisible from the Decks/Collection
+        // tabs, the Swaps view, or behind the detail panel — so fall back to alert()
+        // there; only Search with no Swaps view open can show it inline.
+        if (state.activeTab === "search" && !swapsContext) showStatus(err.message, true);
+        else alert(err.message);
+      } finally {
+        ownedToggleInFlight.delete(key);
+        if (disablingDetailBtn) ownedToggleBtn.disabled = false;
       }
     }
 
@@ -6411,6 +6442,8 @@
       const card = r.card;
       const el = document.createElement("div");
       el.className = "card-item swap-item";
+      const oracleId = card.oracle_id || card.card_faces?.[0]?.oracle_id || "";
+      if (oracleId) el.dataset.oracleId = oracleId;
       const price = getPrice(card);
       const saves = originalPrice - cardEur(card);
       const owned = ownedQty(collectionIndex, card) || 1;
@@ -6430,7 +6463,7 @@
         </div>
         <div class="swap-meta">
           <div class="swap-bar" role="meter" aria-label="Match" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${r.match}"><span style="width:${r.match}%"></span></div>
-          <div class="swap-match">${r.match}% match · Owned ×${owned}</div>
+          <div class="swap-match">${r.match}% match · Owned ×<span class="swap-owned-qty">${owned}</span></div>
           ${r.reason ? `<div class="swap-reason">${esc(r.reason)}</div>` : ""}
           <div class="swap-links"><a href="${esc(scryfall)}" target="_blank" rel="noopener">Scryfall</a> · <a href="https://edhrec.com/cards/${edhrecSlug(card.name)}" target="_blank" rel="noopener">EDHREC</a></div>
         </div>`;
@@ -6439,6 +6472,20 @@
       el.querySelector("img").addEventListener("click", () => showDetail(card));
       el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
       return el;
+    }
+
+    // After toggling owned on a card, patch just that card's "Owned ×N" in any
+    // rendered swap tile — never re-run requestSwaps here, since that can trigger
+    // a paid AI ranking call.
+    function updateSwapTilesOwned(card) {
+      if (!swapsContext) return;
+      const oracleId = card.oracle_id || card.card_faces?.[0]?.oracle_id;
+      if (!oracleId) return;
+      const owned = ownedQty(collectionIndex, card) || 1;
+      $("#swaps-grid").querySelectorAll(`.swap-item[data-oracle-id="${oracleId}"]`).forEach((tile) => {
+        const qtyEl = tile.querySelector(".swap-owned-qty");
+        if (qtyEl) qtyEl.textContent = owned;
+      });
     }
 
     function renderSwapsResults(data) {

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { test, run } from "./lib/tiny-test.mjs";
 import { createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "../lib/collection-store.js";
 import { CollectionFormatError, MANUAL_BINDER } from "../lib/collection.js";
+import { resetScryfallBlock } from "../lib/scryfall.js";
 
 const HEADER = "Binder Name,Name,Set code,Collector number,Foil,Quantity,Scryfall ID,Condition,Language,Added";
 const row = (id, qty = 1, binder = "Main", added = "2026-01-01T00:00:00.000Z") =>
@@ -67,6 +68,10 @@ test("a Scryfall failure writes nothing", async () => {
 });
 
 test("a rate-limited first request retries and still applies", async () => {
+  // The scryfall.js cooldown is module-level and real-time-based here (this store
+  // doesn't inject `now` into it), so clear it before and after — otherwise the
+  // short Retry-After set by this test could block later tests in this file.
+  resetScryfallBlock();
   const dataDir = await tempDir();
   const scry = fakeScryfall({ rateLimitFirst: true });
   const sleeps = [];
@@ -77,6 +82,7 @@ test("a rate-limited first request retries and still applies", async () => {
   assert.ok(sleeps.includes(1000));
   const saved = JSON.parse(await readFile(join(dataDir, "collection.json"), "utf8"));
   assert.ok(saved.entries["a|normal|Main"]);
+  resetScryfallBlock(); // don't let this test's cooldown leak into later tests
 });
 
 test("an expired or unknown preview is rejected", async () => {

@@ -169,6 +169,17 @@ test("diffAdd drops a manual entry whose name matches an added/increased row", (
   assert.ok(d.entries["cw-2|normal|New Releases"]);
 });
 
+test("diffAdd keeps a manual entry when its name only matches a skipped (already-imported) row", () => {
+  const first = diffSync(null, parseManaBoxCsv(whole));
+  const current = { entries: { ...first.entries, [MANUAL_KEY]: manualEntry("cw-1", "Elfsworn Giant") }, importedRows: first.importedRows };
+  // Re-uploading the same file: every row is already imported, so none are
+  // actually added/increased — the manual mark must survive.
+  const d = diffAdd(current, parseManaBoxCsv(whole));
+  assert.ok(d.entries[MANUAL_KEY], "manual entry should survive — no row was actually added/increased");
+  assert.equal(d.details.manualDropped.length, 0);
+  assert.equal(d.summary.manualDropped, 0);
+});
+
 test("slimCard keeps only the documented fields", () => {
   const slim = slimCard({
     id: "x", oracle_id: "o", name: "N", type_line: "Instant", artist: "A",

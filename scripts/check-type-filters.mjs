@@ -8,7 +8,7 @@ const BEGIN = "// @testable type-helpers begin";
 const END = "// @testable type-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("type-helpers markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { parseTypeLine, typeFacets, matchesTypeFilter };`)();
+const h = Function(`${block}; return { parseTypeLine, typeFacets, matchesTypeFilter, visibleSubtypes };`)();
 
 const card = (type_line, extra = {}) => ({ type_line, ...extra });
 
@@ -81,6 +81,35 @@ test("matchesTypeFilter: OR within a row, AND across rows, empty filter passes e
   assert.equal(h.matchesTypeFilter(shrine, enchantmentAndShrine), true);
   assert.equal(h.matchesTypeFilter(aura, enchantmentAndShrine), false, "Aura is an Enchantment but not a Shrine");
   assert.equal(h.matchesTypeFilter(elf, enchantmentAndShrine), false);
+});
+
+const facet = (value, count) => ({ value, count });
+const topTwelve = Array.from({ length: 12 }, (_, i) => facet(`Sub${i}`, 12 - i));
+
+test("visibleSubtypes: expanded returns every facet regardless of selection", () => {
+  const facets = [...topTwelve, facet("Rare", 1)];
+  const selected = new Set();
+  assert.deepEqual(h.visibleSubtypes(facets, selected, true, 12), facets);
+});
+
+test("visibleSubtypes: collapsed with nothing selected returns just the top `limit`", () => {
+  const facets = [...topTwelve, facet("Rare", 1)];
+  const selected = new Set();
+  assert.deepEqual(h.visibleSubtypes(facets, selected, false, 12), topTwelve);
+});
+
+test("visibleSubtypes: collapsed keeps a selected subtype visible even past the top `limit`", () => {
+  const facets = [...topTwelve, facet("Rare", 1)];
+  const selected = new Set(["Rare"]);
+  const visible = h.visibleSubtypes(facets, selected, false, 12);
+  assert.deepEqual(visible, [...topTwelve, facet("Rare", 1)]);
+});
+
+test("visibleSubtypes: collapsed selection already within the top `limit` doesn't duplicate it", () => {
+  const facets = [...topTwelve, facet("Rare", 1)];
+  const selected = new Set(["Sub0"]);
+  const visible = h.visibleSubtypes(facets, selected, false, 12);
+  assert.deepEqual(visible, topTwelve);
 });
 
 await run("Type/subtype filter helpers");
