@@ -1444,20 +1444,6 @@
     .da-err { color: #B45B4E; }
     .da-approx { font-size: 10.5px; color: #B0A99E; margin: 10px 0 0; }
 
-    .radar-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center; }
-    .radar-fig svg { width: 100%; height: auto; overflow: visible; display: block; }
-    .rad-lbl { font-size: 9.5px; font-weight: 600; fill: #57524A; }
-    .rad-legend { display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #57524A; margin-bottom: 12px; }
-    .rad-key { display: inline-flex; align-items: center; gap: 8px; }
-    .rad-swatch { width: 16px; height: 10px; border-radius: 3px; flex: none; }
-    .rad-swatch.deck { background: rgba(185,137,42,0.20); border: 2px solid #B9892A; }
-    .rad-swatch.target { background: transparent; border: 1.5px dashed #7FA07A; }
-    .rad-list { display: flex; flex-direction: column; gap: 6px; }
-    .rad-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; }
-    .rad-row .nm { flex: 1; color: #57524A; }
-    .rad-row .vl { color: #9E9B92; font-variant-numeric: tabular-nums; }
-    @media (max-width: 620px) { .radar-wrap { grid-template-columns: 1fr; } }
-
     @media (max-width: 620px) {
       .da-tiles { grid-template-columns: repeat(2, 1fr); }
       .da-grid { grid-template-columns: 1fr; gap: 14px; }
@@ -1500,9 +1486,12 @@
     .da2-badge.grade-d { background: #F5E7E0; border-color: #E7CBBB; }
     .da2-badge.grade-d b { color: #A45636; }
     .da2-badge.grade-d span { color: #A9705C; }
-    .da2-vrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .da2-badge.in-progress { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: #F8F0D9; border-color: #EAD9A9; }
+    .da2-badge.in-progress b { font-size: 17px; font-weight: 780; color: #A17317; line-height: 1; font-variant-numeric: tabular-nums; }
+    .da2-badge.in-progress small { font-size: 8px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #A18543; }
     .da2-vhead { font-size: 14.5px; font-weight: 720; margin-bottom: 3px; letter-spacing: -0.01em; color: #2A2721; }
     .da2-vsub { font-size: 12px; color: #9E9B92; line-height: 1.5; }
+    .da2-vsub[hidden] { display: none; }
     .da2-tags { display: flex; align-items: center; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
     .da2-tags-label { color: #A39E93; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
     .da2-tag-chip { border: 1px solid #E0DACD; background: #FFFEFA; color: #57524A; border-radius: 999px; height: 24px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1 inherit; cursor: default; }
@@ -1522,32 +1511,30 @@
     .da2-chip.trim.da2-card-chip:hover { background: #F7ECE6; border-color: #E0C0B2; }
     .da2-layout { display: grid; grid-template-columns: minmax(0, 1.32fr) minmax(300px, 0.82fr); gap: 12px; margin-bottom: 14px; align-items: stretch; }
     .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 12px; }
-    .da2-ledger { padding: 0; overflow: hidden; }
-    .da2-ledger-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 13px 14px 11px; }
-    .da2-ledger-hint { color: #A39E93; font-size: 10.5px; }
-    .da2-role { border-top: 1px solid rgba(31,29,25,0.08); }
-    .da2-role-toggle { width: 100%; display: grid; grid-template-columns: 8px minmax(0, 1fr) auto 16px; gap: 9px; align-items: center; border: 0; padding: 10px 14px; background: transparent; color: #2A2721; text-align: left; cursor: pointer; font: inherit; transition: background 0.15s ease; }
-    .da2-role-toggle:hover { background: #F8F6F0; }
-    .da2-role-toggle:active { transform: translateY(1px); }
-    .da2-role-status { width: 7px; height: 7px; border-radius: 50%; background: #7FA07A; }
-    .da2-role.low .da2-role-status { background: #D6A24A; }
-    .da2-role.high .da2-role-status { background: #C6795A; }
-    .da2-role-title { display: block; color: #2A2721; font-size: 12px; font-weight: 720; }
-    .da2-role-sub { display: block; margin-top: 2px; color: #9E9B92; font-size: 10.5px; line-height: 1.35; }
-    .da2-role-value { color: #57524A; font: 650 12px/1 ui-monospace, "SF Mono", Menlo, monospace; white-space: nowrap; }
-    .da2-role-value small { color: #A39E93; font: 500 10.5px/1 inherit; }
-    .da2-role-chevron { width: 15px; height: 15px; color: #918A7F; transition: transform 0.18s ease; }
-    .da2-role.open .da2-role-chevron { transform: rotate(180deg); }
-    .da2-role-detail { display: none; padding: 0 14px 13px 31px; }
-    .da2-role.open .da2-role-detail { display: block; }
-    .da2-role-note { margin: 0 0 8px; color: #78726A; font-size: 11.5px; line-height: 1.45; }
+    .da2-main { display: flex; flex-direction: column; gap: 12px; }
+    .da2-chips-card { padding: 14px 15px; }
+    .da2-chip-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 11px; }
+    .da2-chip-row:first-child { margin-top: 0; }
+    .da2-chip-row-label { flex: none; width: 92px; padding-top: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #A39E93; }
+    .da2-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .da2-chip.bad { border: 1px solid #E9D6CC; color: #A45636; }
+    .da2-chip.ok { border: 1px solid #DCE6D6; color: #4d6b48; }
+    button.da2-chip.bad, button.da2-chip.ok { font-family: inherit; cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease; }
+    button.da2-chip.bad:hover { background: #FBF1EC; border-color: #DCA98F; }
+    button.da2-chip.ok:hover { background: #F2F7EE; border-color: #B9CCAF; }
+    button.da2-chip:active { transform: translateY(1px); }
+    button.da2-chip:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; }
+    .da2-chip.role { border: 1px solid #E5DED2; background: #F7F4EC; color: #5C564D; }
+    .da2-chip.role.conditional { border-style: dashed; color: #8A6B2A; }
+    .da2-chip.role.da2-card-chip:hover { background: #FFFDF7; border-color: #C8B88D; color: #2A2721; }
+    .da2-chip.role.da2-card-chip:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; }
+    .da2-role-detail { padding: 12px 14px; }
+    .da2-role-detail[hidden] { display: none; }
+    .da2-role-detail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .da2-role-detail-head b { font-size: 12.5px; font-weight: 720; color: #2A2721; }
+    .da2-role-detail-head span { font-size: 11px; color: #9E9B92; }
+    .da2-role-detail-flow { margin-bottom: 9px; font-size: 11px; color: #78726A; }
     .da2-role-cards { display: flex; flex-wrap: wrap; gap: 5px; }
-    .da2-role-card { border: 1px solid #E5DED2; border-radius: 6px; background: #F7F4EC; color: #5C564D; padding: 4px 7px; font-size: 10.5px; line-height: 1.25; }
-    button.da2-role-card { font-family: inherit; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease; }
-    button.da2-role-card:hover { background: #FFFDF7; border-color: #C8B88D; color: #2A2721; }
-    button.da2-role-card:active { transform: translateY(1px); }
-    button.da2-role-card:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; }
-    .da2-role-card.conditional { border-style: dashed; color: #8A6B2A; }
     .da2-role-key { margin-top: 8px; color: #A39E93; font-size: 10px; }
     .da2-side { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; height: 100%; }
     .da2-mana-card { display: flex; flex-direction: column; height: 100%; padding: 14px 12px 12px; }
@@ -1556,38 +1543,24 @@
     .da2-mana-card .curve { height: auto; flex: 1 1 102px; min-height: 102px; max-height: 300px; margin-top: 2px; }
     .da2-mana-card .curve-bar { max-width: 36px; }
     .da2-section-rule { height: 1px; margin: 14px 0 12px; background: rgba(31,29,25,0.08); }
-    .da2-color-access { margin-top: auto; }
-    .da2-flow-summary { display: grid; grid-template-columns: auto 1fr; gap: 9px; align-items: start; margin-top: 7px; }
-    .da2-flow-score { color: #A17317; font-size: 25px; font-weight: 780; font-variant-numeric: tabular-nums; line-height: 0.95; }
-    .da2-flow-copy b { display: block; color: #57524A; font-size: 11.5px; line-height: 1.2; }
-    .da2-flow-copy span { display: block; margin-top: 3px; color: #9E9B92; font-size: 10.5px; line-height: 1.35; }
-    .da2-flow-track { display: flex; height: 7px; margin-top: 11px; overflow: hidden; border-radius: 999px; background: #EDE9E0; }
-    .da2-flow-seg.early { background: #7FA07A; } .da2-flow-seg.conditional { background: #C9A866; } .da2-flow-seg.late { background: #D4CEC1; }
-    .da2-flow-legend { display: flex; flex-wrap: wrap; gap: 7px 10px; margin-top: 7px; color: #918A7F; font-size: 10px; }
-    .da2-flow-legend i { display: inline-block; width: 6px; height: 6px; margin: 0 3px 1px 0; border-radius: 50%; vertical-align: middle; }
-    .da2-flow-legend .early { background: #7FA07A; } .da2-flow-legend .conditional { background: #C9A866; } .da2-flow-legend .late { background: #D4CEC1; }
     .da2-approx { font-size: 9.5px; font-weight: 600; color: #B0A99E; letter-spacing: 0; text-transform: none; }
+    .da2-colors-line { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 4px; }
+    .da2-color-chip { display: inline-flex; align-items: center; gap: 6px; font: 650 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #57524A; }
+    .da2-color-chip .da2-srcpip { width: 18px; height: 18px; }
+    .da2-color-chip .da2-srcpip svg { width: 10px; height: 10px; }
 
-    .da2-src { display: grid; grid-template-columns: auto 1fr auto; gap: 11px; align-items: center; padding: 6px 0; }
     .da2-srcpip { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none; }
     .da2-srcpip svg { width: 13px; height: 13px; }
-    .da2-srctrack { position: relative; height: 9px; border-radius: 999px; overflow: hidden; background: #EDE9E0; }
-    .da2-srcfill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; }
-    .da2-srctick { position: absolute; top: -3px; bottom: -3px; width: 2px; border-radius: 2px; background: #2A2721; }
-    .da2-srcmeta { font: 600 12px/1.2 ui-monospace, Menlo, monospace; text-align: right; white-space: nowrap; color: #2A2721; }
-    .da2-srcmeta small { display: block; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; }
     .da2-sb-w { background: #C9A24B; } .da2-sb-u { background: #5F86B0; } .da2-sb-b { background: #6E675A; } .da2-sb-r { background: #C0704E; } .da2-sb-g { background: #7FA07A; }
 
     .da2-strip-min { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .da2-building { margin-top: 12px; padding: 14px 15px; background: #FAF8F2; border: 1px dashed #E0DACD; border-radius: 12px; color: #78726A; font-size: 12.5px; line-height: 1.5; }
     .da2-building b { color: #57524A; font-weight: 700; }
     .da2-wc { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
-    .da2-wc-head { display: flex; align-items: baseline; justify-content: space-between; }
-    .da2-wc-n { font-size: 19px; font-weight: 750; color: #2A2721; font-variant-numeric: tabular-nums; }
-    .da2-wtag { display: inline-block; font: 600 12px/1.4 inherit; background: #F2EFEA; color: #6a5a3c; border: 1px solid #E7E0D2; padding: 5px 9px; border-radius: 7px; margin: 8px 5px 0 0; }
+    .da2-wc-line { font-size: 12.5px; font-weight: 650; color: #57524A; }
     .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
     @media (max-width: 900px) { .da2-layout { grid-template-columns: 1fr; } }
-    @media (max-width: 620px) { .da2-role-toggle { grid-template-columns: 8px minmax(0, 1fr) auto 14px; gap: 7px; padding: 10px 12px; } .da2-role-detail { padding-left: 27px; padding-right: 12px; } .da2-ledger-hint { display: none; } }
+    @media (max-width: 480px) { .da2-chip-row { flex-direction: column; gap: 4px; } .da2-chip-row-label { width: auto; padding-top: 0; } }
 
     .detail-reason {
       margin: 0 0 14px;
@@ -2178,12 +2151,6 @@
         </div>
 
         <div class="collection-section" id="collection-section">
-          <div class="collection-header">
-            <div class="collection-stats" id="collection-stats"></div>
-            <button class="export-btn" id="collection-upload-btn" type="button">Upload CSV</button>
-            <input type="file" id="collection-file" accept=".csv,text/csv" hidden>
-          </div>
-          <div class="collection-swaps-status" id="collection-swaps-status"></div>
           <div class="search-section">
             <div class="color-identity">
               <div class="color-toggles" id="collection-colors" aria-label="Filter by color identity"></div>
@@ -2204,6 +2171,12 @@
             <button class="sort-dir-btn" id="collection-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
             <select id="collection-binder" aria-label="Binder"></select>
           </div>
+          <div class="collection-header">
+            <div class="collection-stats" id="collection-stats"></div>
+            <button class="export-btn" id="collection-upload-btn" type="button">Upload CSV</button>
+            <input type="file" id="collection-file" accept=".csv,text/csv" hidden>
+          </div>
+          <div class="collection-swaps-status" id="collection-swaps-status"></div>
           <div class="type-filter" id="collection-type-filter" style="display:none" aria-label="Filter by card type"></div>
           <div id="collection-empty" class="empty-state">
             <p>No collection yet</p>
@@ -4504,7 +4477,7 @@
       return blendProfiles(identityTags);
     }
     function deckIdentityHtml(identityTags, analyzed) {
-      if (!analyzed) return `<div class="da2-tags"><span class="da2-tags-label">Deck identity</span><span class="da2-tag-chip"><span>Appears after Analyze</span></span></div>`;
+      if (!analyzed) return "";
       const chips = identityTags.length
         ? identityTags.map((tag) => `<span class="da2-tag-chip">${esc(tag)}</span>`).join("")
         : `<span class="da2-tag-chip"><span>No clear identity returned</span></span>`;
@@ -4573,20 +4546,6 @@
         return { c, have: weightedHave, rawHave: rawHave[c], need, status, pips: pips[c], earlyPips: earlyPips[c], splash };
       });
     }
-    function sourcesHtml(sources) {
-      if (!sources.length) return `<div class="da2-vsub">Colorless — no colored sources needed.</div>`;
-      return sources.map((s) => {
-        const max = Math.max(s.have, s.need, 1) * 1.3;
-        const label = s.status === "ok" ? (s.splash ? "Splash" : "Reliable") : (s.status === "low" ? "Tight" : "Short");
-        const lc = s.c.toLowerCase();
-        return `<div class="da2-src">
-          <div class="da2-srcpip da2-sb-${lc}">${MANA_SVG[lc]}</div>
-          <div class="da2-srctrack"><div class="da2-srcfill da2-sb-${lc}" style="width:${s.have / max * 100}%"></div><div class="da2-srctick" style="left:${s.need / max * 100}%"></div></div>
-          <div class="da2-srcmeta">${s.have}/${s.need}<small style="color:${STATUS_COLOR[s.status]}">${label}</small></div>
-        </div>`;
-      }).join("");
-    }
-
     const ROLE_KEYS = ["ramp", "draw", "removal", "wipes", "tutors", "interaction", "graveyardHate", "protection"];
     const REMOVAL_TARGET_TYPES = ["creature", "artifact", "enchantment", "planeswalker"];
 
@@ -4749,81 +4708,49 @@
       if (first === "C") return "grade-c";
       return "grade-d";
     }
-    function cardFlowHtml(flow) {
-      if (!flow.total) return `<div class="da2-vsub" style="margin-top:7px">No card-advantage effects detected yet.</div>`;
-      const pct = (n) => `${Math.max(0, n / flow.total * 100)}%`;
-      return `<div class="da2-flow-summary"><div class="da2-flow-score">${flow.early}</div><div class="da2-flow-copy"><b>Early direct access</b><span>of ${flow.total} total card-advantage effects</span></div></div>
-        <div class="da2-flow-track" title="Early/direct, conditional, and late card access"><i class="da2-flow-seg early" style="width:${pct(flow.early)}"></i><i class="da2-flow-seg conditional" style="width:${pct(flow.conditional)}"></i><i class="da2-flow-seg late" style="width:${pct(flow.late)}"></i></div>
-        <div class="da2-flow-legend"><span><i class="early"></i>Early/direct ${flow.early}</span><span><i class="conditional"></i>Conditional ${flow.conditional}</span><span><i class="late"></i>Late ${flow.late}</span></div>`;
+
+    // ═══ Analysis UI helpers (pure) ═══════════════════════════════════
+    // Consumed by the summary sentence and the two chip rows. Operate only on
+    // computeGrade(...).items — no DOM, no other deck-analysis helpers — so they can be
+    // evaluated in isolation by scripts/check-analysis-ui.mjs.
+    // @testable analysis-helpers begin
+    function severityRank(sev) { return sev === "critical" ? 0 : (sev === "major" ? 1 : 2); }
+    function sortWorstFirst(items) {
+      return [...items].sort((a, b) => a.score - b.score || severityRank(a.severity) - severityRank(b.severity));
     }
-    // Detail-only addendum for the Removal row: what permanent types it can answer, and
-    // how much of it is instant-speed. Folded into the existing note so it only costs
-    // anything once the row is expanded — nothing changes in the collapsed view.
-    function removalCoverageNote(detail) {
-      if (!detail.count) return "";
-      const instantQty = detail.cards.reduce((n, c) => n + (c.instant ? c.qty : 0), 0);
-      const covered = new Set();
-      detail.cards.forEach((c) => (c.targets || []).forEach((t) => covered.add(t)));
-      const missing = REMOVAL_TARGET_TYPES.filter((t) => !covered.has(t));
-      const bits = [];
-      if (covered.size) bits.push(missing.length ? `no coverage for ${listJoin(missing.map((t) => t + "s"))}` : "answers all permanent types");
-      bits.push(`${instantQty} of ${detail.count} instant-speed`);
-      return ` ${capitalize(bits.join("; "))}.`;
+    function fmtGapNum(n) { return Number.isInteger(n) ? String(n) : Number(n).toFixed(1); }
+    // One sentence naming the worst gaps, e.g. "In progress — 12 cards to go. Biggest gaps:
+    // Lands 30/36, Ramp 5/8, Interaction 3/8." Replaced by the AI verdict once cached.
+    function gapSummary(items, { total, maxGaps = 3 } = {}) {
+      const failing = sortWorstFirst(items.filter((it) => !it.pass));
+      const inProgress = typeof total === "number" && total < 90;
+      const prefix = inProgress ? `In progress — ${100 - total} cards to go. ` : "";
+      if (!failing.length) return `${prefix}On target across the board.`;
+      const bits = failing.slice(0, maxGaps).map((it) => `${it.label} ${it.valueLabel}/${fmtGapNum(it.status === "high" ? it.hi : it.lo)}`);
+      return `${prefix}Biggest gaps: ${bits.join(", ")}.`;
     }
-    function roleLedgerHtml(details, counts, profile, grade, aiRead = false) {
-      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
-      const order = ["ramp", "draw", "removal", "interaction", "wipes", "protection", "tutors", "graveyardHate"];
-      const subtitles = {
-        ramp: "Mana acceleration and land development",
-        draw: "Card advantage and repeatable access",
-        removal: "Targeted opponent-facing answers",
-        interaction: "Reactive answers, not just instant-speed utility",
-        wipes: "Mass removal and reset effects",
-        protection: "Keeps your commander or board intact",
-        tutors: "Finds a specific card or engine piece",
-        graveyardHate: "Disrupts opposing graveyards",
-      };
-      const rows = order.map((key) => {
-        const [lo, hi] = targets[key];
-        const value = counts[key] || 0;
-        const item = grade.items.find((entry) => entry.key === key);
-        const status = item?.status || scoreCheck(value, lo, hi).status;
-        const detail = details[key] || { count: 0, cards: [] };
-        const conditional = detail.cards.filter((card) => card.conditional).length;
-        const aiDifference = aiRead && value !== detail.count;
-        const note = (aiDifference
-          ? `AI classified ${value}; the heuristic evidence below finds ${detail.count}.`
-          : `${detail.count} heuristic match${detail.count === 1 ? "" : "es"}${conditional ? ` · ${conditional} setup-dependent` : ""}.`
-        ) + (key === "removal" ? removalCoverageNote(detail) : "");
-        const cards = detail.cards.slice(0, 14).map((card) => `<button class="da2-role-card${card.conditional ? " conditional" : ""}" type="button" data-card="${esc(card.name)}" title="Show ${esc(card.name)} in card focus">${esc(card.name)}${card.qty > 1 ? ` ×${card.qty}` : ""}</button>`).join("");
-        const remaining = detail.cards.length - 14;
-        const open = status !== "ok";
-        return `<div class="da2-role ${status}${open ? " open" : ""}">
-          <button class="da2-role-toggle" type="button" aria-expanded="${open}" aria-controls="da2-role-${key}"><i class="da2-role-status"></i><span><span class="da2-role-title">${esc(AI_LABEL[key])}</span><span class="da2-role-sub">${esc(subtitles[key])}</span></span><span class="da2-role-value">${fmtScoreNum(value)} <small>/ ${targetLabel(lo, hi)}</small></span><svg class="da2-role-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-          <div class="da2-role-detail" id="da2-role-${key}"><p class="da2-role-note">${esc(note)}</p><div class="da2-role-cards">${cards || `<span class="da2-role-card conditional">No heuristic matches</span>`}${remaining > 0 ? `<span class="da2-role-card">+${remaining} more</span>` : ""}</div>${conditional ? `<div class="da2-role-key">Dashed cards are temporary, setup-dependent, or board-state dependent.</div>` : ""}</div>
-        </div>`;
-      }).join("");
-      return `<div class="da2-ledger-head"><div class="da-h" style="margin:0">Role ledger <span class="da2-approx">· ${aiRead ? "AI-refined" : "heuristic"}</span></div><span class="da2-ledger-hint">Expand a role to inspect its cards</span></div>${rows}`;
+    // Splits grade items into "needs attention" (failing, worst first) and "on target"
+    // (passing) chips. The five per-color source items collapse into a single chip in
+    // each group, since five near-identical "1/5 Short" rows was the redundancy to cut.
+    function chipGroups(items) {
+      const isColorKey = (key) => typeof key === "string" && key.startsWith("source-");
+      const colorItems = items.filter((it) => isColorKey(it.key));
+      const otherItems = items.filter((it) => !isColorKey(it.key));
+      const withText = (it) => ({
+        ...it,
+        text: it.pass ? `${it.label} ${it.valueLabel}` : `${it.label} ${it.valueLabel}/${fmtGapNum(it.status === "high" ? it.hi : it.lo)}`,
+      });
+      const attention = sortWorstFirst(otherItems.filter((it) => !it.pass)).map(withText);
+      const onTarget = otherItems.filter((it) => it.pass).map(withText);
+      if (colorItems.length) {
+        const order = ["W", "U", "B", "R", "G"];
+        const shortColors = order.filter((c) => colorItems.some((it) => it.key === `source-${c}` && !it.pass));
+        if (shortColors.length) attention.push({ key: "colors", label: "Colors", pass: false, text: `Colors short: ${shortColors.join(" ")}` });
+        else onTarget.push({ key: "colors", label: "Colors", pass: true, text: "Colors OK" });
+      }
+      return { attention, onTarget };
     }
-    function deckGaps(counts, sources, profile = DECK_STYLE_PROFILES.default) {
-      const g = [];
-      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
-      Object.keys(targets).forEach((k) => { const lo = targets[k][0], n = counts[k] || 0; if (n < lo) g.push(`+${Math.ceil(lo - n)} ${AI_LABEL[k].toLowerCase()}`); });
-      sources.forEach((s) => { if (s.have < s.need) g.push(`+${Math.ceil(s.need - s.have)} ${COLOR_FULL[s.c].toLowerCase()} sources`); });
-      return g;
-    }
-    function listJoin(a) { return a.length <= 1 ? (a[0] || "") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
-    function heuristicVerdict(counts, sources, profile = DECK_STYLE_PROFILES.default) {
-      const shorts = [];
-      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
-      ["ramp", "draw", "removal", "interaction"].forEach((k) => { if ((counts[k] || 0) < targets[k][0]) shorts.push(AI_LABEL[k].toLowerCase()); });
-      const shortColors = sources.filter((s) => s.have < s.need).map((s) => COLOR_FULL[s.c].toLowerCase());
-      const bits = [];
-      if (shorts.length) bits.push(`light on ${listJoin(shorts)}`);
-      if ((counts.wipes || 0) < targets.wipes[0]) bits.push("considering a board reset for creature-heavy tables");
-      if (shortColors.length) bits.push(`${listJoin(shortColors)} under-sourced`);
-      return bits.length ? `Solid ${profile.label.toLowerCase()} shell — ${listJoin(bits)}.` : `Well-rounded for ${profile.label.toLowerCase()}.`;
-    }
+    // @testable analysis-helpers end
 
     function bracketDialHtml(bracket) {
       const segs = [1, 2, 3, 4, 5].map((i) => `<span class="seg ${bracket && i <= bracket ? "on" : ""}"></span>`).join("");
@@ -4936,30 +4863,92 @@
       if (card) showDetail(card);
     }
 
-    function wireRoleLedger() {
-      const ledger = $("#da2-role-ledger");
-      ledger?.querySelectorAll(".da2-role-toggle").forEach((btn) => btn.addEventListener("click", () => {
-        const role = btn.closest(".da2-role");
-        const open = !role.classList.contains("open");
-        role.classList.toggle("open", open);
-        btn.setAttribute("aria-expanded", String(open));
+    // The two chip rows (Needs attention / On target) built from computeGrade(...).items.
+    // Role chips (ROLE_KEYS) are buttons that toggle the shared #da2-role-detail panel;
+    // every other chip (lands, curve, the merged colors chip) is inert text.
+    function chipsCardHtml(items) {
+      const { attention, onTarget } = chipGroups(items);
+      const chipHtml = (c) => {
+        const cls = `da2-chip ${c.pass ? "ok" : "bad"}`;
+        if (ROLE_KEYS.includes(c.key)) return `<button class="${cls}" type="button" data-role-key="${c.key}" aria-expanded="false" aria-controls="da2-role-detail">${esc(c.text)}</button>`;
+        return `<span class="${cls}">${esc(c.text)}</span>`;
+      };
+      return `
+        <div class="da2-chip-row">
+          <span class="da2-chip-row-label">Needs attention</span>
+          <div class="da2-chips">${attention.length ? attention.map(chipHtml).join("") : `<span class="da2-chip muted">Nothing flagged</span>`}</div>
+        </div>
+        <div class="da2-chip-row">
+          <span class="da2-chip-row-label">On target</span>
+          <div class="da2-chips">${onTarget.length ? onTarget.map(chipHtml).join("") : `<span class="da2-chip muted">Nothing yet</span>`}</div>
+        </div>`;
+    }
+    // Content of the shared role-detail panel opened by a role chip: its evidence cards
+    // (heuristic or AI-refined — daCtx.roleDetails always carries the heuristic evidence),
+    // the setup-dependent legend once, and — for Draw only — the card-flow split.
+    function roleDetailHtml(key) {
+      if (!daCtx) return "";
+      const detail = daCtx.roleDetails[key] || { count: 0, cards: [] };
+      const cards = detail.cards.slice(0, 24).map((card) => `<span class="da2-chip role${card.conditional ? " conditional" : ""} da2-card-chip" data-card="${esc(card.name)}" role="button" tabindex="0" title="Show ${esc(card.name)} in card focus">${esc(card.name)}${card.qty > 1 ? ` ×${card.qty}` : ""}</span>`).join("");
+      const remaining = detail.cards.length - 24;
+      const conditional = detail.cards.some((c) => c.conditional);
+      const flowLine = (key === "draw" && daCtx.flow.total)
+        ? `<div class="da2-role-detail-flow">${daCtx.flow.early} early · ${daCtx.flow.conditional} conditional · ${daCtx.flow.late} late</div>` : "";
+      return `<div class="da2-role-detail-head"><b>${esc(AI_LABEL[key] || key)}</b><span>${detail.count} card${detail.count === 1 ? "" : "s"} found</span></div>
+        ${flowLine}
+        <div class="da2-role-cards">${cards || `<span class="da2-chip muted">No matches yet</span>`}${remaining > 0 ? `<span class="da2-chip muted">+${remaining} more</span>` : ""}</div>
+        ${conditional ? `<div class="da2-role-key">Dashed cards are temporary, setup-dependent, or board-state dependent.</div>` : ""}`;
+    }
+    // Wires the chip-row role buttons to the shared detail panel: click toggles it open
+    // for that role (closing it if it's already showing that role), and card chips inside
+    // the panel open the card focus, same as the Add/Trim chips.
+    function wireDeckAnalysisChips() {
+      const card = $("#da2-chips-card");
+      const detail = $("#da2-role-detail");
+      card?.querySelectorAll(".da2-chip[data-role-key]").forEach((btn) => btn.addEventListener("click", () => {
+        const key = btn.dataset.roleKey;
+        const wasOpen = Boolean(detail && !detail.hidden && detail.dataset.roleKey === key);
+        card.querySelectorAll(".da2-chip[data-role-key]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+        if (!detail) return;
+        if (wasOpen) { detail.hidden = true; detail.innerHTML = ""; delete detail.dataset.roleKey; return; }
+        detail.innerHTML = roleDetailHtml(key);
+        detail.hidden = false;
+        detail.dataset.roleKey = key;
+        btn.setAttribute("aria-expanded", "true");
       }));
-      ledger?.querySelectorAll(".da2-role-card[data-card]").forEach((chip) => chip.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openCardByName(chip.dataset.card);
-      }));
+      detail?.addEventListener("click", (e) => {
+        const chip = e.target.closest(".da2-card-chip");
+        if (chip) { e.stopPropagation(); openCardByName(chip.dataset.card); }
+      });
+      detail?.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const chip = e.target.closest(".da2-card-chip");
+        if (chip) { e.preventDefault(); openCardByName(chip.dataset.card); }
+      });
+    }
+    // Per deck color: "W 1/5", shortfalls in the existing warning color.
+    function colorsLineHtml(sources) {
+      if (!sources.length) return `<div class="da2-vsub" style="margin-top:6px">Colorless — no colored sources needed.</div>`;
+      const items = sources.map((s) => {
+        const lc = s.c.toLowerCase();
+        const style = s.status === "ok" ? "" : ` style="color:${STATUS_COLOR[s.status]}"`;
+        return `<span class="da2-color-chip"${style}><span class="da2-srcpip da2-sb-${lc}">${MANA_SVG[lc]}</span>${s.c} ${fmtScoreNum(s.have)}/${s.need}</span>`;
+      }).join("");
+      return `<div class="da2-colors-line">${items}</div>`;
+    }
+    function winConditionsLineHtml(wincons) {
+      return wincons.length ? `Win conditions: ${wincons.slice(0, 8).map((w) => esc(w)).join(", ")}` : "Win conditions: none detected";
     }
 
-    // Fill the AI-only parts (verdict, refined ledger + grade, Add/Trim card suggestions).
+    // Fill the AI-only parts (verdict, refined grade + chips, Add/Trim card suggestions).
     function renderAiExtras(data) {
       const v = $("#da2-verdict"); if (v && data.verdict) v.textContent = data.verdict;
       if (data.counts && Object.keys(data.counts).length) {
         if (daCtx) {
           const grade = applyAiGradeContext(computeGrade(data.counts, daCtx.sources, daCtx.stats, daCtx.profile), data);
           updateGradeUi(grade);
-          const ledger = $("#da2-role-ledger"); if (ledger) { ledger.innerHTML = roleLedgerHtml(daCtx.roleDetails, data.counts, daCtx.profile, grade, true); wireRoleLedger(); }
-          const flow = $("#da2-card-flow"); if (flow) flow.innerHTML = cardFlowHtml(daCtx.flow);
-          const sub = $("#da2-subnote"); if (sub) sub.textContent = "Role counts and deck identity are AI-classified; health targets adapt quietly to the deck's plan.";
+          const chipsCard = $("#da2-chips-card"); if (chipsCard) chipsCard.innerHTML = chipsCardHtml(grade.items);
+          const detail = $("#da2-role-detail"); if (detail) { detail.hidden = true; detail.innerHTML = ""; delete detail.dataset.roleKey; }
         }
       }
       const wrap = $("#da2-fix-wrap");
@@ -5004,7 +4993,11 @@
 
       const counts = (cached && cached.counts && Object.keys(cached.counts).length) ? cached.counts : roles;
       const grade = applyAiGradeContext(computeGrade(counts, sources, s, profile), cached);
-      const verdict = (cached && cached.verdict) ? cached.verdict : heuristicVerdict(roles, sources, profile);
+      const verdict = (cached && cached.verdict) ? cached.verdict : gapSummary(grade.items, { total: s.total });
+      const subnoteText = staleReview ? "Deck changed since the last analysis — showing the previous AI read. Re-analyze to refresh." : "";
+      const gradeBadgeHtml = s.total >= 90
+        ? `<div class="da2-badge ${gradeTone(grade.letter)}" id="da2-grade" title="${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target"><b>${grade.letter}</b></div>`
+        : `<div class="da2-badge in-progress" title="${s.total} of 100 cards · a full grade appears at 90"><b>${100 - s.total}</b><small>to go</small></div>`;
 
       daCtx = { folderId, sources, stats: s, profile, roleDetails, flow }; // let AI review refine the grade while retaining card-level evidence
 
@@ -5013,45 +5006,44 @@
           <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
           <div class="da2-bracket-wrap">
             <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
+            <button class="da-review-btn" id="da-review-btn">${ICON_SPARKLE}<span class="da-review-label">${cached ? "Re-analyze" : "Analyze"}</span></button>
             <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
           </div>
         </div>
         <div class="da2-body">
         <div class="da2-score">
-          <div class="da2-gradebox">
-            <div class="da2-badge ${gradeTone(grade.letter)}" id="da2-grade" title="${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target"><b>${grade.letter}</b></div>
-          </div>
+          <div class="da2-gradebox">${gradeBadgeHtml}</div>
           <div>
-            <div class="da2-vrow"><div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div><button class="da-review-btn" id="da-review-btn">${ICON_SPARKLE}<span class="da-review-label">${cached ? "Re-analyze" : "Analyze"}</span></button></div>
-            <div class="da2-vsub" id="da2-subnote">${staleReview ? "Deck changed since the last analysis — showing the previous AI read. Re-analyze to refresh." : cached ? "Role counts and deck identity are AI-classified; health targets adapt quietly to the deck's plan." : "Role counts are heuristic — run Analyze to identify this deck's plan and get card-level suggestions."}</div>
+            <div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div>
+            <div class="da2-vsub" id="da2-subnote" ${subnoteText ? "" : "hidden"}>${subnoteText}</div>
             ${deckIdentityHtml(identityTags, Boolean(cached))}
             <div class="da2-fix-wrap" id="da2-fix-wrap">${cached ? fixRowsHtml(cached) : ""}</div>
           </div>
         </div>
         <div class="da2-layout">
-          <section class="da2-card da2-ledger" id="da2-role-ledger">${roleLedgerHtml(roleDetails, counts, profile, grade, Boolean(cached))}</section>
+          <div class="da2-main">
+            <div class="da2-card da2-chips-card" id="da2-chips-card">${chipsCardHtml(grade.items)}</div>
+            <div class="da2-role-detail" id="da2-role-detail" hidden></div>
+            <div class="da2-card da2-wc">
+              <div class="da2-wc-line" id="da2-wc-line">${winConditionsLineHtml(wincons)}</div>
+              <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
+            </div>
+          </div>
           <div class="da2-side">
           <div class="da2-card da2-mana-card">
             <div class="da-h">Mana curve</div>
             ${curveHtml(s.curve)}
             <div class="da2-section-rule"></div>
-            <div class="da-h" style="margin:0">Card-flow quality</div>
-            <div id="da2-card-flow">${cardFlowHtml(flow)}</div>
-            <div class="da2-color-access"><div class="da2-section-rule"></div>
-              <div class="da-h" style="margin:0 0 2px">Color access</div>
-              ${sourcesHtml(sources)}</div>
+            <div class="da-h" style="margin:0 0 2px">Colors</div>
+            ${colorsLineHtml(sources)}
           </div>
-          <div class="da2-wc">
-            <div class="da2-wc-head"><div class="da-h" style="margin:0">Win conditions</div><div class="da2-wc-n">${wincons.length}</div></div>
-            ${wincons.length ? `<div>${wincons.slice(0, 8).map((w) => `<span class="da2-wtag">${esc(w)}</span>`).join("")}</div>` : `<div class="da2-vsub" style="margin-top:6px">No explicit game-ending card — likely wins through combat or value.</div>`}
-            <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
-          </div>
+          <section class="da2-card" id="da2-opening-hand" hidden></section>
           </div>
         </div>
+        <section class="da2-card" id="da2-edhrec" hidden></section>
         </div>`;
       dA.style.display = "block";
       dA.classList.toggle("collapsed", collapsed);
-      wireRoleLedger();
       const fixWrapEl = $("#da2-fix-wrap");
       fixWrapEl?.addEventListener("click", (e) => {
         const chip = e.target.closest(".da2-card-chip");
@@ -5075,39 +5067,9 @@
         }
       });
       if (cached) renderAiExtras(cached);
+      wireDeckAnalysisChips();
       enhanceBracket(cards, folderId);
       if (commander) enhanceCombos(commander.name, folderId);
-    }
-
-    // Role coverage as a radar: the deck's polygon vs a dashed target ring.
-    function roleRadarHtml(counts, profile = DECK_STYLE_PROFILES.default) {
-      const SHORT = { ramp: "Ramp", draw: "Draw", removal: "Removal", wipes: "Wipes", tutors: "Tutors", interaction: "Interaction", graveyardHate: "Graveyard hate", protection: "Protection" };
-      const targets = profile.roleTargets || BASE_ROLE_TARGETS;
-      const roles = Object.keys(targets).map((k) => {
-        const [lo, hi] = targets[k];
-        return { label: AI_LABEL[k], short: SHORT[k], v: counts[k] || 0, lo, hi };
-      });
-      const W = 380, H = 316, cx = 190, cy = 154, R = 96, N = roles.length;
-      const RT = 0.62; // the target (minimum) ring — every role's minimum normalized to one circle
-      const tgt = (r) => (r.hi != null ? `${r.lo}–${r.hi}` : `${r.lo}+`);
-      // Deck radius: meeting the minimum lands you on the ring; going over is compressed
-      // so a role that clears a low bar (e.g. graveyard hate 3 vs 1) doesn't dominate the shape.
-      const valR = (r) => { const frac = r.v / (r.lo || 1); const f = frac <= 1 ? frac : 1 + Math.min(0.38, (frac - 1) * 0.12); return Math.min(0.98, RT * f); };
-      const ang = (i) => (-90 + i * 360 / N) * Math.PI / 180;
-      const pt = (i, f) => [cx + Math.cos(ang(i)) * R * f, cy + Math.sin(ang(i)) * R * f];
-      const rings = [0.31, 0.62, 0.93].map((f) => `<polygon points="${roles.map((_, i) => pt(i, f).join(",")).join(" ")}" fill="none" stroke="rgba(31,29,25,0.09)"/>`).join("");
-      const axes = roles.map((_, i) => { const [x, y] = pt(i, 0.96); return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(31,29,25,0.08)"/>`; }).join("");
-      const tp = roles.map((_, i) => pt(i, RT).join(",")).join(" ");
-      const dp = roles.map((r, i) => pt(i, valR(r)).join(",")).join(" ");
-      const dots = roles.map((r, i) => { const [x, y] = pt(i, valR(r)); const cl = r.v < r.lo ? "#C0704E" : "#B9892A"; return `<circle cx="${x}" cy="${y}" r="3" fill="${cl}"/>`; }).join("");
-      const labels = roles.map((r, i) => {
-        const [x, y] = pt(i, 1.16);
-        const a = Math.abs(x - cx) < 12 ? "middle" : (x < cx ? "end" : "start");
-        return `<text x="${x}" y="${y}" text-anchor="${a}" class="rad-lbl">${esc(r.short)}<tspan x="${x}" dy="11" class="rad-lbl-v">${r.v} / ${tgt(r)}</tspan></text>`;
-      }).join("");
-      const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Role coverage radar">${rings}${axes}<polygon points="${tp}" fill="none" stroke="#7FA07A" stroke-dasharray="4 3" stroke-width="1.5"/><polygon points="${dp}" fill="rgba(185,137,42,0.18)" stroke="#B9892A" stroke-width="2.2" stroke-linejoin="round"/>${dots}${labels}</svg>`;
-      return `<div class="radar-wrap"><div class="radar-fig">${svg}</div>
-        <div class="rad-legend"><span class="rad-key"><span class="rad-swatch deck"></span>This deck</span><span class="rad-key"><span class="rad-swatch target"></span>Target (minimum)</span></div></div>`;
     }
 
     async function reviewDeckWithAI(cards, folderId, commander, winConditions) {
