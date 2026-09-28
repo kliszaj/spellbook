@@ -200,6 +200,16 @@ test("edhrecPicks: keeps only owned cards not already in the deck", () => {
   assert.equal(picks[0].card.id, "c1");
 });
 
+test("edhrecPicks: excludes an owned basic land but keeps an owned nonbasic land", () => {
+  const owned = new Map([
+    ["swamp", { id: "s1", name: "Swamp", type_line: "Basic Land — Swamp" }],
+    ["evolving wilds", { id: "e1", name: "Evolving Wilds", type_line: "Land" }],
+  ]);
+  const cards = [edhrecCard("Swamp", { category: "Lands" }), edhrecCard("Evolving Wilds", { category: "Lands" })];
+  const picks = h.edhrecPicks(cards, owned, new Set());
+  assert.deepEqual(picks.map((p) => p.name), ["Evolving Wilds"]);
+});
+
 test("edhrecPicks: sorts by synergy desc, then inclusion desc", () => {
   const owned = new Map([
     ["low synergy", { id: "a", name: "Low Synergy" }],

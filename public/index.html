@@ -4895,10 +4895,16 @@
     // synergy desc then inclusion desc. `ownedByName` maps a normalized name to the owned
     // card object (used for the thumb/save/detail actions); `deckNames` is the set of
     // normalized names already in the deck (main + Maybeboard).
+    // Local to this block (mirrors the outer isBasicLand) — basics are always in every
+    // Commander deck's card pool, so EDHREC's "you already own this" is never a useful pick.
+    function edhrecIsBasicLand(card) {
+      const tl = (card && card.type_line) || "";
+      return tl.includes("Basic") && tl.includes("Land");
+    }
     function edhrecPicks(edhrecCards, ownedByName, deckNames) {
       return (edhrecCards || [])
         .map((c) => ({ ...c, card: ownedByName.get(edhrecNameKey(c.name)) }))
-        .filter((c) => c.card && !deckNames.has(edhrecNameKey(c.name)))
+        .filter((c) => c.card && !edhrecIsBasicLand(c.card) && !deckNames.has(edhrecNameKey(c.name)))
         .sort((a, b) => b.synergy - a.synergy || b.inclusion - a.inclusion);
     }
     // @testable analysis-helpers end
@@ -5282,14 +5288,24 @@
     // Session-only cache keyed by commander slug — fetched once no matter how many
     // decks/renders share a commander; picks recompute from this cache on every render
     // (deck/collection changes never trigger a refetch).
-    const edhrecCache = new Map(); // slug -> { status: "loading" | "ready" | "error", data, error }
+    // slug -> { status: "loading" | "ready" | "error", data, error, waiters }. `waiters` (only
+    // populated while loading) maps folderId -> cards for every deck currently rendering this
+    // commander, so every one of them repaints once the shared fetch resolves — not just
+    // whichever deck happened to start it.
+    const edhrecCache = new Map();
     let edhrecShowAll = false; // reset alongside handState when the deck signature changes
 
     function ensureEdhrecLoaded(commanderName, folderId, cards) {
       const slug = commanderSlug(commanderName);
       const existing = edhrecCache.get(slug);
-      if (existing) return existing;
-      const entry = { status: "loading" };
+      if (existing) {
+        // Another deck sharing this commander may be rendering while the first deck's
+        // fetch is still in flight — register it so it also repaints on resolve, instead
+        // of only the deck that happened to trigger the fetch.
+        if (existing.status === "loading") existing.waiters.set(folderId, cards);
+        return existing;
+      }
+      const entry = { status: "loading", waiters: new Map([[folderId, cards]]) };
       edhrecCache.set(slug, entry);
       fetch(`/api/edhrec/commander?name=${encodeURIComponent(commanderName)}`)
         .then(async (r) => {
@@ -5302,7 +5318,11 @@
           entry.status = "error";
           entry.error = err.message || "Couldn't reach EDHREC.";
         })
-        .then(() => rerenderDeckAnalysisIfActive(folderId, cards));
+        .then(() => {
+          const waiters = entry.waiters;
+          entry.waiters = new Map();
+          waiters.forEach((waitCards, waitFolderId) => rerenderDeckAnalysisIfActive(waitFolderId, waitCards));
+        });
       return entry;
     }
 
