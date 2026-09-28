@@ -11,7 +11,7 @@
     "test:deck-identity": "node scripts/check-deck-identity-contract.mjs",
     "test:deck-analysis": "npm run test:calibration && npm run test:board-wipes && npm run test:deck-identity && node scripts/check-analysis-ui.mjs",
     "test:collection": "node scripts/check-collection.mjs && node scripts/check-collection-store.mjs && node scripts/check-collection-ui.mjs && node scripts/check-scryfall.mjs && node scripts/check-type-filters.mjs",
-    "test:swaps": "node scripts/check-ai-client.mjs && node scripts/check-profiles.mjs && node scripts/check-embeddings.mjs && node scripts/check-swaps.mjs && node scripts/check-swaps-service.mjs && node scripts/check-deck-notes.mjs",
+    "test:swaps": "node scripts/check-ai-client.mjs && node scripts/check-profiles.mjs && node scripts/check-embeddings.mjs && node scripts/check-swaps.mjs && node scripts/check-swaps-service.mjs && node scripts/check-deck-notes.mjs && node scripts/check-deck-profiles.mjs",
     "test:swaps:model": "node scripts/check-swaps-model.mjs",
     "test": "npm run test:collection && npm run test:swaps && npm run test:deck-analysis",
     "pilot:swaps": "node scripts/pilot-swaps.mjs"

@@ -4547,23 +4547,9 @@
       });
     }
     const ROLE_KEYS = ["ramp", "draw", "removal", "wipes", "tutors", "interaction", "graveyardHate", "protection"];
-    const REMOVAL_TARGET_TYPES = ["creature", "artifact", "enchantment", "planeswalker"];
-
-    // Scans every "target ..." clause (a fixed window after each occurrence, not a single
-    // greedy regex) so compound phrasing like "target creature or planeswalker" or
-    // "target artifact, creature, or enchantment" still finds every type named.
-    function removalTargetTypes(ot) {
-      const types = new Set();
-      let from = 0;
-      for (let i = ot.indexOf("target ", from); i >= 0; i = ot.indexOf("target ", from)) {
-        const window = ot.slice(i, i + 60);
-        if (/\bpermanent\b/.test(window)) REMOVAL_TARGET_TYPES.forEach((t) => types.add(t));
-        else REMOVAL_TARGET_TYPES.forEach((t) => { if (new RegExp(`\\b${t}\\b`).test(window)) types.add(t); });
-        from = i + 7;
-      }
-      if (/\bany target\b/.test(ot)) types.add("creature");
-      return types;
-    }
+    // oracle_id (or the front face's, for a DFC) — the key both the profile store and the
+    // deck-profiles API index by.
+    function cardOracleId(card) { return card?.oracle_id || card?.card_faces?.[0]?.oracle_id || null; }
 
     // The ledger intentionally keeps the heuristic's card-level evidence, even after an AI
     // review refines a count. That makes the AI adjustment visible rather than opaque.
@@ -4590,15 +4576,20 @@
       return roles;
     }
 
-    function detectRoleDetails(cards, folderId) {
+    // AI card profiles are canonical when available (fixes flicker counted as removal,
+    // "draw cards equal to …" missed, narrow win-condition text matching); a card with no
+    // profile falls back to the rule-based classifier. `profiles` is keyed by oracle id.
+    function detectRoleDetails(cards, folderId, profiles = null) {
       const details = Object.fromEntries(ROLE_KEYS.map((key) => [key, { count: 0, cards: [] }]));
       cards.forEach((c) => {
         if (isBasicLand(c)) return;
         const q = cardQty(folderId, c.id);
-        const roles = classifyRoleCard(c);
+        const profile = profiles ? profiles[cardOracleId(c)] : null;
+        const roles = profile ? rolesFromProfile(c, profile) : classifyRoleCard(c);
+        const source = profile ? "ai" : "rules";
         Object.entries(roles).forEach(([role, meta]) => {
           details[role].count += q;
-          details[role].cards.push({ name: c.name, qty: q, cmc: Number(c.cmc || 0), ...meta });
+          details[role].cards.push({ name: c.name, qty: q, cmc: Number(c.cmc || 0), source, ...meta });
         });
       });
       return details;
@@ -4625,10 +4616,17 @@
     }
     // Only cards that actively END the game in your favor. "can't lose the game"
     // (Platinum Angel, Cloudsteel Kirin) is protection/stall, and "you lose the game"
-    // is a drawback (Demonic Pact) — neither is a win condition.
-    function detectWinCons(cards) {
+    // is a drawback (Demonic Pact) — neither is a win condition. Union of the text match
+    // (narrow — only literal "win/lose the game" phrasing) and any profiled card tagged
+    // wincon (broader — the AI judges by function, e.g. infinite-damage or mill-out combos).
+    function detectWinCons(cards, profiles = null) {
       const names = [];
-      cards.forEach((c) => { if (isBasicLand(c)) return; if (/you win the game|wins the game|each opponent loses the game|target player loses the game/.test(getOracleText(c).toLowerCase())) names.push(c.name); });
+      cards.forEach((c) => {
+        if (isBasicLand(c)) return;
+        const profile = profiles ? profiles[cardOracleId(c)] : null;
+        const textMatch = /you win the game|wins the game|each opponent loses the game|target player loses the game/.test(getOracleText(c).toLowerCase());
+        if (textMatch || isWincon(profile)) names.push(c.name);
+      });
       return [...new Set(names)];
     }
 
@@ -4710,10 +4708,58 @@
     }
 
     // ═══ Analysis UI helpers (pure) ═══════════════════════════════════
-    // Consumed by the summary sentence and the two chip rows. Operate only on
-    // computeGrade(...).items — no DOM, no other deck-analysis helpers — so they can be
-    // evaluated in isolation by scripts/check-analysis-ui.mjs.
+    // No DOM, no dependency on anything outside this block — evaluated in isolation by
+    // scripts/check-analysis-ui.mjs. Two groups: role-source mapping (getOracleText through
+    // isWincon), consumed by detectRoleDetails/detectWinCons; and grade-item formatting
+    // (severityRank through chipGroups), consumed by the summary sentence and chip rows.
     // @testable analysis-helpers begin
+    function getOracleText(card) {
+      if (card.oracle_text) return card.oracle_text;
+      if (card.card_faces) return card.card_faces.map((f) => f.oracle_text || "").join("\n---\n");
+      return "";
+    }
+    const REMOVAL_TARGET_TYPES = ["creature", "artifact", "enchantment", "planeswalker"];
+    // Scans every "target ..." clause (a fixed window after each occurrence, not a single
+    // greedy regex) so compound phrasing like "target creature or planeswalker" or
+    // "target artifact, creature, or enchantment" still finds every type named.
+    function removalTargetTypes(ot) {
+      const types = new Set();
+      let from = 0;
+      for (let i = ot.indexOf("target ", from); i >= 0; i = ot.indexOf("target ", from)) {
+        const window = ot.slice(i, i + 60);
+        if (/\bpermanent\b/.test(window)) REMOVAL_TARGET_TYPES.forEach((t) => types.add(t));
+        else REMOVAL_TARGET_TYPES.forEach((t) => { if (new RegExp(`\\b${t}\\b`).test(window)) types.add(t); });
+        from = i + 7;
+      }
+      if (/\bany target\b/.test(ot)) types.add("creature");
+      return types;
+    }
+    // Maps an AI card profile (lib/profiles.js MECHANICS tags) to the same role shape
+    // classifyRoleCard returns, so detectRoleDetails can use either source interchangeably.
+    // Instant-speed / removal-target detection still reads the card itself (mirrors
+    // classifyRoleCard's checks) since the profile carries no type line or rules text.
+    function rolesFromProfile(card, profile) {
+      const mechanics = new Set(Array.isArray(profile?.mechanics) ? profile.mechanics : []);
+      const tl = (card?.type_line || "").toLowerCase();
+      const ot = getOracleText(card || {}).toLowerCase();
+      const isInstant = tl.includes("instant") || /\bflash\b|cast .* as though .* flash|activate only as an instant/.test(ot);
+      const isActivatedAnswer = !tl.includes("sorcery") && /\}[^\n]*:\s*(destroy|exile|return|counter)/.test(ot);
+      const roles = {};
+      const add = (role, extra = {}) => { roles[role] = { conditional: false, note: profile?.summary || "", ...extra }; };
+      if (mechanics.has("ramp") || mechanics.has("fast-mana")) add("ramp");
+      if (mechanics.has("card-draw")) add("draw");
+      const isRemoval = mechanics.has("spot-removal") || mechanics.has("bounce");
+      if (isRemoval) add("removal", { instant: isInstant, targets: [...removalTargetTypes(ot)] });
+      if (mechanics.has("board-wipe")) add("wipes");
+      if (mechanics.has("tutor")) add("tutors");
+      if (mechanics.has("counterspell") || (isRemoval && (isInstant || isActivatedAnswer))) add("interaction");
+      if (mechanics.has("graveyard-hate")) add("graveyardHate");
+      if (mechanics.has("protection")) add("protection");
+      return roles;
+    }
+    function isWincon(profile) {
+      return Boolean(profile && Array.isArray(profile.mechanics) && profile.mechanics.includes("wincon"));
+    }
     function severityRank(sev) { return sev === "critical" ? 0 : (sev === "major" ? 1 : 2); }
     function sortWorstFirst(items) {
       return [...items].sort((a, b) => a.score - b.score || severityRank(a.severity) - severityRank(b.severity));
@@ -4804,6 +4850,105 @@
     function persistDeckReviews() { try { localStorage.setItem("deck_reviews", JSON.stringify(deckReviewCache)); } catch (e) { /* quota — keep the in-memory copy */ } }
     let daCtx = null; // current panel context — lets AI extras recompute grade/gaps/drawer
     function deckSig(cards, folderId, commanderName = "") { return `${DECK_REVIEW_CACHE_VERSION}|${commanderName}|${cards.map((c) => c.id + ":" + cardQty(folderId, c.id)).sort().join("|")}`; }
+
+    // ═══ Deck card profiles (AI role source) ══════════════════════════
+    // In-memory cache of AI card profiles by oracle id — populated from /api/deck-profiles
+    // and read synchronously by detectRoleDetails/detectWinCons on every render.
+    const profileCache = new Map();
+    function cacheProfiles(profiles) { Object.entries(profiles || {}).forEach(([oid, p]) => profileCache.set(oid, p)); }
+    function nonBasicCards(cards) { return cards.filter((c) => !isBasicLand(c)); }
+    function profilesFromCache(cards) {
+      const out = {};
+      nonBasicCards(cards).forEach((c) => { const oid = cardOracleId(c); if (oid && profileCache.has(oid)) out[oid] = profileCache.get(oid); });
+      return out;
+    }
+    function deckProfilesSig(folderId, cards) {
+      const ids = [...new Set(nonBasicCards(cards).map(cardOracleId).filter(Boolean))].sort();
+      return `${folderId}|${ids.join(",")}`;
+    }
+    async function postJson(url, body) {
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, data };
+    }
+    function rerenderDeckAnalysisIfActive(folderId, cards) {
+      if (state.activeFolder !== folderId) return; // deck switched while this was in flight
+      const activeDeck = state.folders.find((f) => f.id === folderId);
+      if (activeDeck) renderDeckAnalysis(activeDeck, cards);
+    }
+    // Current profile line state, scoped to the folder it's for (so switching decks while
+    // one is in flight doesn't flash the previous deck's status): null, or
+    // { folderId, phase: "profiling" | "awaiting-confirm" | "error", missing, estimate, error }.
+    let daProfileStatus = null;
+    // The oracle-id-set signature ensureDeckProfiles last acted on — re-render for the same
+    // deck (no card-set change) is a no-op; a changed set (or Retry, which clears this) redoes it.
+    let daProfileSig = null;
+    function daProfileLineHtml(folderId) {
+      const st = daProfileStatus && daProfileStatus.folderId === folderId ? daProfileStatus : null;
+      if (!st) return "";
+      const n = (count) => `${count} card${count === 1 ? "" : "s"}`;
+      if (st.phase === "profiling") return `<div class="da2-vsub" id="da2-profile-line">Profiling ${n(st.missing)}…</div>`;
+      if (st.phase === "awaiting-confirm") {
+        const price = st.estimate?.usd != null ? ` (≈ $${st.estimate.usd.toFixed(2)})` : "";
+        return `<div class="da2-vsub" id="da2-profile-line">Profile ${n(st.missing)} for accurate roles${price} <button class="da2-chip muted cta" id="da2-profile-btn" type="button" style="margin-left:6px">Profile</button></div>`;
+      }
+      if (st.phase === "error") return `<div class="da2-vsub" id="da2-profile-line">${esc(st.error)} <button class="da2-chip muted cta" id="da2-profile-retry-btn" type="button" style="margin-left:6px">Retry</button></div>`;
+      return "";
+    }
+    function wireDeckProfileLine(deck, cards, folderId) {
+      $("#da2-profile-btn")?.addEventListener("click", () => {
+        const missingCount = (daProfileStatus?.folderId === folderId && daProfileStatus.missing) || nonBasicCards(cards).length;
+        runDeckProfilePrepare(folderId, cards, deckProfilesSig(folderId, cards), nonBasicCards(cards), { confirm: true, missingCount });
+      });
+      $("#da2-profile-retry-btn")?.addEventListener("click", () => {
+        daProfileSig = null; // force ensureDeckProfiles to redo the lookup (and prepare, if still needed)
+        ensureDeckProfiles(deck, cards, folderId);
+      });
+    }
+    async function runDeckProfilePrepare(folderId, cards, sig, nonBasic, { confirm, missingCount }) {
+      daProfileStatus = { folderId, phase: "profiling", missing: missingCount };
+      rerenderDeckAnalysisIfActive(folderId, cards);
+      const res = await postJson("/api/deck-profiles/prepare", { cards: nonBasic, confirm }).catch((err) => ({ ok: false, data: { error: err.message } }));
+      if (daProfileSig !== sig) return; // deck changed again while this was in flight
+      if (res.ok) {
+        cacheProfiles(res.data.profiles);
+        daProfileStatus = null;
+      } else if (res.data?.needsConfirmation) {
+        daProfileStatus = { folderId, phase: "awaiting-confirm", missing: res.data.missing, estimate: res.data.estimate };
+      } else {
+        daProfileStatus = { folderId, phase: "error", error: res.data?.error || "Profiling failed" };
+      }
+      rerenderDeckAnalysisIfActive(folderId, cards);
+    }
+    // Looks up profiles for the deck's non-basic main-deck cards, caching them by oracle id
+    // (skipped when the same set was already checked — a re-render alone never refetches).
+    // Missing ≤ the auto limit and AI available: profiles automatically (the server enforces
+    // the limit, so the client never needs to know its value). Missing over the limit: shows
+    // a "Profile N cards (≈ $X)" line with a manual Profile button. No AI: no line, and
+    // detectRoleDetails/detectWinCons fall back to the rule-based classifier per card.
+    async function ensureDeckProfiles(deck, cards, folderId) {
+      const nonBasic = nonBasicCards(cards);
+      const sig = deckProfilesSig(folderId, cards);
+      if (sig === daProfileSig) return;
+      daProfileSig = sig;
+      if (!nonBasic.length) { daProfileStatus = null; return; }
+      const lookupRes = await postJson("/api/deck-profiles/lookup", { cards: nonBasic }).catch((err) => ({ ok: false, data: { error: err.message } }));
+      if (daProfileSig !== sig) return;
+      if (!lookupRes.ok) {
+        daProfileStatus = { folderId, phase: "error", error: lookupRes.data?.error || "Couldn't check card profiles" };
+        rerenderDeckAnalysisIfActive(folderId, cards);
+        return;
+      }
+      const { profiles, missing, aiAvailable } = lookupRes.data;
+      const learnedNew = Object.keys(profiles || {}).length > 0; // some cards were already profiled server-side
+      cacheProfiles(profiles);
+      if (!missing.length || !aiAvailable) {
+        daProfileStatus = null;
+        if (learnedNew || !missing.length) rerenderDeckAnalysisIfActive(folderId, cards);
+        return;
+      }
+      await runDeckProfilePrepare(folderId, cards, sig, nonBasic, { confirm: false, missingCount: missing.length });
+    }
 
     async function enhanceBracket(cards, folderId) {
       const gc = await loadGameChangers();
@@ -4940,16 +5085,17 @@
       return wincons.length ? `Win conditions: ${wincons.slice(0, 8).map((w) => esc(w)).join(", ")}` : "Win conditions: none detected";
     }
 
-    // Fill the AI-only parts (verdict, refined grade + chips, Add/Trim card suggestions).
+    // Fill the AI-only parts: verdict, Add/Trim, and AI role-note annotations layered onto
+    // the canonical (profile/rule-based) grade. `data.counts` is never used here — role chip
+    // counts and the role-detail panel's cards always come from countsFromRoleDetails(daCtx's
+    // roleDetails), so what the chips say and what the detail panel lists never diverge.
     function renderAiExtras(data) {
       const v = $("#da2-verdict"); if (v && data.verdict) v.textContent = data.verdict;
-      if (data.counts && Object.keys(data.counts).length) {
-        if (daCtx) {
-          const grade = applyAiGradeContext(computeGrade(data.counts, daCtx.sources, daCtx.stats, daCtx.profile), data);
-          updateGradeUi(grade);
-          const chipsCard = $("#da2-chips-card"); if (chipsCard) chipsCard.innerHTML = chipsCardHtml(grade.items);
-          const detail = $("#da2-role-detail"); if (detail) { detail.hidden = true; detail.innerHTML = ""; delete detail.dataset.roleKey; }
-        }
+      if (daCtx) {
+        const grade = applyAiGradeContext(computeGrade(daCtx.counts, daCtx.sources, daCtx.stats, daCtx.profile), data);
+        updateGradeUi(grade);
+        const chipsCard = $("#da2-chips-card"); if (chipsCard) chipsCard.innerHTML = chipsCardHtml(grade.items);
+        const detail = $("#da2-role-detail"); if (detail) { detail.hidden = true; detail.innerHTML = ""; delete detail.dataset.roleKey; }
       }
       const wrap = $("#da2-fix-wrap");
       if (wrap) wrap.innerHTML = fixRowsHtml(data);
@@ -4986,12 +5132,15 @@
       const identityTags = Array.isArray(cached?.identityTags) ? cached.identityTags : [];
       const profile = effectiveDeckProfile(identityTags);
       const sources = colorSourceStats(cards, folderId, colors);
-      const roleDetails = detectRoleDetails(cards, folderId);
-      const roles = countsFromRoleDetails(roleDetails);
+      // Profile-based counts are canonical whenever a card has an AI profile; a card without
+      // one falls back to the rule-based classifier. Never the AI review's cached counts —
+      // those stay confined to verdict/identityTags/add/trim (see renderAiExtras).
+      const profiles = profilesFromCache(cards);
+      const roleDetails = detectRoleDetails(cards, folderId, profiles);
+      const counts = countsFromRoleDetails(roleDetails);
       const flow = cardFlowStats(roleDetails);
-      const wincons = detectWinCons(cards);
+      const wincons = detectWinCons(cards, profiles);
 
-      const counts = (cached && cached.counts && Object.keys(cached.counts).length) ? cached.counts : roles;
       const grade = applyAiGradeContext(computeGrade(counts, sources, s, profile), cached);
       const verdict = (cached && cached.verdict) ? cached.verdict : gapSummary(grade.items, { total: s.total });
       const subnoteText = staleReview ? "Deck changed since the last analysis — showing the previous AI read. Re-analyze to refresh." : "";
@@ -4999,7 +5148,7 @@
         ? `<div class="da2-badge ${gradeTone(grade.letter)}" id="da2-grade" title="${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target"><b>${grade.letter}</b></div>`
         : `<div class="da2-badge in-progress" title="${s.total} of 100 cards · a full grade appears at 90"><b>${100 - s.total}</b><small>to go</small></div>`;
 
-      daCtx = { folderId, sources, stats: s, profile, roleDetails, flow }; // let AI review refine the grade while retaining card-level evidence
+      daCtx = { folderId, sources, stats: s, profile, roleDetails, flow, counts }; // let AI review refine the grade while retaining card-level evidence
 
       dA.innerHTML = `
         <div class="da2-strip">
@@ -5016,6 +5165,7 @@
           <div>
             <div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div>
             <div class="da2-vsub" id="da2-subnote" ${subnoteText ? "" : "hidden"}>${subnoteText}</div>
+            ${daProfileLineHtml(folderId)}
             ${deckIdentityHtml(identityTags, Boolean(cached))}
             <div class="da2-fix-wrap" id="da2-fix-wrap">${cached ? fixRowsHtml(cached) : ""}</div>
           </div>
@@ -5068,8 +5218,10 @@
       });
       if (cached) renderAiExtras(cached);
       wireDeckAnalysisChips();
+      wireDeckProfileLine(deck, cards, folderId);
       enhanceBracket(cards, folderId);
       if (commander) enhanceCombos(commander.name, folderId);
+      ensureDeckProfiles(deck, cards, folderId);
     }
 
     async function reviewDeckWithAI(cards, folderId, commander, winConditions) {
@@ -5724,12 +5876,6 @@
     function getCardImage(card) {
       if (card.image_uris?.normal) return card.image_uris.normal;
       if (card.card_faces?.[0]?.image_uris?.normal) return card.card_faces[0].image_uris.normal;
-      return "";
-    }
-
-    function getOracleText(card) {
-      if (card.oracle_text) return card.oracle_text;
-      if (card.card_faces) return card.card_faces.map((f) => f.oracle_text || "").join("\n---\n");
       return "";
     }
 

@@ -8,10 +8,11 @@ import { mergeDeckNotes, normalizeDeckNotes } from "./lib/deck-notes.js";
 import { createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "./lib/collection-store.js";
 import { CollectionFormatError } from "./lib/collection.js";
 import { createUsageLog } from "./lib/ai-usage.js";
-import { createProfileStore } from "./lib/profiles.js";
+import { createProfileStore, oracleIdOf } from "./lib/profiles.js";
 import { createEmbeddingStore, createLocalEmbedder } from "./lib/embeddings.js";
 import { createRankingCache } from "./lib/swaps.js";
 import { capSwapsRequest, createSwapsService } from "./lib/swaps-service.js";
+import { createDeckProfiles } from "./lib/deck-profiles.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -920,20 +921,24 @@ app.get("/api/combos", async (req, res) => {
 
 // ── Collection & swaps ─────────────────────────────────────────────
 const collectionStore = createCollectionStore({ dataDir: DATA_DIR });
+const profileStore = createProfileStore({ dataDir: DATA_DIR });
+const usageLog = createUsageLog({ dataDir: DATA_DIR });
+const getAi = async () => {
+  const ai = activeAiConfig(await readAppState());
+  return ai.apiKey ? createAiClient(ai) : null;
+};
 let embedderPromise = null;
 const swapsService = createSwapsService({
   collectionStore,
-  profileStore: createProfileStore({ dataDir: DATA_DIR }),
+  profileStore,
   embeddingStore: createEmbeddingStore({ dataDir: DATA_DIR }),
   rankingCache: createRankingCache({ dataDir: DATA_DIR }),
-  usageLog: createUsageLog({ dataDir: DATA_DIR }),
-  getAi: async () => {
-    const ai = activeAiConfig(await readAppState());
-    return ai.apiKey ? createAiClient(ai) : null;
-  },
+  usageLog,
+  getAi,
   getEmbedder: () => (embedderPromise ||= createLocalEmbedder({ cacheDir: join(DATA_DIR, "models") })
     .catch((err) => { embedderPromise = null; throw err; })),
 });
+const deckProfiles = createDeckProfiles({ profileStore, getAi, usageLog });
 
 app.get("/api/collection", async (req, res) => {
   try {
@@ -1012,6 +1017,38 @@ app.post("/api/swaps", async (req, res) => {
     res.status(httpStatus).json(body);
   } catch (err) {
     res.status(500).json({ error: err.message || "Swaps failed" });
+  }
+});
+
+// Deck cards are unauthenticated client input too, so cap and dedupe the same way as
+// /api/swaps: reuse capSwapsRequest's card capping (deck: null — no deck fields here).
+const DECK_PROFILE_CARDS_MAX = 200;
+function normalizeDeckProfileCards(raw) {
+  const byOid = new Map();
+  for (const item of (Array.isArray(raw) ? raw : []).slice(0, DECK_PROFILE_CARDS_MAX)) {
+    const { card } = capSwapsRequest({ card: item, deck: null });
+    const oid = oracleIdOf(card);
+    if (oid && !byOid.has(oid)) byOid.set(oid, card);
+  }
+  return [...byOid.values()];
+}
+
+app.post("/api/deck-profiles/lookup", async (req, res) => {
+  try {
+    res.json(await deckProfiles.lookup(normalizeDeckProfileCards(req.body?.cards)));
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Couldn't look up card profiles" });
+  }
+});
+
+app.post("/api/deck-profiles/prepare", async (req, res) => {
+  try {
+    const result = await deckProfiles.prepare(normalizeDeckProfileCards(req.body?.cards), { confirm: Boolean(req.body?.confirm) });
+    if (result?.error === "no-ai") return res.status(409).json({ error: "AI isn't configured." });
+    if (result?.needsConfirmation) return res.status(409).json(result);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Couldn't profile deck cards" });
   }
 });
 

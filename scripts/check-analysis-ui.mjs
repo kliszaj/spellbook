@@ -8,7 +8,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -73,6 +73,56 @@ test("chipGroups reports a single Colors OK chip when every color is on target",
   const { attention, onTarget } = h.chipGroups(items);
   assert.deepEqual(attention, []);
   assert.deepEqual(onTarget.map((c) => c.text), ["Removal 7", "Colors OK"]);
+});
+
+const profileCard = (typeLine, oracleText, extra = {}) => ({ type_line: typeLine, oracle_text: oracleText, ...extra });
+const profile = (mechanics, extra = {}) => ({ summary: "Test summary.", mechanics, synergies: [], model: "claude-sonnet-5", ...extra });
+
+test("rolesFromProfile: a blink card (flicker/etb-value, instant) is not removal or interaction", () => {
+  const card = profileCard("Instant", "Exile target creature you control, then return it to the battlefield.");
+  const roles = h.rolesFromProfile(card, profile(["flicker", "etb-value"]));
+  assert.equal(roles.removal, undefined);
+  assert.equal(roles.interaction, undefined);
+});
+
+test("rolesFromProfile: spot-removal at instant speed is removal + interaction", () => {
+  const card = profileCard("Instant", "Destroy target creature.");
+  const roles = h.rolesFromProfile(card, profile(["spot-removal"]));
+  assert.ok(roles.removal);
+  assert.equal(roles.removal.instant, true);
+  assert.ok(roles.interaction);
+});
+
+test("rolesFromProfile: spot-removal at sorcery speed is removal only", () => {
+  const card = profileCard("Sorcery", "Destroy target creature.");
+  const roles = h.rolesFromProfile(card, profile(["spot-removal"]));
+  assert.ok(roles.removal);
+  assert.equal(roles.removal.instant, false);
+  assert.equal(roles.interaction, undefined);
+});
+
+test("rolesFromProfile: counterspell is interaction", () => {
+  const card = profileCard("Instant", "Counter target spell.");
+  const roles = h.rolesFromProfile(card, profile(["counterspell"]));
+  assert.ok(roles.interaction);
+});
+
+test("rolesFromProfile: card-draw is draw", () => {
+  const card = profileCard("Sorcery", "Draw a card for each Shrine you control.");
+  const roles = h.rolesFromProfile(card, profile(["card-draw"]));
+  assert.ok(roles.draw);
+});
+
+test("rolesFromProfile: removal target types still come from the rules text", () => {
+  const card = profileCard("Instant", "Destroy target creature or planeswalker.");
+  const roles = h.rolesFromProfile(card, profile(["spot-removal"]));
+  assert.deepEqual(new Set(roles.removal.targets), new Set(["creature", "planeswalker"]));
+});
+
+test("isWincon: true only when the profile is tagged wincon", () => {
+  assert.equal(h.isWincon(profile(["wincon"])), true);
+  assert.equal(h.isWincon(profile(["card-draw"])), false);
+  assert.equal(h.isWincon(null), false);
 });
 
 await run("Deck analysis UI helpers");
