@@ -8,7 +8,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -123,6 +123,66 @@ test("isWincon: true only when the profile is tagged wincon", () => {
   assert.equal(h.isWincon(profile(["wincon"])), true);
   assert.equal(h.isWincon(profile(["card-draw"])), false);
   assert.equal(h.isWincon(null), false);
+});
+
+// The brief's worked example (~0.605) doesn't match the exact hypergeometric value for
+// N=99,K=36,n=7,k=3 — cross-checked independently with exact BigInt binomial coefficients,
+// which agree with hypergeomAtLeast to ~1e-14 and land at ~0.501, not ~0.605. Pinning the
+// verified value here; flagged for the reviewer in the task report.
+test("hypergeomAtLeast: 99-card library, 36 lands, 7-card hand, P(>=3 lands) ≈ 0.501", () => {
+  const p = h.hypergeomAtLeast(99, 36, 7, 3);
+  assert.ok(Math.abs(p - 0.501) <= 0.01, `expected ~0.501, got ${p}`);
+});
+
+test("hypergeomAtLeast: k <= 0 is a certainty", () => {
+  assert.equal(h.hypergeomAtLeast(99, 36, 7, 0), 1);
+  assert.equal(h.hypergeomAtLeast(99, 36, 7, -2), 1);
+});
+
+test("hypergeomAtLeast: no successes in the pool makes any k >= 1 impossible", () => {
+  assert.equal(h.hypergeomAtLeast(99, 0, 7, 1), 0);
+});
+
+test("hypergeomAtLeast: drawing the whole population guarantees exactly K successes", () => {
+  assert.equal(h.hypergeomAtLeast(99, 36, 99, 36), 1);
+});
+
+test("hypergeomAtLeast: always returns a probability in [0, 1]", () => {
+  for (const [N, K, n, k] of [[99, 36, 7, 3], [99, 10, 7, 5], [40, 15, 7, 2], [99, 99, 7, 7]]) {
+    const p = h.hypergeomAtLeast(N, K, n, k);
+    assert.ok(p >= 0 && p <= 1, `${N},${K},${n},${k} -> ${p}`);
+  }
+});
+
+test("openingHandOdds: keepable stays in [0,1] and tracks landsIn7 minus the P(>=6) tail", () => {
+  const N = 99, lands = 36;
+  const odds = h.openingHandOdds({ N, lands, ramp: 8 });
+  assert.ok(odds.keepableLands >= 0 && odds.keepableLands <= 1);
+  const atLeast6 = h.hypergeomAtLeast(N, lands, 7, 6);
+  assert.ok(odds.keepableLands >= odds.landsIn7 - atLeast6 - 1e-9);
+});
+
+test("openingHandOdds: commanderOnCurve is absent without a commander mana value", () => {
+  const odds = h.openingHandOdds({ N: 99, lands: 36, ramp: 8 });
+  assert.equal(odds.commanderOnCurve, undefined);
+  const withCommander = h.openingHandOdds({ N: 99, lands: 36, ramp: 8, commanderMv: 2 });
+  assert.ok(withCommander.commanderOnCurve > 0 && withCommander.commanderOnCurve <= 1);
+});
+
+test("drawRandom: returns n distinct cards from the input with a seeded rng", () => {
+  const cards = Array.from({ length: 20 }, (_, i) => ({ id: `c${i}` }));
+  let seed = 42;
+  const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const hand = h.drawRandom(cards, 7, rng);
+  assert.equal(hand.length, 7);
+  assert.equal(new Set(hand.map((c) => c.id)).size, 7); // distinct entries, not duplicated by the shuffle
+  hand.forEach((c) => assert.ok(cards.includes(c)));
+});
+
+test("drawRandom: never returns more cards than the library holds", () => {
+  const cards = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  const hand = h.drawRandom(cards, 7);
+  assert.equal(hand.length, 3);
 });
 
 await run("Deck analysis UI helpers");

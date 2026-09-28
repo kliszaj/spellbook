@@ -1559,6 +1559,22 @@
     .da2-wc { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
     .da2-wc-line { font-size: 12.5px; font-weight: 650; color: #57524A; }
     .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
+
+    .da2-hand-odds { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .da2-hand-line { font-size: 12px; color: #57524A; display: flex; justify-content: space-between; gap: 10px; }
+    .da2-hand-line b { color: #2A2721; font-weight: 700; }
+    .da2-hand-line[title] { cursor: help; border-bottom: 1px dotted #C8B88D; padding-bottom: 1px; }
+    .da2-hand-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .da2-hand-btn { font-family: inherit; font-size: 11.5px; font-weight: 600; padding: 6px 11px; border: 1px solid rgba(31,29,25,0.14); border-radius: 8px; background: #FFFEFA; color: #504B42; cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s; }
+    .da2-hand-btn:hover:not(:disabled) { border-color: rgba(31,29,25,0.24); background: #F2EFE8; color: #181715; }
+    .da2-hand-btn:disabled { opacity: 0.45; cursor: default; }
+    .da2-hand-mull { margin: 10px 0 6px; font-size: 11px; color: #8A6B2A; }
+    .da2-hand-cards { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .da2-hand-card { padding: 0; border: none; background: none; cursor: pointer; width: 62px; }
+    .da2-hand-card img { width: 100%; display: block; border-radius: 6px; aspect-ratio: 488 / 680; object-fit: cover; border: 1px solid rgba(31,29,25,0.16); background: #efeae1; }
+    .da2-hand-card:hover img { filter: brightness(1.05); }
+    .da2-hand-card:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; border-radius: 6px; }
+    .da2-hand-lands { margin-top: 8px; font-size: 11px; color: #78726A; }
     @media (max-width: 900px) { .da2-layout { grid-template-columns: 1fr; } }
     @media (max-width: 480px) { .da2-chip-row { flex-direction: column; gap: 4px; } .da2-chip-row-label { width: auto; padding-top: 0; } }
 
@@ -4796,6 +4812,55 @@
       }
       return { attention, onTarget };
     }
+
+    // ── Opening-hand odds (hypergeometric) ──────────────────────────────
+    // Exact hypergeometric via log-factorials, so C(99, k)-scale terms never overflow.
+    function logFactorial(n) {
+      let s = 0;
+      for (let i = 2; i <= n; i++) s += Math.log(i);
+      return s;
+    }
+    function logChoose(n, k) {
+      if (k < 0 || k > n || n < 0) return -Infinity;
+      return logFactorial(n) - logFactorial(k) - logFactorial(n - k);
+    }
+    // P(X ≥ k) drawing n cards from a population of N with K successes, no replacement.
+    function hypergeomAtLeast(N, K, n, k) {
+      if (k <= 0) return 1;
+      const maxK = Math.min(n, K);
+      if (k > maxK) return 0;
+      const logDenom = logChoose(N, n);
+      let p = 0;
+      for (let i = k; i <= maxK; i++) p += Math.exp(logChoose(K, i) + logChoose(N - K, n - i) - logDenom);
+      return Math.min(1, Math.max(0, p));
+    }
+    // Opening-hand odds for a library of size N with K_L lands and K_R ramp pieces (both
+    // quantity-weighted, commander excluded), on the play. commanderMv, when given, is the
+    // commander's mana value — commanderOnCurve is an approximation that pools lands + ramp
+    // into one "mana source" count, since a ramp piece isn't literally a land.
+    function openingHandOdds({ N, lands, ramp, commanderMv }) {
+      const out = {
+        landsIn7: hypergeomAtLeast(N, lands, 7, 3),
+        keepableLands: Math.max(0, hypergeomAtLeast(N, lands, 7, 2) - hypergeomAtLeast(N, lands, 7, 6)),
+        rampByT2: hypergeomAtLeast(N, ramp, 8, 1), // opening 7 + the turn-2 draw on the play
+      };
+      if (commanderMv >= 1) {
+        const seenBy = 7 + (commanderMv - 1);
+        out.commanderOnCurve = hypergeomAtLeast(N, lands + ramp, seenBy, commanderMv);
+      }
+      return out;
+    }
+    // Fisher–Yates partial shuffle — draws min(n, cards.length) distinct elements uniformly
+    // without replacement. `rng` is injectable so callers/tests can seed it.
+    function drawRandom(cards, n, rng = Math.random) {
+      const pool = cards.slice();
+      const count = Math.min(n, pool.length);
+      for (let i = 0; i < count; i++) {
+        const j = i + Math.floor(rng() * (pool.length - i));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, count);
+    }
     // @testable analysis-helpers end
 
     function bracketDialHtml(bracket) {
@@ -5101,6 +5166,78 @@
       if (wrap) wrap.innerHTML = fixRowsHtml(data);
     }
 
+    // ═══ Opening hand ═══════════════════════════════════════════════
+    // The library: main deck minus the commander, basic lands expanded to their real
+    // quantity (cardQty), matching what you'd actually shuffle up and draw from. Reads
+    // state via cardQty, so — unlike hypergeomAtLeast/openingHandOdds/drawRandom — it isn't
+    // in the pure @testable block.
+    function openingHandLibrary(cards, folderId, commanderId) {
+      return cards.filter((c) => c.id !== commanderId).flatMap((c) => Array(cardQty(folderId, c.id)).fill(c));
+    }
+    // Ramp count for the odds model: the analysis' own ramp role count (AI-profile or
+    // rule-based, whichever detectRoleDetails used), minus any land or the commander that
+    // slipped in under that role — the library excludes both.
+    function rampCountForLibrary(roleDetails, cards, commander) {
+      const exclude = new Set(cards.filter(isLandCard).map((c) => c.name));
+      if (commander) exclude.add(commander.name);
+      return (roleDetails.ramp?.cards || []).reduce((n, rc) => n + (exclude.has(rc.name) ? 0 : rc.qty), 0);
+    }
+
+    // Per-panel opening-hand demo state — reset whenever the underlying deck sig changes
+    // (see renderDeckAnalysis), preserved across incidental re-renders (AI profile loads,
+    // grade recompute) so a drawn hand doesn't vanish out from under the user.
+    let handState = null; // { hand: Card[], mulligans: number }
+    let handStateSig = null;
+
+    function openingHandSectionHtml(odds, commander) {
+      const pct = (p) => Math.round(p * 100);
+      const commanderLine = (odds.commanderOnCurve != null && commander)
+        ? `<div class="da2-hand-line" title="Approximation — counts lands and ramp together; assumes each ramp piece gives one extra mana.">${esc(frontFaceName(commander.name))} on curve (turn ${Math.round(commander.cmc || 0)}) <b>${pct(odds.commanderOnCurve)}%</b></div>`
+        : "";
+      const hand = handState?.hand || [];
+      const handHtml = hand.length ? `
+        ${handState.mulligans > 0 ? `<div class="da2-hand-mull">Mulligan ${handState.mulligans}: put ${handState.mulligans} card${handState.mulligans > 1 ? "s" : ""} on the bottom</div>` : ""}
+        <div class="da2-hand-cards">${hand.map((c) => `<button class="da2-hand-card" type="button" data-id="${esc(c.id)}" title="${esc(c.name)}"><img src="${getCardImage(c)}" alt="${esc(c.name)}" loading="lazy"></button>`).join("")}</div>
+        <div class="da2-hand-lands">${hand.filter(isLandCard).length} lands</div>` : "";
+      return `
+        <div class="da-h">Opening hand</div>
+        <div class="da2-hand-odds">
+          <div class="da2-hand-line">3+ lands in opening 7 <b>${pct(odds.landsIn7)}%</b></div>
+          <div class="da2-hand-line">2–5 lands (keepable) <b>${pct(odds.keepableLands)}%</b></div>
+          <div class="da2-hand-line">Ramp by turn 2 <b>${pct(odds.rampByT2)}%</b></div>
+          ${commanderLine}
+        </div>
+        <div class="da2-hand-actions">
+          <button class="da2-hand-btn" type="button" id="da2-hand-sample">${hand.length ? "New hand" : "Sample hand"}</button>
+          <button class="da2-hand-btn" type="button" id="da2-hand-mulligan" ${hand.length ? "" : "disabled"}>Mulligan</button>
+        </div>
+        ${handHtml}`;
+    }
+
+    function renderOpeningHandSection(library, odds, commander) {
+      const section = $("#da2-opening-hand");
+      if (!section) return;
+      if (!library.length) { section.hidden = true; section.innerHTML = ""; return; }
+      section.hidden = false;
+      section.innerHTML = openingHandSectionHtml(odds, commander);
+      const redraw = () => renderOpeningHandSection(library, odds, commander);
+      $("#da2-hand-sample").addEventListener("click", () => {
+        handState = { hand: drawRandom(library, 7), mulligans: 0 };
+        redraw();
+      });
+      $("#da2-hand-mulligan").addEventListener("click", () => {
+        if (!handState) return;
+        handState = { hand: drawRandom(library, 7), mulligans: handState.mulligans + 1 };
+        redraw();
+      });
+      section.querySelectorAll(".da2-hand-card").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = handState?.hand.find((c) => c.id === btn.dataset.id);
+          if (card) showDetail(card);
+        });
+      });
+    }
+
     function renderDeckAnalysis(deck, cards) {
       if (!cards.length) { dA.style.display = "none"; dA.innerHTML = ""; return; }
       const collapsed = localStorage.getItem("deck_analysis_collapsed") === "true";
@@ -5125,6 +5262,9 @@
       // The AI review persists across deck edits (stale reads beat losing the analysis
       // on every add); only a Re-analyze — or a cache-version bump — replaces it.
       const sig = deckSig(cards, folderId, commander?.name);
+      // The sample hand survives incidental re-renders (AI profile loads, grade recompute)
+      // but resets once the deck itself changes — same signature the review cache keys on.
+      if (handStateSig !== sig) { handState = null; handStateSig = sig; }
       const reviewEntry = deckReviewCache[folderId];
       const validEntry = reviewEntry && typeof reviewEntry.sig === "string" && reviewEntry.sig.startsWith(`${DECK_REVIEW_CACHE_VERSION}|`) ? reviewEntry : null;
       const cached = validEntry ? validEntry.data : null;
@@ -5222,6 +5362,13 @@
       enhanceBracket(cards, folderId);
       if (commander) enhanceCombos(commander.name, folderId);
       ensureDeckProfiles(deck, cards, folderId);
+      // Free, no network — real decks only (this branch never runs otherwise).
+      if (deck) {
+        const library = openingHandLibrary(cards, folderId, deck.commanderId || null);
+        const ramp = rampCountForLibrary(roleDetails, cards, commander);
+        const odds = openingHandOdds({ N: library.length, lands: s.lands, ramp, commanderMv: commander ? (commander.cmc || 0) : undefined });
+        renderOpeningHandSection(library, odds, commander);
+      }
     }
 
     async function reviewDeckWithAI(cards, folderId, commander, winConditions) {
