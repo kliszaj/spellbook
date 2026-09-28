@@ -2,13 +2,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test, run } from "./lib/tiny-test.mjs";
+import { commanderSlug as serverCommanderSlug } from "../lib/edhrec.js";
 
 const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
 const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -183,6 +184,61 @@ test("drawRandom: never returns more cards than the library holds", () => {
   const cards = [{ id: "a" }, { id: "b" }, { id: "c" }];
   const hand = h.drawRandom(cards, 7);
   assert.equal(hand.length, 3);
+});
+
+// ── EDHREC × collection ──────────────────────────────────────────────
+const edhrecCard = (name, overrides = {}) => ({ name, category: "Creatures", synergy: 0.3, inclusion: 0.4, numDecks: 100, ...overrides });
+
+test("edhrecPicks: keeps only owned cards not already in the deck", () => {
+  const owned = new Map([["sanctum of all", { id: "c1", name: "Sanctum of All" }]]);
+  const cards = [edhrecCard("Sanctum of All"), edhrecCard("Not Owned"), edhrecCard("Already In Deck")];
+  const deckNames = new Set(["already in deck"]);
+  const ownedTwo = new Map(owned);
+  ownedTwo.set("already in deck", { id: "c2", name: "Already In Deck" });
+  const picks = h.edhrecPicks(cards, ownedTwo, deckNames);
+  assert.deepEqual(picks.map((p) => p.name), ["Sanctum of All"]);
+  assert.equal(picks[0].card.id, "c1");
+});
+
+test("edhrecPicks: sorts by synergy desc, then inclusion desc", () => {
+  const owned = new Map([
+    ["low synergy", { id: "a", name: "Low Synergy" }],
+    ["high synergy low inclusion", { id: "b", name: "High Synergy Low Inclusion" }],
+    ["high synergy high inclusion", { id: "c", name: "High Synergy High Inclusion" }],
+  ]);
+  const cards = [
+    edhrecCard("Low Synergy", { synergy: 0.1, inclusion: 0.9 }),
+    edhrecCard("High Synergy Low Inclusion", { synergy: 0.8, inclusion: 0.2 }),
+    edhrecCard("High Synergy High Inclusion", { synergy: 0.8, inclusion: 0.5 }),
+  ];
+  const picks = h.edhrecPicks(cards, owned, new Set());
+  assert.deepEqual(picks.map((p) => p.name), ["High Synergy High Inclusion", "High Synergy Low Inclusion", "Low Synergy"]);
+});
+
+test("edhrecPicks: matches by normalized front-face name — DFC front face and case", () => {
+  const owned = new Map([["valki, god of lies", { id: "v1", name: "Valki, God of Lies" }]]);
+  const cards = [edhrecCard("VALKI, GOD OF LIES // Tibalt, Cosmic Impostor")];
+  const picks = h.edhrecPicks(cards, owned, new Set());
+  assert.equal(picks.length, 1);
+  assert.equal(picks[0].card.id, "v1");
+});
+
+test("edhrecPicks: a deck name match is also normalized (DFC front face, case)", () => {
+  const owned = new Map([["valki, god of lies", { id: "v1", name: "Valki, God of Lies" }]]);
+  const cards = [edhrecCard("Valki, God of Lies")];
+  const deckNames = new Set(["VALKI, GOD OF LIES".toLowerCase()]);
+  const picks = h.edhrecPicks(cards, owned, deckNames);
+  assert.equal(picks.length, 0);
+});
+
+test("commanderSlug: the client's copy matches the server's for the same inputs", () => {
+  const names = [
+    "Hei Bai, Forest Guardian",
+    "Atraxa, Praetors' Voice",
+    "Valki, God of Lies // Tibalt, Cosmic Impostor",
+    "K'rrik, Son of Yawgmoth",
+  ];
+  for (const name of names) assert.equal(h.commanderSlug(name), serverCommanderSlug(name));
 });
 
 await run("Deck analysis UI helpers");

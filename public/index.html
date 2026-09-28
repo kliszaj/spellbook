@@ -1575,6 +1575,17 @@
     .da2-hand-card:hover img { filter: brightness(1.05); }
     .da2-hand-card:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; border-radius: 6px; }
     .da2-hand-lands { margin-top: 8px; font-size: 11px; color: #78726A; }
+
+    .da2-edhrec-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .da2-edhrec-row { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 9px; transition: background 0.12s ease; }
+    .da2-edhrec-row:hover { background: #F2EFE8; }
+    .da2-edhrec-thumb { width: 40px; border-radius: 5px; display: block; aspect-ratio: 488 / 680; object-fit: cover; border: 1px solid rgba(31,29,25,0.16); background: #efeae1; padding: 0; cursor: pointer; }
+    .da2-edhrec-meta { flex: 1; min-width: 0; cursor: pointer; }
+    .da2-edhrec-name { font-size: 12.5px; font-weight: 650; color: #2A2721; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .da2-edhrec-stats { font-size: 11px; color: #78726A; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .da2-edhrec-more { margin-top: 10px; }
+    .da2-edhrec-foot { margin-top: 12px; font-size: 10.5px; color: #9E9B92; }
+    .da2-edhrec-foot a { color: inherit; }
     @media (max-width: 900px) { .da2-layout { grid-template-columns: 1fr; } }
     @media (max-width: 480px) { .da2-chip-row { flex-direction: column; gap: 4px; } .da2-chip-row-label { width: auto; padding-top: 0; } }
 
@@ -4861,6 +4872,35 @@
       }
       return pool.slice(0, count);
     }
+
+    // ── EDHREC × collection ──────────────────────────────────────────
+    // Import-free copy of lib/edhrec.js's commanderSlug — the client needs the same slug
+    // (for the footnote link) without pulling in a server module; scripts/check-analysis-ui.mjs
+    // asserts this copy and the server's stay in lockstep.
+    function commanderSlug(name) {
+      return String(name || "")
+        .split(" // ")[0]
+        .trim()
+        .toLowerCase()
+        .replace(/'/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+    // Front face, case-insensitive — local to this block (mirrors the outer frontFaceName)
+    // so the block stays evaluable in isolation.
+    function edhrecNameKey(name) {
+      return String(name || "").split(" // ")[0].trim().toLowerCase();
+    }
+    // EDHREC cards the collection owns and that aren't already in the deck, sorted by
+    // synergy desc then inclusion desc. `ownedByName` maps a normalized name to the owned
+    // card object (used for the thumb/save/detail actions); `deckNames` is the set of
+    // normalized names already in the deck (main + Maybeboard).
+    function edhrecPicks(edhrecCards, ownedByName, deckNames) {
+      return (edhrecCards || [])
+        .map((c) => ({ ...c, card: ownedByName.get(edhrecNameKey(c.name)) }))
+        .filter((c) => c.card && !deckNames.has(edhrecNameKey(c.name)))
+        .sort((a, b) => b.synergy - a.synergy || b.inclusion - a.inclusion);
+    }
     // @testable analysis-helpers end
 
     function bracketDialHtml(bracket) {
@@ -5238,6 +5278,107 @@
       });
     }
 
+    // ── EDHREC × collection ("From your collection") ────────────────────
+    // Session-only cache keyed by commander slug — fetched once no matter how many
+    // decks/renders share a commander; picks recompute from this cache on every render
+    // (deck/collection changes never trigger a refetch).
+    const edhrecCache = new Map(); // slug -> { status: "loading" | "ready" | "error", data, error }
+    let edhrecShowAll = false; // reset alongside handState when the deck signature changes
+
+    function ensureEdhrecLoaded(commanderName, folderId, cards) {
+      const slug = commanderSlug(commanderName);
+      const existing = edhrecCache.get(slug);
+      if (existing) return existing;
+      const entry = { status: "loading" };
+      edhrecCache.set(slug, entry);
+      fetch(`/api/edhrec/commander?name=${encodeURIComponent(commanderName)}`)
+        .then(async (r) => {
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(data.error || "Couldn't reach EDHREC.");
+          entry.status = "ready";
+          entry.data = data;
+        })
+        .catch((err) => {
+          entry.status = "error";
+          entry.error = err.message || "Couldn't reach EDHREC.";
+        })
+        .then(() => rerenderDeckAnalysisIfActive(folderId, cards));
+      return entry;
+    }
+
+    function edhrecRowHtml(pick) {
+      const card = pick.card;
+      const isSaved = isCardSaved(card.id);
+      const synergyPct = Math.round((pick.synergy || 0) * 100);
+      const synergyLabel = synergyPct >= 0 ? `+${synergyPct}%` : `${synergyPct}%`; // a card can carry negative synergy on EDHREC
+      const inclusionPct = Math.round((pick.inclusion || 0) * 100);
+      return `
+        <div class="da2-edhrec-row" data-id="${card.id}">
+          <img class="da2-edhrec-thumb" src="${getCardImage(card)}" alt="${esc(card.name)}" loading="lazy">
+          <div class="da2-edhrec-meta">
+            <div class="da2-edhrec-name">${esc(card.name)}</div>
+            <div class="da2-edhrec-stats">${synergyLabel} synergy · in ${inclusionPct}% of decks · ${esc(pick.category)}</div>
+          </div>
+          <button class="icon-btn save-btn ${isSaved ? "saved" : ""}" data-id="${card.id}" title="${isSaved ? "Saved" : "Save"}" aria-label="${isSaved ? "Remove from saved" : "Save"}">${bookmarkIcon(isSaved)}</button>
+        </div>`;
+    }
+
+    function edhrecSectionHtml(picks, commander) {
+      const shown = edhrecShowAll ? picks : picks.slice(0, 12);
+      const hasMore = picks.length > 12;
+      const slug = commanderSlug(commander.name);
+      const body = picks.length
+        ? `<div class="da2-edhrec-list">${shown.map(edhrecRowHtml).join("")}</div>
+           ${hasMore ? `<button class="da2-hand-btn da2-edhrec-more" type="button" id="da2-edhrec-more">${edhrecShowAll ? "Show less" : `Show all ${picks.length}`}</button>` : ""}`
+        : `<div class="da2-vsub">None of EDHREC's picks for this commander are in your collection yet.</div>`;
+      return `
+        <div class="da-h">From your collection</div>
+        <div class="da2-vsub">EDHREC picks for ${esc(frontFaceName(commander.name))} you already own</div>
+        ${body}
+        <div class="da2-edhrec-foot">Data from <a href="https://edhrec.com/commanders/${esc(slug)}" target="_blank" rel="noopener">EDHREC</a></div>`;
+    }
+
+    function renderEdhrecSection(deck, commander, folderId, cards) {
+      const section = $("#da2-edhrec");
+      if (!section) return;
+      if (!deck || !commander || !hasCollection()) { section.hidden = true; section.innerHTML = ""; return; }
+      const entry = ensureEdhrecLoaded(commander.name, folderId, cards);
+      section.hidden = false;
+      if (entry.status === "loading") {
+        section.innerHTML = `<div class="da-h">From your collection</div><div class="da2-vsub">Loading EDHREC picks…</div>`;
+        return;
+      }
+      if (entry.status === "error") {
+        section.innerHTML = `<div class="da-h">From your collection</div><div class="da2-vsub">${esc(entry.error)} <button class="da2-chip muted cta" id="da2-edhrec-retry" type="button" style="margin-left:6px">Retry</button></div>`;
+        $("#da2-edhrec-retry").addEventListener("click", () => {
+          edhrecCache.delete(commanderSlug(commander.name));
+          renderEdhrecSection(deck, commander, folderId, cards);
+        });
+        return;
+      }
+      const ownedByName = new Map();
+      (collectionIndex?.list || []).forEach((it) => {
+        const key = frontFaceName(it.card.name).toLowerCase();
+        if (!ownedByName.has(key)) ownedByName.set(key, it.card);
+      });
+      const deckNames = new Set(getFolderCards(folderId).map((c) => frontFaceName(c.name).toLowerCase()));
+      const picks = edhrecPicks(entry.data.cards, ownedByName, deckNames);
+      section.innerHTML = edhrecSectionHtml(picks, commander);
+      section.querySelectorAll(".da2-edhrec-row").forEach((row) => {
+        const pick = picks.find((p) => String(p.card.id) === row.dataset.id);
+        if (!pick) return;
+        const card = pick.card;
+        row.querySelector(".da2-edhrec-thumb").addEventListener("click", () => showDetail(card));
+        row.querySelector(".da2-edhrec-meta").addEventListener("click", () => showDetail(card));
+        row.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
+        row.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
+      });
+      $("#da2-edhrec-more")?.addEventListener("click", () => {
+        edhrecShowAll = !edhrecShowAll;
+        renderEdhrecSection(deck, commander, folderId, cards);
+      });
+    }
+
     function renderDeckAnalysis(deck, cards) {
       if (!cards.length) { dA.style.display = "none"; dA.innerHTML = ""; return; }
       const collapsed = localStorage.getItem("deck_analysis_collapsed") === "true";
@@ -5264,7 +5405,7 @@
       const sig = deckSig(cards, folderId, commander?.name);
       // The sample hand survives incidental re-renders (AI profile loads, grade recompute)
       // but resets once the deck itself changes — same signature the review cache keys on.
-      if (handStateSig !== sig) { handState = null; handStateSig = sig; }
+      if (handStateSig !== sig) { handState = null; handStateSig = sig; edhrecShowAll = false; }
       const reviewEntry = deckReviewCache[folderId];
       const validEntry = reviewEntry && typeof reviewEntry.sig === "string" && reviewEntry.sig.startsWith(`${DECK_REVIEW_CACHE_VERSION}|`) ? reviewEntry : null;
       const cached = validEntry ? validEntry.data : null;
@@ -5368,6 +5509,7 @@
         const ramp = rampCountForLibrary(roleDetails, cards, commander);
         const odds = openingHandOdds({ N: library.length, lands: s.lands, ramp, commanderMv: commander ? (commander.cmc || 0) : undefined });
         renderOpeningHandSection(library, odds, commander);
+        renderEdhrecSection(deck, commander, folderId, cards);
       }
     }
 
@@ -6004,7 +6146,7 @@
     }
 
     function refreshResultsSaveState() {
-      document.querySelectorAll("#results .save-btn, #collection-grid .save-btn, #swaps-grid .save-btn").forEach((btn) => {
+      document.querySelectorAll("#results .save-btn, #collection-grid .save-btn, #swaps-grid .save-btn, #da2-edhrec .save-btn").forEach((btn) => {
         const id = btn.dataset.id;
         const saved = isCardSaved(id);
         btn.innerHTML = bookmarkIcon(saved);

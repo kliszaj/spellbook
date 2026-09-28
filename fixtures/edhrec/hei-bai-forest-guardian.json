@@ -1,0 +1,217 @@
+{
+  "header": "Hei Bai, Forest Guardian (Commander)",
+  "container": {
+    "json_dict": {
+      "card": {
+        "name": "Hei Bai, Forest Guardian",
+        "num_decks": 7174
+      },
+      "cardlists": [
+        {
+          "header": "High Synergy Cards",
+          "tag": "highsynergycards",
+          "cardviews": [
+            {
+              "name": "Sanctum of All",
+              "sanitized": "sanctum-of-all",
+              "synergy": 0.9054770430741654,
+              "num_decks": 6801,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Go-Shintai of Life's Origin",
+              "sanitized": "go-shintai-of-lifes-origin",
+              "synergy": 0.8879994602685548,
+              "num_decks": 6479,
+              "potential_decks": 7174
+            },
+            {
+              "name": "The Spirit Oasis",
+              "sanitized": "the-spirit-oasis",
+              "synergy": 0.8845947558537351,
+              "num_decks": 6607,
+              "potential_decks": 7124
+            },
+            {
+              "name": "Sanctum of Calm Waters",
+              "sanitized": "sanctum-of-calm-waters",
+              "synergy": 0.8842019101644163,
+              "num_decks": 6639,
+              "potential_decks": 7174
+            }
+          ]
+        },
+        {
+          "header": "Top Cards",
+          "tag": "topcards",
+          "cardviews": [
+            {
+              "name": "Crescent Island Temple",
+              "sanitized": "crescent-island-temple",
+              "synergy": 0.8233505898109457,
+              "num_decks": 6188,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Honden of Life's Web",
+              "sanitized": "honden-of-lifes-web",
+              "synergy": 0.8223201857901284,
+              "num_decks": 6183,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Go-Shintai of Shared Purpose",
+              "sanitized": "go-shintai-of-shared-purpose",
+              "synergy": 0.8112567645308048,
+              "num_decks": 6104,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Kyoshi Island Plaza",
+              "sanitized": "kyoshi-island-plaza",
+              "synergy": 0.8118253319043766,
+              "num_decks": 5982,
+              "potential_decks": 7034
+            }
+          ]
+        },
+        {
+          "header": "Creatures",
+          "tag": "creatures",
+          "cardviews": [
+            {
+              "name": "Go-Shintai of Lost Wisdom",
+              "sanitized": "go-shintai-of-lost-wisdom",
+              "synergy": 0.60978679071608,
+              "num_decks": 4623,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Sythis, Harvest's Hand",
+              "sanitized": "sythis-harvests-hand",
+              "synergy": 0.5002213274193935,
+              "num_decks": 4245,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Jukai Naturalist",
+              "sanitized": "jukai-naturalist",
+              "synergy": 0.4165740381825174,
+              "num_decks": 3501,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Eidolon of Blossoms",
+              "sanitized": "eidolon-of-blossoms",
+              "synergy": 0.3965313098254774,
+              "num_decks": 3307,
+              "potential_decks": 7174
+            }
+          ]
+        },
+        {
+          "header": "Instants",
+          "tag": "instants",
+          "cardviews": [
+            {
+              "name": "Ephemerate",
+              "sanitized": "ephemerate",
+              "synergy": 0.529259791122079,
+              "num_decks": 4063,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Cloudshift",
+              "sanitized": "cloudshift",
+              "synergy": 0.484043807328312,
+              "num_decks": 3601,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Swords to Plowshares",
+              "sanitized": "swords-to-plowshares",
+              "synergy": 0.09605979575804036,
+              "num_decks": 3444,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Essence Flux",
+              "sanitized": "essence-flux",
+              "synergy": 0.4223664778069549,
+              "num_decks": 3103,
+              "potential_decks": 7174
+            }
+          ]
+        },
+        {
+          "header": "Enchantments",
+          "tag": "enchantments",
+          "cardviews": [
+            {
+              "name": "Sanctum of Tranquil Light",
+              "sanitized": "sanctum-of-tranquil-light",
+              "synergy": 0.6367822665937318,
+              "num_decks": 4822,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Sanctum of Shattered Heights",
+              "sanitized": "sanctum-of-shattered-heights",
+              "synergy": 0.5967305615306651,
+              "num_decks": 4517,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Sterling Grove",
+              "sanitized": "sterling-grove",
+              "synergy": 0.5319239879471066,
+              "num_decks": 4353,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Sphere of Safety",
+              "sanitized": "sphere-of-safety",
+              "synergy": 0.4284438741998844,
+              "num_decks": 3492,
+              "potential_decks": 7174
+            }
+          ]
+        },
+        {
+          "header": "Lands",
+          "tag": "lands",
+          "cardviews": [
+            {
+              "name": "Forest",
+              "sanitized": "forest",
+              "synergy": 0.09123438139123108,
+              "num_decks": 6525,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Plains",
+              "sanitized": "plains",
+              "synergy": 0.11046055904803309,
+              "num_decks": 6420,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Command Tower",
+              "sanitized": "command-tower",
+              "synergy": 0.009538120710775533,
+              "num_decks": 6418,
+              "potential_decks": 7174
+            },
+            {
+              "name": "Island",
+              "sanitized": "island",
+              "synergy": 0.08018212888240728,
+              "num_decks": 6297,
+              "potential_decks": 7174
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

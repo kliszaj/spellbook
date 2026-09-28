@@ -13,6 +13,7 @@ import { createEmbeddingStore, createLocalEmbedder } from "./lib/embeddings.js";
 import { createRankingCache } from "./lib/swaps.js";
 import { capSwapsRequest, createSwapsService } from "./lib/swaps-service.js";
 import { createDeckProfiles } from "./lib/deck-profiles.js";
+import { createEdhrecClient, EdhrecError } from "./lib/edhrec.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -916,6 +917,20 @@ app.get("/api/combos", async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(502).json({ error: "Couldn't reach Commander Spellbook" });
+  }
+});
+
+// ── EDHREC (unofficial) commander recommendations ──────────────────
+const edhrecClient = createEdhrecClient({ dataDir: DATA_DIR });
+
+app.get("/api/edhrec/commander", async (req, res) => {
+  const name = String(req.query.name || "").trim();
+  if (!name) return res.status(400).json({ error: "Missing name" });
+  try {
+    res.json(await edhrecClient.getCommander(name));
+  } catch (err) {
+    if (err instanceof EdhrecError) return res.status(502).json({ error: err.message });
+    res.status(502).json({ error: "Couldn't reach EDHREC." });
   }
 });
 
