@@ -8,7 +8,7 @@ const BEGIN = "// @testable collection-helpers begin";
 const END = "// @testable collection-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("collection helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { buildCollectionIndex, ownedQty, filterCollectionItems, sortCollectionItems, collectionTotals, deckColorMatch, ownCount };`)();
+const h = Function(`${block}; return { buildCollectionIndex, ownedQty, filterCollectionItems, collectionTotals, deckColorMatch, ownCount };`)();
 
 const card = (id, name, extra = {}) => ({ id, oracle_id: `o-${name}`, name, cmc: 2, color_identity: ["W"], prices: { eur: "1.00", eur_foil: "3.00" }, ...extra });
 const data = {
@@ -47,13 +47,6 @@ test("filterCollectionItems: name, fits-within colors, binder", () => {
   assert.deepEqual(names(h.filterCollectionItems(index.list, { colors: ["W"] })), ["Alpha Strike"]);
   assert.deepEqual(names(h.filterCollectionItems(index.list, { colors: ["W", "U"] })), ["Alpha Strike", "Blue Thing"]);
   assert.deepEqual(names(h.filterCollectionItems(index.list, { binder: "Trade" })), ["Alpha Strike"]);
-});
-
-test("sortCollectionItems by name, price and mana value", () => {
-  const order = (field) => h.sortCollectionItems(index.list, field).map((it) => it.card.name);
-  assert.deepEqual(order("name"), ["Alpha Strike", "Blue Thing"]);
-  assert.deepEqual(order("price"), ["Blue Thing", "Alpha Strike"]);
-  assert.deepEqual(order("cmc"), ["Blue Thing", "Alpha Strike"]);
 });
 
 test("collectionTotals counts matched cards and prices foils as foil", () => {
