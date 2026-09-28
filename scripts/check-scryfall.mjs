@@ -36,23 +36,35 @@ test("429 with Retry-After then 200 succeeds after one sleep", async () => {
   assert.equal(calls.length, 2);
 });
 
-test("429 repeated beyond maxRetries throws ScryfallError", async () => {
+test("429 twice with default maxRetries rejects with a rate-limiting ScryfallError", async () => {
+  const { fetchImpl, calls } = fakeFetch([rateLimited("1"), rateLimited("1")]);
+  const { sleep } = fakeSleep();
+  await assert.rejects(postCardCollection([{ id: "a" }], { fetchImpl, sleep }), (err) => {
+    assert.ok(err instanceof ScryfallError);
+    assert.match(err.message, /rate-limiting/);
+    return true;
+  });
+  assert.equal(calls.length, 2);
+});
+
+test("429 repeated beyond an explicit maxRetries throws ScryfallError", async () => {
   const { fetchImpl, calls } = fakeFetch([rateLimited("1"), rateLimited("1"), rateLimited("1")]);
   const { sleep } = fakeSleep();
   await assert.rejects(postCardCollection([{ id: "a" }], { fetchImpl, sleep, maxRetries: 2 }), ScryfallError);
   assert.equal(calls.length, 3);
 });
 
-test("Retry-After is capped at MAX_RETRY_WAIT_MS; missing header defaults to 1s", async () => {
-  const { fetchImpl: fetchImpl1 } = fakeFetch([rateLimited("60"), okRes({ data: [], not_found: [] })]);
+test("Retry-After is capped at MAX_RETRY_WAIT_MS (120s); missing header defaults to 60s", async () => {
+  const { fetchImpl: fetchImpl1 } = fakeFetch([rateLimited("600"), okRes({ data: [], not_found: [] })]);
   const { sleep: sleep1, waits: waits1 } = fakeSleep();
   await postCardCollection([{ id: "a" }], { fetchImpl: fetchImpl1, sleep: sleep1 });
   assert.deepEqual(waits1, [MAX_RETRY_WAIT_MS]);
+  assert.equal(MAX_RETRY_WAIT_MS, 120_000);
 
   const { fetchImpl: fetchImpl2 } = fakeFetch([rateLimited(undefined), okRes({ data: [], not_found: [] })]);
   const { sleep: sleep2, waits: waits2 } = fakeSleep();
   await postCardCollection([{ id: "a" }], { fetchImpl: fetchImpl2, sleep: sleep2 });
-  assert.deepEqual(waits2, [1000]);
+  assert.deepEqual(waits2, [60_000]);
 });
 
 test("a network error throws ScryfallError with no retry", async () => {

@@ -95,14 +95,14 @@ test("cards Scryfall can't find stay in entries and are reported as unmatched", 
   assert.equal(result.cards.b, undefined);
 });
 
-test("only uncached cards are looked up, 75 per request", async () => {
+test("only uncached cards are looked up, 75 per request, paced 500ms apart", async () => {
   const scry = fakeScryfall();
-  let sleeps = 0;
-  const store = createCollectionStore({ dataDir: await tempDir(), fetchImpl: scry.fetchImpl, sleep: async () => { sleeps++; } });
+  const sleeps = [];
+  const store = createCollectionStore({ dataDir: await tempDir(), fetchImpl: scry.fetchImpl, sleep: async (ms) => { sleeps.push(ms); } });
   const ids = Array.from({ length: 80 }, (_, i) => `id${i}`);
   await store.apply((await store.preview(csv(...ids.map((id) => row(id))))).previewId, "sync");
   assert.deepEqual(scry.requests.map((r) => r.length), [75, 5]);
-  assert.equal(sleeps, 1);
+  assert.deepEqual(sleeps, [500]);
   await store.apply((await store.preview(csv(...ids.map((id) => row(id)), row("new")))).previewId, "sync");
   assert.deepEqual(scry.requests.at(-1), ["new"]);
 });
