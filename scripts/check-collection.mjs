@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { test, run } from "./lib/tiny-test.mjs";
 import {
   parseCsv, parseManaBoxCsv, CollectionFormatError, aggregateRows, entryKey, rowFingerprint,
-  diffSync, diffAdd, defaultMode, totalQty, slimCard, SLIM_CARD_FIELDS,
+  diffSync, diffAdd, defaultMode, totalQty, slimCard, SLIM_CARD_FIELDS, MANUAL_BINDER,
 } from "../lib/collection.js";
 
 const fixture = (name) => readFileSync(new URL(`../fixtures/collection/${name}`, import.meta.url), "utf8");
@@ -60,7 +60,7 @@ test("row fingerprints include condition and language", () => {
 
 test("diffSync on a first upload adds everything without a warning", () => {
   const d = diffSync(null, parseManaBoxCsv(whole));
-  assert.deepEqual(d.summary, { added: 3, changed: 0, removed: 0, totalAfter: 5 });
+  assert.deepEqual(d.summary, { added: 3, changed: 0, removed: 0, manualDropped: 0, totalAfter: 5 });
   assert.equal(d.warning, null);
   assert.equal(d.importedRows.length, 4);
 });
@@ -73,7 +73,7 @@ test("diffSync reports new, changed and removed entries and keeps the stored add
     "New Releases,binder,Forest,ECL,Lorwyn Eclipsed,273,normal,common,1,110396,b460f5f7-c7c9-400c-8419-23d614f45bf9,0.16,false,false,false,near_mint,en,false,EUR,2026-01-18T15:41:37.551Z",
   ].join("\n");
   const d = diffSync({ entries: first.entries, importedRows: first.importedRows }, parseManaBoxCsv(next));
-  assert.deepEqual(d.summary, { added: 1, changed: 1, removed: 1, totalAfter: 6 });
+  assert.deepEqual(d.summary, { added: 1, changed: 1, removed: 1, manualDropped: 0, totalAfter: 6 });
   assert.equal(d.details.changed[0].name, "Elfsworn Giant");
   assert.equal(d.details.changed[0].binder, "all cards");
   assert.deepEqual([d.details.changed[0].qtyBefore, d.details.changed[0].qtyAfter], [1, 2]);
@@ -98,6 +98,44 @@ test("defaultMode is sync for a first upload or a normal re-export", () => {
   assert.equal(defaultMode(current, diffSync(current, parseManaBoxCsv(whole))), "sync");
 });
 
+const manualEntry = (scryfallId, name, qty = 1) => ({
+  scryfallId, foil: "normal", binder: MANUAL_BINDER, qty, added: "2026-06-01T00:00:00.000Z",
+  name, set: "TMP", number: "1", manual: true,
+});
+const MANUAL_KEY = `cw-1|normal|${MANUAL_BINDER}`;
+
+test("diffSync keeps a manual entry (not removed, no warning contribution) across a sync", () => {
+  const first = diffSync(null, parseManaBoxCsv(whole));
+  const current = { entries: { ...first.entries, [MANUAL_KEY]: manualEntry("cw-1", "Culling the Weak", 100) } };
+  const d = diffSync(current, parseManaBoxCsv(whole));
+  assert.equal(d.details.removed.length, 0);
+  assert.equal(d.details.manualDropped.length, 0);
+  assert.equal(d.summary.manualDropped, 0);
+  assert.ok(d.entries[MANUAL_KEY]);
+  assert.equal(d.warning, null); // a 100-qty manual entry never counts toward the removal warning
+});
+
+test("diffSync drops a manual entry whose name is now scanned into the file", () => {
+  const first = diffSync(null, parseManaBoxCsv(whole));
+  const current = { entries: { ...first.entries, [MANUAL_KEY]: manualEntry("cw-1", "Culling the Weak") } };
+  const scannedCsv = whole.trim() + "\n"
+    + "New Releases,binder,Culling the Weak,TMP,Tempest,1,normal,common,1,999999,cw-2,0.05,false,false,false,near_mint,en,false,EUR,2026-06-02T00:00:00.000Z";
+  const d = diffSync(current, parseManaBoxCsv(scannedCsv));
+  assert.equal(d.entries[MANUAL_KEY], undefined);
+  assert.equal(d.details.manualDropped.length, 1);
+  assert.equal(d.details.manualDropped[0].name, "Culling the Weak");
+  assert.equal(d.summary.manualDropped, 1);
+  assert.equal(d.details.removed.length, 0);
+});
+
+test("diffSync's removal warning and defaultMode ignore manual entries in the current total", () => {
+  const first = diffSync(null, parseManaBoxCsv(whole));
+  const current = { entries: { ...first.entries, [MANUAL_KEY]: manualEntry("cw-1", "Culling the Weak", 100) } };
+  const d = diffSync(current, parseManaBoxCsv([lines[0], lines[4]].join("\n")));
+  assert.match(d.warning, /This would remove 4 of 5 cards/);
+  assert.equal(defaultMode(current, d), "add");
+});
+
 test("diffAdd adds new keys and increases existing ones without mutating the input", () => {
   const first = diffSync(null, parseManaBoxCsv(whole));
   const current = { entries: first.entries, importedRows: first.importedRows };
@@ -107,7 +145,7 @@ test("diffAdd adds new keys and increases existing ones without mutating the inp
     "New Releases,binder,Mountain,ECL,Lorwyn Eclipsed,272,foil,common,1,110313,295b92bc-d66f-45d8-9bbe-5f5f13e39fd4,0.23,false,false,false,near_mint,en,false,EUR,2026-09-20T12:00:00.000Z",
   ].join("\n");
   const d = diffAdd(current, parseManaBoxCsv(scan));
-  assert.deepEqual(d.summary, { added: 1, increased: 1, skipped: 0, totalAfter: 8 });
+  assert.deepEqual(d.summary, { added: 1, increased: 1, skipped: 0, manualDropped: 0, totalAfter: 8 });
   assert.deepEqual([d.details.increased[0].qtyBefore, d.details.increased[0].qtyAfter], [3, 4]);
   assert.equal(current.entries[MOUNTAIN_KEY].qty, 3);
 });
@@ -115,8 +153,20 @@ test("diffAdd adds new keys and increases existing ones without mutating the inp
 test("diffAdd skips rows already imported, so re-applying a file is a no-op", () => {
   const first = diffSync(null, parseManaBoxCsv(whole));
   const again = diffAdd({ entries: first.entries, importedRows: first.importedRows }, parseManaBoxCsv(whole));
-  assert.deepEqual(again.summary, { added: 0, increased: 0, skipped: 5, totalAfter: 5 });
+  assert.deepEqual(again.summary, { added: 0, increased: 0, skipped: 5, manualDropped: 0, totalAfter: 5 });
   assert.equal(again.importedRows.length, first.importedRows.length);
+});
+
+test("diffAdd drops a manual entry whose name matches an added/increased row", () => {
+  const first = diffSync(null, parseManaBoxCsv(whole));
+  const current = { entries: { ...first.entries, [MANUAL_KEY]: manualEntry("cw-1", "Culling the Weak") }, importedRows: first.importedRows };
+  const scan = [lines[0], "New Releases,binder,Culling the Weak,TMP,Tempest,1,normal,common,1,999999,cw-2,0.05,false,false,false,near_mint,en,false,EUR,2026-06-02T00:00:00.000Z"].join("\n");
+  const d = diffAdd(current, parseManaBoxCsv(scan));
+  assert.equal(d.entries[MANUAL_KEY], undefined);
+  assert.equal(d.details.manualDropped.length, 1);
+  assert.equal(d.details.manualDropped[0].name, "Culling the Weak");
+  assert.equal(d.summary.manualDropped, 1);
+  assert.ok(d.entries["cw-2|normal|New Releases"]);
 });
 
 test("slimCard keeps only the documented fields", () => {

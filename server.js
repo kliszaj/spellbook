@@ -966,6 +966,21 @@ app.post("/api/collection/apply", async (req, res) => {
   }
 });
 
+app.post("/api/collection/owned", async (req, res) => {
+  const { scryfallId, oracleId, owned } = req.body || {};
+  if (typeof owned !== "boolean") return res.status(400).json({ error: "Missing owned" });
+  if (owned && typeof scryfallId !== "string") return res.status(400).json({ error: "Missing scryfallId" });
+  if (!owned && typeof oracleId !== "string") return res.status(400).json({ error: "Missing oracleId" });
+  try {
+    const result = owned ? await collectionStore.markOwned(scryfallId) : await collectionStore.unmarkOwned(oracleId);
+    swapsService.afterSync().catch(() => {});
+    res.json(result);
+  } catch (err) {
+    const status = err instanceof CollectionFormatError ? 400 : err instanceof ScryfallError ? 502 : 500;
+    res.status(status).json({ error: err.message || "Couldn't update the collection" });
+  }
+});
+
 app.get("/api/swaps/status", async (req, res) => {
   try {
     res.json(await swapsService.status());

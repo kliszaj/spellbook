@@ -1078,6 +1078,19 @@
 
     .detail-label { color: #A19D93; }
 
+    .detail-owned-cell { display: flex; align-items: center; gap: 8px; }
+    .owned-toggle-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      color: #3f7d5c;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
     .oracle-text {
       margin-top: 12px;
       padding: 12px;
@@ -1869,6 +1882,7 @@
     .ctx-item:hover { background: #f4f4f2; }
     .ctx-item.danger { color: #b3261e; }
     .ctx-item.danger:hover { background: #fdecea; }
+    .ctx-item.disabled { color: #A19D93; cursor: default; pointer-events: none; }
 
     /* ── Deck section divider (e.g. Maybeboard) ── */
     .deck-section-divider {
@@ -2234,7 +2248,7 @@
             <div class="detail-row"><span class="detail-label">Set</span><span id="detail-set"></span></div>
             <div class="detail-row"><span class="detail-label">Rarity</span><span id="detail-rarity"></span></div>
             <div class="detail-row" id="detail-pt-row"><span class="detail-label">P/T</span><span id="detail-pt"></span></div>
-            <div class="detail-row" id="detail-owned-row" style="display:none"><span class="detail-label">Owned</span><span id="detail-owned"></span></div>
+            <div class="detail-row" id="detail-owned-row" style="display:none"><span class="detail-label">Owned</span><span class="detail-owned-cell"><span id="detail-owned"></span><button type="button" id="detail-owned-toggle" class="owned-toggle-btn" style="display:none"></button></span></div>
             <div class="detail-row"><span class="detail-label">Market</span><span id="detail-price"></span></div>
             <div class="detail-row"><span class="detail-label">Foil</span><span id="detail-foil-price"></span></div>
             <div id="detail-oracle" class="oracle-text"></div>
@@ -2366,6 +2380,7 @@
     <button class="ctx-item" data-act="commander" style="display:none">Set as commander</button>
     <button class="ctx-item" data-act="maybe" style="display:none">Mark as Maybe</button>
     <button class="ctx-item danger" data-act="remove" style="display:none">Remove from deck</button>
+    <button class="ctx-item" data-act="owned" style="display:none">Mark as owned</button>
   </div>
 
   <script>
@@ -3886,6 +3901,7 @@
         });
         el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
         el.querySelector("img").addEventListener("click", () => showDetail(card));
+        el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
         resultsEl.appendChild(el);
       });
       scheduleTiltInit(resultsEl);
@@ -5140,8 +5156,16 @@
         $("#detail-pt-row").style.display = ""; // fall back to .detail-row's grid so P/T aligns with the other rows
       } else { $("#detail-pt-row").style.display = "none"; }
       const owned = ownedQty(collectionIndex, card);
-      $("#detail-owned").textContent = `×${owned}`;
-      $("#detail-owned-row").style.display = owned ? "" : "none";
+      $("#detail-owned").textContent = owned ? `×${owned}` : "Not owned";
+      $("#detail-owned-row").style.display = hasCollection() ? "" : "none";
+      const ownedInfoDetail = ownedInfo(card);
+      const ownedToggle = $("#detail-owned-toggle");
+      if (ownedInfoDetail.state === "manabox") {
+        ownedToggle.style.display = "none";
+      } else {
+        ownedToggle.style.display = hasCollection() ? "" : "none";
+        ownedToggle.textContent = ownedInfoDetail.state === "manual" ? "Unmark owned" : "Mark as owned";
+      }
       $("#detail-swaps-btn").style.display = hasCollection() && !isBasicLand(card) ? "" : "none";
       const saveBtn = $("#detail-save-btn");
       saveBtn.textContent = isSaved ? "Saved" : "Save";
@@ -5217,6 +5241,11 @@
       setMaybe(deck.id, card.id, !isMaybe(deck.id, card.id));
       renderSavedCards();
       showDetail(card);
+    });
+
+    $("#detail-owned-toggle").addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (state.detailCard) toggleOwned(state.detailCard);
     });
 
     // ── Download the print-resolution image (proxies) ─────────────────
@@ -5581,29 +5610,45 @@
         : null;
     }
 
-    function openCardContextMenu(card, x, y) {
+    function openCardContextMenu(card, x, y, { deckActions = true } = {}) {
       contextMenuCard = card;
       const deck = activeDeck();
       const isCommanderCard = Boolean(deck && deck.commanderId === card.id);
       const commanderItem = cardContextMenu.querySelector('[data-act="commander"]');
       const maybeItem = cardContextMenu.querySelector('[data-act="maybe"]');
       const removeItem = cardContextMenu.querySelector('[data-act="remove"]');
+      const ownedItem = cardContextMenu.querySelector('[data-act="owned"]');
 
-      if (deck && isLegendaryCreature(card)) {
+      if (deckActions && deck && isLegendaryCreature(card)) {
         commanderItem.style.display = "";
         commanderItem.textContent = isCommanderCard ? "Unset commander" : "Set as commander";
       } else {
         commanderItem.style.display = "none";
       }
 
-      if (deck && !isCommanderCard) {
+      if (deckActions && deck && !isCommanderCard) {
         maybeItem.style.display = "";
         maybeItem.textContent = isMaybe(deck.id, card.id) ? "Move to main deck" : "Mark as Maybe";
       } else {
         maybeItem.style.display = "none";
       }
 
-      removeItem.style.display = deck ? "" : "none";
+      removeItem.style.display = (deckActions && deck) ? "" : "none";
+
+      if (hasCollection()) {
+        const info = ownedInfo(card);
+        ownedItem.style.display = "";
+        ownedItem.classList.toggle("disabled", info.state === "manabox");
+        if (info.state === "manabox") {
+          ownedItem.textContent = "Owned (from ManaBox)";
+          ownedItem.setAttribute("aria-disabled", "true");
+        } else {
+          ownedItem.textContent = info.state === "manual" ? "Unmark owned" : "Mark as owned";
+          ownedItem.removeAttribute("aria-disabled");
+        }
+      } else {
+        ownedItem.style.display = "none";
+      }
 
       cardContextMenu.classList.add("visible");
       positionContextMenu(x, y);
@@ -5649,6 +5694,9 @@
             syncSaveUI();
             renderSavedCards();
           }
+          break;
+        case "owned":
+          if (btn.getAttribute("aria-disabled") !== "true") toggleOwned(card);
           break;
       }
       closeCardContextMenu();
@@ -5919,6 +5967,42 @@
     }
     // @testable collection-helpers end
 
+    // Keep in sync with lib/collection.js's MANUAL_BINDER.
+    const MANUAL_BINDER = "Marked in Spellbook";
+    // Owned state for the right-click toggle and the focus panel:
+    // "none" (never owned), "manual" (owned only via a manual mark, toggle available),
+    // or "manabox" (owned via a ManaBox entry — the toggle is disabled).
+    function ownedInfo(card) {
+      if (!card) return { state: "none", qty: 0 };
+      const oid = card.oracle_id || card.card_faces?.[0]?.oracle_id;
+      const item = oid && collectionIndex ? collectionIndex.byOracle.get(oid) : null;
+      if (!item || !item.qty) return { state: "none", qty: 0 };
+      const manualOnly = item.binders.size === 1 && item.binders.has(MANUAL_BINDER);
+      return { state: manualOnly ? "manual" : "manabox", qty: item.qty };
+    }
+    // POST the owned toggle, then refresh whatever's currently showing this card.
+    async function toggleOwned(card) {
+      const info = ownedInfo(card);
+      if (info.state === "manabox") return;
+      const oracleId = card.oracle_id || card.card_faces?.[0]?.oracle_id;
+      try {
+        const res = await fetch("/api/collection/owned", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scryfallId: card.id, oracleId, owned: info.state === "none" }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Couldn't update the collection");
+        collectionData = data;
+        collectionIndex = buildCollectionIndex(data);
+        if (state.activeTab === "saved") renderSavedCards();
+        if (state.activeTab === "collection") renderCollection(true);
+        if (state.detailCard) showDetail(state.detailCard);
+      } catch (err) {
+        showStatus(err.message, true);
+      }
+    }
+
     const COLLECTION_PAGE = 60;
     const COLOR_NAMES = { w: "White", u: "Blue", b: "Black", r: "Red", g: "Green", c: "Colorless" };
     const collectionUi = { colors: new Set(), query: "", binder: "", sortField: "name", sortDir: "asc", shown: 0, notice: "" };
@@ -6007,6 +6091,7 @@
       el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
       el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
       el.querySelector("img").addEventListener("click", () => showDetail(card));
+      el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
       return el;
     }
 
@@ -6352,6 +6437,7 @@
       el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
       el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
       el.querySelector("img").addEventListener("click", () => showDetail(card));
+      el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
       return el;
     }
 

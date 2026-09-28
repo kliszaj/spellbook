@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test, run } from "./lib/tiny-test.mjs";
 import { createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "../lib/collection-store.js";
+import { CollectionFormatError, MANUAL_BINDER } from "../lib/collection.js";
 
 const HEADER = "Binder Name,Name,Set code,Collector number,Foil,Quantity,Scryfall ID,Condition,Language,Added";
 const row = (id, qty = 1, binder = "Main", added = "2026-01-01T00:00:00.000Z") =>
@@ -46,7 +47,7 @@ test("preview + apply(sync) writes the collection and slim cards", async () => {
   const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
   const p = await store.preview(csv(row("a", 2), row("b")));
   assert.equal(p.defaultMode, "sync");
-  assert.deepEqual(p.sync.summary, { added: 2, changed: 0, removed: 0, totalAfter: 3 });
+  assert.deepEqual(p.sync.summary, { added: 2, changed: 0, removed: 0, manualDropped: 0, totalAfter: 3 });
   const result = await store.apply(p.previewId, "sync");
   assert.deepEqual(Object.keys(result.cards).sort(), ["a", "b"]);
   assert.equal(result.cards.a.artist, undefined);
@@ -112,10 +113,10 @@ test("add mode imports a scan once; uploading it again skips every row", async (
   await store.apply((await store.preview(csv(row("a")))).previewId, "sync");
   const scan = csv(row("a", 1, "Main", "2026-09-01T00:00:00.000Z"), row("c", 1, "Scans", "2026-09-01T00:00:00.000Z"));
   const first = await store.preview(scan);
-  assert.deepEqual(first.add.summary, { added: 1, increased: 1, skipped: 0, totalAfter: 3 });
+  assert.deepEqual(first.add.summary, { added: 1, increased: 1, skipped: 0, manualDropped: 0, totalAfter: 3 });
   await store.apply(first.previewId, "add");
   const again = await store.preview(scan);
-  assert.deepEqual(again.add.summary, { added: 0, increased: 0, skipped: 2, totalAfter: 3 });
+  assert.deepEqual(again.add.summary, { added: 0, increased: 0, skipped: 2, manualDropped: 0, totalAfter: 3 });
 });
 
 test("sync drops cards no longer referenced from the card cache", async () => {
@@ -148,6 +149,81 @@ test("previews are capped at 5; the oldest is evicted", async () => {
   await assert.rejects(store.apply(previewIds[0], "sync"), PreviewExpiredError);
   const result = await store.apply(previewIds[5], "sync");
   assert.deepEqual(Object.keys(result.cards), ["c5"]);
+});
+
+// ── markOwned / unmarkOwned ───────────────────────────────────────────
+test("markOwned adds a manual entry + card and updates syncedAt", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  const result = await store.markOwned("z");
+  const key = `z|normal|${MANUAL_BINDER}`;
+  assert.ok(result.entries[key]);
+  assert.equal(result.entries[key].manual, true);
+  assert.equal(result.entries[key].qty, 1);
+  assert.equal(result.cards.z.name, "Card z");
+  assert.ok(result.syncedAt);
+  const saved = JSON.parse(await readFile(join(dataDir, "collection.json"), "utf8"));
+  assert.ok(saved.entries[key]);
+});
+
+test("markOwned on a card already owned via a ManaBox entry is a no-op", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  await store.apply((await store.preview(csv(row("a")))).previewId, "sync");
+  const before = await readFile(join(dataDir, "collection.json"), "utf8");
+  const result = await store.markOwned("a");
+  assert.deepEqual(Object.keys(result.entries), ["a|normal|Main"]);
+  const after = await readFile(join(dataDir, "collection.json"), "utf8");
+  assert.equal(after, before); // untouched — no write happened
+});
+
+test("markOwned with a Scryfall failure writes nothing", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall({ fail: true }).fetchImpl, sleep: noSleep });
+  await assert.rejects(store.markOwned("z"), ScryfallError);
+  assert.equal(await exists(join(dataDir, "collection.json")), false);
+  assert.equal(await exists(join(dataDir, "collection-cards.json")), false);
+});
+
+test("markOwned throws a CollectionFormatError when Scryfall can't find the card", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall({ notFound: ["z"] }).fetchImpl, sleep: noSleep });
+  await assert.rejects(store.markOwned("z"), CollectionFormatError);
+  assert.equal(await exists(join(dataDir, "collection.json")), false);
+});
+
+test("unmarkOwned removes only manual entries for that oracle id and drops the unreferenced card", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  await store.apply((await store.preview(csv(row("a")))).previewId, "sync");
+  await store.markOwned("z");
+  const result = await store.unmarkOwned("o-z");
+  assert.equal(result.entries[`z|normal|${MANUAL_BINDER}`], undefined);
+  assert.ok(result.entries["a|normal|Main"]);
+  assert.equal(result.cards.z, undefined);
+  assert.ok(result.cards.a);
+});
+
+test("unmarkOwned is a no-op when no manual entry matches", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  await store.apply((await store.preview(csv(row("a")))).previewId, "sync");
+  const before = await readFile(join(dataDir, "collection.json"), "utf8");
+  await store.unmarkOwned("no-such-oracle");
+  const after = await readFile(join(dataDir, "collection.json"), "utf8");
+  assert.equal(after, before);
+});
+
+test("a later Full-collection apply that lacks the manual card keeps it", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  await store.markOwned("z");
+  const p = await store.preview(csv(row("a")));
+  assert.equal(p.sync.summary.removed, 0);
+  const result = await store.apply(p.previewId, "sync");
+  assert.ok(result.entries[`z|normal|${MANUAL_BINDER}`]);
+  assert.ok(result.entries["a|normal|Main"]);
+  assert.ok(result.cards.z);
 });
 
 await run("Collection store");
