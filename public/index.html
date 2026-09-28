@@ -1113,9 +1113,25 @@
     /* ── Card-type filter chips ── */
     .type-filter {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 6px;
       margin: 0 0 14px;
+    }
+
+    .type-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .type-chip.type-chip-more {
+      background: transparent;
+      border-style: dashed;
+      color: #9E9B92;
+    }
+
+    .type-chip.type-chip-more:hover {
+      color: #6D685F;
     }
 
     .type-chip {
@@ -3262,7 +3278,9 @@
       resultsEl.innerHTML = "";
       paginationEl.style.display = "none";
       sortBar.style.display = "none";
-      searchTypeFilter.clear();
+      searchTypeFilter.types.clear();
+      searchTypeFilter.subtypes.clear();
+      searchTypeFilter.expanded = false;
       typeFilterEl.style.display = "none";
       typeFilterEl.replaceChildren();
       state.results = [];
@@ -3702,17 +3720,13 @@
 
     // Render results
     // ── Card-type filter chips ──────────────────────────────────────────────
-    // Client-side view filter over already-loaded cards. Chips show only the
-    // primary types actually present; none selected = show everything; one or
-    // more selected = show cards matching ANY selected type (OR).
+    // Client-side view filter over already-loaded cards, driven by the actual
+    // Scryfall type line (types + subtypes), not a fixed list.
+    // Deck-analysis (type bar/legend) still uses this fixed primary-type set.
     const CARD_TYPES = ["creature", "artifact", "enchantment", "instant", "sorcery", "land", "planeswalker", "battle"];
     const CARD_TYPE_LABEL = { creature: "Creature", artifact: "Artifact", enchantment: "Enchantment", instant: "Instant", sorcery: "Sorcery", land: "Land", planeswalker: "Planeswalker", battle: "Battle" };
     const CARD_TYPE_RE = {};
     CARD_TYPES.forEach((t) => { CARD_TYPE_RE[t] = new RegExp("\\b" + t + "\\b"); });
-    const searchTypeFilter = new Set();
-    const savedTypeFilter = new Set();
-
-    function toggleSet(set, value) { set.has(value) ? set.delete(value) : set.add(value); }
 
     // Word-boundary match against the whole type line (covers both faces of a
     // DFC) so a subtype like "Island" never counts as the "land" type.
@@ -3723,46 +3737,122 @@
       return found;
     }
 
-    function typesPresent(cards) {
-      const present = new Set();
-      cards.forEach((c) => cardTypes(c).forEach((t) => present.add(t)));
-      return present;
-    }
+    // @testable type-helpers begin
+    const TYPE_ROW_ORDER = ["Creature", "Artifact", "Enchantment", "Instant", "Sorcery", "Land", "Planeswalker", "Battle", "Kindred", "Legendary"];
+    const KNOWN_TYPE_WORDS = new Set(["Artifact", "Battle", "Creature", "Enchantment", "Instant", "Kindred", "Land", "Planeswalker", "Sorcery"]);
+    const SUBTYPES_SHOWN = 12;
 
-    function filterByTypes(cards, set) {
-      if (!set.size) return cards;
-      return cards.filter((c) => { for (const t of cardTypes(c)) if (set.has(t)) return true; return false; });
-    }
-
-    // Drop selections for types no longer present (folder/search changed).
-    function pruneToPresent(set, cards) {
-      if (!set.size) return;
-      const present = typesPresent(cards);
-      [...set].forEach((t) => { if (!present.has(t)) set.delete(t); });
-    }
-
-    function renderTypeChips(container, cards, set, onToggle) {
-      const present = typesPresent(cards);
-      const types = CARD_TYPES.filter((t) => present.has(t));
-      if (types.length <= 1) { container.style.display = "none"; container.replaceChildren(); return; }
-      container.style.display = "flex";
-      container.replaceChildren();
-      types.forEach((t) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "type-chip" + (set.has(t) ? " active" : "");
-        chip.textContent = CARD_TYPE_LABEL[t];
-        chip.setAttribute("aria-pressed", String(set.has(t)));
-        chip.addEventListener("click", () => onToggle(t));
-        container.appendChild(chip);
+    // Splits a Scryfall type line ("Legendary Creature — Human Wizard") into
+    // its supertype/type words (left of the em dash) and subtype words
+    // (right of it). "Tribal" is normalized to "Kindred".
+    function parseTypeLine(card) {
+      const types = new Set();
+      const subtypes = new Set();
+      const faces = (card.card_faces && card.card_faces.length && card.card_faces[0].type_line)
+        ? card.card_faces.map((f) => f.type_line || "")
+        : (card.type_line || "").split(" // ");
+      faces.forEach((line) => {
+        const [left, right] = line.split(" — ");
+        (left || "").trim().split(/\s+/).filter(Boolean).forEach((word) => {
+          if (word === "Tribal") { types.add("Kindred"); return; }
+          if (word === "Legendary") { types.add("Legendary"); return; }
+          if (KNOWN_TYPE_WORDS.has(word)) types.add(word);
+        });
+        if (right) right.trim().split(/\s+/).filter(Boolean).forEach((word) => subtypes.add(word));
       });
+      return { types, subtypes };
     }
 
-    // Render the current search results honoring the active type chips.
+    // Builds the chip facets (present values + counts) over a card list, one
+    // count per card per value. Types are ordered per TYPE_ROW_ORDER; subtypes
+    // are ordered by count desc, then name.
+    function typeFacets(cards) {
+      const typeCounts = new Map();
+      const subtypeCounts = new Map();
+      cards.forEach((card) => {
+        const { types, subtypes } = parseTypeLine(card);
+        types.forEach((t) => typeCounts.set(t, (typeCounts.get(t) || 0) + 1));
+        subtypes.forEach((s) => subtypeCounts.set(s, (subtypeCounts.get(s) || 0) + 1));
+      });
+      const types = TYPE_ROW_ORDER.filter((t) => typeCounts.has(t)).map((value) => ({ value, count: typeCounts.get(value) }));
+      const subtypes = [...subtypeCounts.entries()]
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+      return { types, subtypes };
+    }
+
+    // OR within a row (types, subtypes), AND across rows. An empty filter passes everything.
+    function matchesTypeFilter(card, filter) {
+      const { types, subtypes } = parseTypeLine(card);
+      const typeOk = !filter.types.size || [...filter.types].some((t) => types.has(t));
+      const subtypeOk = !filter.subtypes.size || [...filter.subtypes].some((s) => subtypes.has(s));
+      return typeOk && subtypeOk;
+    }
+    // @testable type-helpers end
+
+    function makeTypeFilterState() { return { types: new Set(), subtypes: new Set(), expanded: false }; }
+    const searchTypeFilter = makeTypeFilterState();
+    const savedTypeFilter = makeTypeFilterState();
+    const collectionTypeFilter = makeTypeFilterState();
+
+    function toggleSet(set, value) { set.has(value) ? set.delete(value) : set.add(value); }
+
+    function typeChip(label, active, onClick, extraClass = "") {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "type-chip" + (extraClass ? ` ${extraClass}` : "") + (active ? " active" : "");
+      chip.textContent = label;
+      chip.setAttribute("aria-pressed", String(active));
+      chip.addEventListener("click", onClick);
+      return chip;
+    }
+
+    // Renders the two-row type/subtype chip panel for a view (Search, Decks,
+    // Collection) into `container`, driven by `cards` (the view's list before
+    // type filtering) and mutating `filter` ({types, subtypes, expanded}) in
+    // place. `onChange` re-renders the owning view (results + chips); the
+    // "+N more"/"Show less" chip only re-renders this panel.
+    function renderTypeFilterChips(container, cards, filter, onChange) {
+      const facets = typeFacets(cards);
+      const presentTypes = new Set(facets.types.map((f) => f.value));
+      const presentSubtypes = new Set(facets.subtypes.map((f) => f.value));
+      [...filter.types].forEach((t) => { if (!presentTypes.has(t)) filter.types.delete(t); });
+      [...filter.subtypes].forEach((s) => { if (!presentSubtypes.has(s)) filter.subtypes.delete(s); });
+
+      const showTypesRow = facets.types.length > 1 || filter.types.size > 0;
+      const showSubtypesRow = facets.subtypes.length > 0;
+      container.replaceChildren();
+      if (!showTypesRow && !showSubtypesRow) { container.style.display = "none"; return; }
+      container.style.display = "flex";
+
+      if (showTypesRow) {
+        const row = document.createElement("div");
+        row.className = "type-row";
+        facets.types.forEach(({ value, count }) => {
+          row.appendChild(typeChip(`${value} ${count}`, filter.types.has(value), () => { toggleSet(filter.types, value); onChange(); }));
+        });
+        container.appendChild(row);
+      }
+
+      if (showSubtypesRow) {
+        const row = document.createElement("div");
+        row.className = "type-row";
+        const visible = filter.expanded ? facets.subtypes : facets.subtypes.slice(0, SUBTYPES_SHOWN);
+        visible.forEach(({ value, count }) => {
+          row.appendChild(typeChip(`${value} ${count}`, filter.subtypes.has(value), () => { toggleSet(filter.subtypes, value); onChange(); }));
+        });
+        if (facets.subtypes.length > SUBTYPES_SHOWN) {
+          const label = filter.expanded ? "Show less" : `+${facets.subtypes.length - SUBTYPES_SHOWN} more`;
+          row.appendChild(typeChip(label, false, () => { filter.expanded = !filter.expanded; renderTypeFilterChips(container, cards, filter, onChange); }, "type-chip-more"));
+        }
+        container.appendChild(row);
+      }
+    }
+
+    // Render the current search results honoring the active type/subtype chips.
     function renderSearchView() {
-      pruneToPresent(searchTypeFilter, state.results);
-      renderTypeChips(typeFilterEl, state.results, searchTypeFilter, (t) => { toggleSet(searchTypeFilter, t); renderSearchView(); });
-      renderResults(filterByTypes(state.results, searchTypeFilter), false);
+      renderTypeFilterChips(typeFilterEl, state.results, searchTypeFilter, renderSearchView);
+      renderResults(state.results.filter((c) => matchesTypeFilter(c, searchTypeFilter)), false);
     }
 
     function renderResults(cards, append) {
@@ -4035,9 +4125,8 @@
       const isRealDeck = state.activeFolder !== "all" && state.activeFolder !== DEFAULT_FOLDER;
 
       // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
-      pruneToPresent(savedTypeFilter, cards);
-      renderTypeChips(savedTypeFilterEl, cards, savedTypeFilter, (t) => { toggleSet(savedTypeFilter, t); renderSavedCards(); });
-      const visible = filterByTypes(cards, savedTypeFilter).filter((c) => deckColorMatch(c, deckColorFilter));
+      renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, renderSavedCards);
+      const visible = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter));
 
       // Maybeboard cards stay in the deck but are excluded from the main section and
       // everything that measures the deck (analysis, size, export) — see below.
@@ -5923,16 +6012,21 @@
 
     function renderCollection(reset) {
       const grid = $("#collection-grid");
+      const collectionTypeFilterEl = $("#collection-type-filter");
       renderCollectionHeader();
       renderBinderOptions();
       $("#collection-empty").style.display = hasCollection() ? "none" : "block";
-      const items = hasCollection()
-        ? (() => {
-            const filtered = filterCollectionItems(collectionIndex.list, { query: collectionUi.query, colors: [...collectionUi.colors], binder: collectionUi.binder });
-            const byId = new Map(filtered.map((it) => [it.card.id, it]));
-            return sortCardsByField(filtered.map((it) => it.card), collectionUi.sortField, collectionUi.sortDir).map((c) => byId.get(c.id));
-          })()
-        : [];
+      let items = [];
+      if (hasCollection()) {
+        const filtered = filterCollectionItems(collectionIndex.list, { query: collectionUi.query, colors: [...collectionUi.colors], binder: collectionUi.binder });
+        const byId = new Map(filtered.map((it) => [it.card.id, it]));
+        renderTypeFilterChips(collectionTypeFilterEl, filtered.map((it) => it.card), collectionTypeFilter, () => renderCollection(true));
+        const typeFiltered = filtered.filter((it) => matchesTypeFilter(it.card, collectionTypeFilter));
+        items = sortCardsByField(typeFiltered.map((it) => it.card), collectionUi.sortField, collectionUi.sortDir).map((c) => byId.get(c.id));
+      } else {
+        collectionTypeFilterEl.style.display = "none";
+        collectionTypeFilterEl.replaceChildren();
+      }
       if (reset) { grid.replaceChildren(); collectionUi.shown = 0; }
       const next = items.slice(collectionUi.shown, collectionUi.shown + COLLECTION_PAGE);
       next.forEach((it) => grid.appendChild(collectionTile(it)));
