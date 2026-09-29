@@ -1521,6 +1521,24 @@
     .da2-tag-chip { border: 1px solid #E0DACD; background: #FFFEFA; color: #57524A; border-radius: 999px; height: 24px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; font: 700 11px/1 inherit; cursor: default; }
     .da2-tag-chip span { color: #A39E93; font-weight: 650; line-height: 1; }
     .da2-fix { display: flex; align-items: baseline; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .da2-swaps { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; }
+    .da2-swaps .da2-fixlbl { width: 44px; padding-top: 6px; }
+    .da2-swap-list { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+    .da2-swap-cards { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .da2-swap-arrow { color: #B0A99E; font-size: 12px; }
+    .da2-swap-why { margin-top: 3px; font-size: 12px; line-height: 1.45; color: #6E685F; }
+    .owned-inline { padding: 2px 7px; border-radius: 999px; background: rgba(63,125,92,0.9); color: #fff; font-size: 10.5px; font-weight: 700; }
+    .da2-chip.key { border: 1px solid #E5DED2; background: #F7F4EC; color: #5C564D; }
+    .da2-full { margin-top: 14px; border-top: 1px solid rgba(31,29,25,0.08); padding-top: 10px; }
+    .da2-full > summary { cursor: pointer; font-size: 12px; font-weight: 700; color: #57524A; list-style-position: inside; }
+    .da2-full > summary:hover { color: #2A2721; }
+    .da2-full-body { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+    .da2-full-sec p { font-size: 12.5px; line-height: 1.55; color: #57524A; }
+    .da2-full-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .da2-full-cols:empty { display: none; }
+    .da2-full-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; line-height: 1.45; color: #57524A; }
+    .da2-full-list.good li::marker { color: #4d6b48; }
+    .da2-full-list.bad li::marker { color: #A45636; }
     .da2-fixlbl { font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; width: 32px; flex: none; padding-top: 4px; }
     .da2-fixlbl.add { color: #6E8A69; } .da2-fixlbl.trim { color: #C0704E; }
     .da2-chip { font: 700 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 5px 9px; border-radius: 7px; background: #fff; }
@@ -5421,12 +5439,50 @@
       return `<span class="da2-chip ${kind} da2-card-chip" data-card="${esc(name)}" role="button" tabindex="0" title="Show ${esc(name)}">${esc(kind === "trim" ? "− " + name : name)}</span>`;
     }
     function fixRowsHtml(data) {
+      // Reviews since the "full analysis" prompt carry paired swaps with reasons; older
+      // cached reviews only have add/trim name lists.
+      if (Array.isArray(data.swaps) && data.swaps.length) return swapRowsHtml(data.swaps) + fullAnalysisHtml(data);
       const add = Array.isArray(data.add) ? data.add : [];
       const trim = Array.isArray(data.trim) ? data.trim : [];
       const addChips = add.length ? add.map((n) => fixCardChip(n, "add")).join("") : `<span class="da2-chip muted">no clear adds</span>`;
       const trimChips = trim.length ? trim.map((n) => fixCardChip(n, "trim")).join("") : `<span class="da2-chip muted">no obvious cuts</span>`;
       return `<div class="da2-fix" id="da2-add-row"><span class="da2-fixlbl add">Add</span>${addChips}</div>
-        <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>`;
+        <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>
+        <div class="da2-vsub" style="margin-top:8px">Re-analyze for the full analysis with reasons.</div>`;
+    }
+    // Normalized name -> owned, built lazily from the collection (for "Owned" on suggestions).
+    function ownsCardNamed(name) {
+      if (!collectionIndex) return false;
+      const key = edhrecNameKey(name);
+      return collectionIndex.list.some((it) => edhrecNameKey(it.card.name) === key);
+    }
+    function swapRowsHtml(swaps) {
+      const rows = swaps.map((s) => `<div class="da2-swap">
+          <div class="da2-swap-cards">${fixCardChip(s.cut, "trim")}<span class="da2-swap-arrow" aria-hidden="true">→</span>${fixCardChip(s.add, "add")}${ownsCardNamed(s.add) ? `<span class="owned-inline">Owned</span>` : ""}</div>
+          <div class="da2-swap-why">${esc(s.reason)}</div>
+        </div>`).join("");
+      return `<div class="da2-swaps"><span class="da2-fixlbl add">Swaps</span><div class="da2-swap-list">${rows}</div></div>`;
+    }
+    let daFullOpen = false; // keeps the Full analysis section open across re-renders
+    function fullAnalysisHtml(data) {
+      if (!data.planRead) return "";
+      const list = (items) => items.map((t) => `<li>${esc(t)}</li>`).join("");
+      const notes = Object.entries(data.roleNotes || {}).filter(([, n]) => n)
+        .map(([k, n]) => `<li><b>${esc(AI_LABEL[k] || k)}</b> — ${esc(n)}</li>`).join("");
+      const keyCards = (data.keyCards || []).map((n) => fixCardChip(n, "key")).join("");
+      return `<details class="da2-full" id="da2-full"${daFullOpen ? " open" : ""}>
+        <summary>Full analysis</summary>
+        <div class="da2-full-body">
+          <div class="da2-full-sec"><div class="da-h">How it wins</div><p>${esc(data.planRead)}</p></div>
+          <div class="da2-full-cols">
+            ${(data.strengths || []).length ? `<div class="da2-full-sec"><div class="da-h">Strengths</div><ul class="da2-full-list good">${list(data.strengths)}</ul></div>` : ""}
+            ${(data.weaknesses || []).length ? `<div class="da2-full-sec"><div class="da-h">Weaknesses</div><ul class="da2-full-list bad">${list(data.weaknesses)}</ul></div>` : ""}
+          </div>
+          ${keyCards ? `<div class="da2-full-sec"><div class="da-h">Key cards <span class="da2-approx">· good ones to pin</span></div><div class="da2-role-cards">${keyCards}</div></div>` : ""}
+          ${notes ? `<div class="da2-full-sec"><div class="da-h">Role notes</div><ul class="da2-full-list">${notes}</ul></div>` : ""}
+          ${data.mulligan ? `<div class="da2-full-sec"><div class="da-h">Keep or mulligan</div><p>${esc(data.mulligan)}</p></div>` : ""}
+        </div>
+      </details>`;
     }
     // Resolve a card by name (saved cards first, then Scryfall) and open its focus panel.
     async function openCardByName(name) {
@@ -5963,6 +6019,8 @@
         const chip = e.target.closest(".da2-card-chip");
         if (chip) { e.stopPropagation(); openCardByName(chip.dataset.card); }
       });
+      // "toggle" doesn't bubble — listen in the capture phase to remember the open state.
+      fixWrapEl?.addEventListener("toggle", (e) => { if (e.target.id === "da2-full") daFullOpen = e.target.open; }, true);
       fixWrapEl?.addEventListener("keydown", (e) => {
         if (e.key !== "Enter" && e.key !== " ") return;
         const chip = e.target.closest(".da2-card-chip");
@@ -6027,7 +6085,12 @@
       rerenderDeckAnalysisIfActive(folderId); // paint the disabled "Analyzing…" button + pending note now
       let err = null;
       try {
-        const payload = cards.slice(0, 250).map((c) => ({ name: c.name, type_line: c.type_line || "", oracle_text: getOracleText(c), cmc: c.cmc || 0 }));
+        // A card with an AI profile sends its short summary instead of the full rules text
+        // (about half the tokens); unprofiled cards fall back to the rules text.
+        const payload = cards.slice(0, 250).map((c) => {
+          const summary = profileCache.get(cardOracleId(c))?.summary || "";
+          return { name: c.name, type_line: c.type_line || "", cmc: c.cmc || 0, ...(summary ? { summary } : { oracle_text: getOracleText(c) }) };
+        });
         const res = await fetch("/api/deck-review", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -823,14 +823,17 @@ const REVIEW_ROLES = ["ramp", "draw", "removal", "wipes", "tutors", "interaction
 // verdict, short role notes, and concrete adds/cuts. Kept stable so it can be prompt-cached.
 const DECK_REVIEW_PROMPT = `You review Magic: The Gathering Commander (EDH) decks for a deck-building app. The app already counts each role (ramp, draw, removal, board wipes, tutors, interaction, graveyard hate, protection) from per-card data and grades them against targets tuned to the deck's archetype — so you don't count or grade. Your job is the judgment a count can't make: what this deck is trying to do, how well its cards serve that plan, and the few changes that would matter most.
 
-You'll get the commander (with its rules text), the deck's color identity, its estimated bracket (1 Exhibition … 5 cEDH), the owner's own game plan when they wrote one, heuristic win-condition signals, and the card list (name, type, mana value, rules text). Treat the owner's game plan as the intended strategy. Judge cards by what they do, not by keywords. When more than 100 cards are listed, it's a pool being trimmed to 100: describe the direction the pool points and name the clearest cuts.
+You'll get the commander (with its rules text), the deck's color identity, its estimated bracket (1 Exhibition … 5 cEDH), the owner's own game plan when they wrote one, heuristic win-condition signals, and the card list: name, type, mana value, and either a short summary of what the card does ("≈ …") or its rules text. Treat the owner's game plan as the intended strategy. Judge cards by what they do, not by keywords. When more than 100 cards are listed, it's a pool being trimmed to 100: describe the direction the pool points and name the clearest cuts.
 
-Fill the response schema:
+Be concise everywhere — the owner reads this on a phone. Fill the response schema:
 - identityTags: 2–8 labels from the allowed list that describe the deck's actual engine, plan, or payoff. Do not use Aristocrats merely because a deck sacrifices or recurs creatures; reserve it for recurring creature-death payoffs (drain, damage, death-value engines). Skip status labels (Budget, Primer, Help Wanted, Rule Zero, Unmaintained, Webcam Friendly) unless the input clearly shows them.
 - verdict: one sentence under 140 characters on where the deck stands and its most meaningful improvement. Missing board wipes are rarely the headline — tokens, aristocrats and graveyard decks often run few on purpose.
+- planRead: 2–3 sentences on how this deck actually wins and what its engine is, naming the key cards.
+- strengths / weaknesses: up to 3 each, one line apiece (under 90 characters), naming the cards involved.
+- keyCards: 5–8 exact card names from the list that make the deck work.
 - roleNotes: for each role where this deck's cards are notably strong, thin, or unusual for its plan, a note under 55 characters naming 1–3 example cards, with your confidence (0–1) that the note is right. Skip roles with nothing worth saying.
-- add: 3–6 real, exactly spelled cards legal in the stated color identity, suited to the plan and the bracket, not already in the list.
-- trim: 2–4 exact card names from the list — the weakest or most redundant for this plan.`;
+- swaps: 3–6 pairs. cut is an exact card name from the list (the weakest or most redundant for this plan); add is a real, exactly spelled card legal in the stated color identity, suited to the plan and the bracket, not already in the list. reason: one line under 110 characters on why the swap helps.
+- mulligan: 1–2 sentences on what a keepable opening hand needs for this deck.`;
 
 function deckReviewSchema() {
   return {
@@ -851,10 +854,22 @@ function deckReviewSchema() {
           additionalProperties: false,
         },
       },
-      add: { type: "array", items: { type: "string" } },
-      trim: { type: "array", items: { type: "string" } },
+      planRead: { type: "string" },
+      strengths: { type: "array", items: { type: "string" } },
+      weaknesses: { type: "array", items: { type: "string" } },
+      keyCards: { type: "array", items: { type: "string" } },
+      swaps: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: { cut: { type: "string" }, add: { type: "string" }, reason: { type: "string" } },
+          required: ["cut", "add", "reason"],
+          additionalProperties: false,
+        },
+      },
+      mulligan: { type: "string" },
     },
-    required: ["identityTags", "verdict", "roleNotes", "add", "trim"],
+    required: ["identityTags", "verdict", "planRead", "strengths", "weaknesses", "keyCards", "roleNotes", "swaps", "mulligan"],
     additionalProperties: false,
   };
 }
@@ -875,6 +890,11 @@ function normalizeDeckReview(parsed = {}) {
     for (const [k, v] of Object.entries(parsed.roleNotes)) roleNotes[k] = clean(v);
     if (parsed.confidence && typeof parsed.confidence === "object") Object.assign(confidence, parsed.confidence);
   }
+  const swaps = Array.isArray(parsed.swaps)
+    ? parsed.swaps.slice(0, 6)
+      .map((s) => ({ cut: oneLine(s?.cut, 80).replace(/^-\s*/, ""), add: oneLine(s?.add, 80), reason: oneLine(s?.reason, 160) }))
+      .filter((s) => s.cut && s.add)
+    : [];
   return {
     roleNotes,
     confidence,
@@ -882,9 +902,19 @@ function normalizeDeckReview(parsed = {}) {
       ? [...new Set(parsed.identityTags.map((tag) => DECK_IDENTITY_LOOKUP.get(String(tag).trim().toLowerCase())).filter(Boolean))].slice(0, 8)
       : [],
     verdict: typeof parsed.verdict === "string" ? parsed.verdict.slice(0, 200) : "",
-    add: Array.isArray(parsed.add) ? parsed.add.slice(0, 6).map(String) : [],
-    trim: Array.isArray(parsed.trim) ? parsed.trim.slice(0, 4).map((n) => String(n).replace(/^-\s*/, "")) : [],
+    planRead: typeof parsed.planRead === "string" ? oneLine(parsed.planRead, 600) : "",
+    strengths: lines(parsed.strengths, 3, 140),
+    weaknesses: lines(parsed.weaknesses, 3, 140),
+    keyCards: lines(parsed.keyCards, 8, 80),
+    swaps,
+    mulligan: typeof parsed.mulligan === "string" ? oneLine(parsed.mulligan, 300) : "",
+    // add/trim stay for the chip rows (and older clients): from the swaps when present.
+    add: swaps.length ? swaps.map((s) => s.add) : lines(parsed.add, 6, 80),
+    trim: swaps.length ? swaps.map((s) => s.cut) : lines(parsed.trim, 4, 80).map((n) => n.replace(/^-\s*/, "")),
   };
+}
+function lines(v, max, len) {
+  return Array.isArray(v) ? v.slice(0, max).map((s) => oneLine(s, len)).filter(Boolean) : [];
 }
 
 // Runs through the shared AI client: effort-aware, strict JSON schema (Anthropic),
@@ -900,7 +930,7 @@ async function reviewDeck({ ai, list }) {
       cachedContext: openai ? "" : `${DECK_REVIEW_PROMPT}\n\nAllowed identityTags: ${DECK_IDENTITY_TAGS.join(" | ")}`,
       user: `Review this Commander deck.\n\n${list}`,
       maxTokens: 12000,
-      effort: "medium",
+      effort: "low", // it gets profiles, counts and the game plan — little left to work out
       schema: openai ? undefined : deckReviewSchema(),
     });
     await usageLog.record({ feature: "deck-review", provider: ai.provider, model: ai.model, ...r.usage, usd: r.usd });
@@ -927,7 +957,7 @@ app.post("/api/deck-review", async (req, res) => {
   }
   try {
     const list = cards
-      .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${oneLine(c.oracle_text, 240)}`)
+      .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${c.summary ? `≈ ${oneLine(c.summary, 220)}` : oneLine(c.oracle_text, 240)}`)
       .join("\n");
     const b = req.body || {};
     const commander = oneLine(b.commander, 120);
