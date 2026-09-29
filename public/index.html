@@ -1533,6 +1533,15 @@
     .da2-chip-row:first-child { margin-top: 0; }
     .da2-chip-row-label { flex: none; width: 92px; padding-top: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #A39E93; }
     .da2-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .da2-types-row { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(31,29,25,0.08); }
+    .da2-type-chip small { margin-left: 6px; font-size: 10px; font-weight: 600; opacity: 0.6; }
+    .da2-basics { margin-top: 12px; }
+    .da2-basics-lead { font-size: 10.5px; color: #9E9B92; margin-bottom: 6px; cursor: help; }
+    .da2-basics-line { display: flex; flex-wrap: wrap; gap: 8px 12px; }
+    .da2-basic { display: inline-flex; align-items: center; gap: 6px; font: 650 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #57524A; }
+    .da2-basic .da2-srcpip { width: 18px; height: 18px; }
+    .da2-basic .da2-srcpip svg { width: 10px; height: 10px; }
+    .da2-basic-have { color: #9E9B92; font-weight: 500; }
     .da2-chip.bad { border: 1px solid #E9D6CC; color: #A45636; }
     .da2-chip.ok { border: 1px solid #DCE6D6; color: #4d6b48; }
     button.da2-chip.bad, button.da2-chip.ok { font-family: inherit; cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease; }
@@ -4524,6 +4533,9 @@
     // A deck is rarely a single archetype — blend the profiles of every archetype its
     // tags imply into one composite lens: targets are averaged, weights taken at their max
     // (so if any archetype leans hard on a role, the blended lens still cares about it).
+    function identityLensKeys(tags) {
+      return [...new Set((tags || []).map((tag) => IDENTITY_TAG_LENSES[tag]).filter((k) => k && k !== "default"))];
+    }
     function blendProfiles(tags) {
       const lensKeys = [...new Set((tags || [])
         .map((tag) => IDENTITY_TAG_LENSES[tag])
@@ -4928,6 +4940,41 @@
       const total = TYPICAL_CURVE.reduce((a, b) => a + b, 0);
       return TYPICAL_CURVE.map((v) => (v / total) * n);
     }
+    // Typical card-type counts for a 100-card Commander deck — the Commander version of a
+    // prerelease "15–18 creatures, 17 lands" sheet. Archetypes shift them (see typeTargetsFor).
+    const TYPE_TARGETS = { creature: [25, 30], spells: [10, 15], artifact: [5, 10], enchantment: [3, 8], planeswalker: [0, 3] };
+    const TYPE_TARGET_OVERRIDES = {
+      spellslinger: { creature: [8, 15], spells: [25, 35] },
+      aggro: { creature: [30, 38], spells: [8, 14] },
+      aristocrats: { creature: [28, 35] },
+      battlecruiser: { creature: [22, 30] },
+      cedh: { creature: [10, 20], spells: [20, 30], artifact: [8, 15] },
+    };
+    // Averages the ranges of every archetype lens the deck's tags map to (like blendProfiles).
+    function typeTargetsFor(lensKeys = []) {
+      const lenses = lensKeys.filter((k) => TYPE_TARGET_OVERRIDES[k]);
+      const out = {};
+      Object.keys(TYPE_TARGETS).forEach((t) => {
+        const ranges = lenses.length ? lenses.map((k) => TYPE_TARGET_OVERRIDES[k][t] || TYPE_TARGETS[t]) : [TYPE_TARGETS[t]];
+        const avg = (i) => Math.round(ranges.reduce((s, r) => s + r[i], 0) / ranges.length);
+        out[t] = [avg(0), avg(1)];
+      });
+      return out;
+    }
+    // Splits n basic lands across colors by their share of colored mana symbols (largest
+    // remainder, so the parts always add up to n). Colors with no symbols get none.
+    function suggestBasicSplit(pips, n) {
+      const cols = Object.keys(pips).filter((c) => pips[c] > 0);
+      const total = cols.reduce((s, c) => s + pips[c], 0);
+      const out = {};
+      if (!total || n <= 0) return out;
+      const raw = cols.map((c) => ({ c, v: (pips[c] / total) * n }));
+      raw.forEach((r) => { out[r.c] = Math.floor(r.v); });
+      let left = n - raw.reduce((s, r) => s + out[r.c], 0);
+      raw.sort((a, b) => (b.v - Math.floor(b.v)) - (a.v - Math.floor(a.v)) || pips[b.c] - pips[a.c]);
+      for (let i = 0; left > 0; i = (i + 1) % raw.length, left--) out[raw[i].c] += 1;
+      return out;
+    }
     // [good, borderline] floors per opening-hand stat, calibrated on a 99-card library:
     // 36 lands → 3+ lands 50%, keepable 79%; 10 ramp → ramp by T2 59%; 36 lands + 10 ramp
     // → a 3-drop commander on curve 88%. Below the borderline floor reads as bad.
@@ -5324,6 +5371,47 @@
       }).join("");
       return `<div class="da2-colors-line">${items}</div>`;
     }
+    const TYPE_GUIDE_ROWS = [
+      ["creature", "Creatures"], ["spells", "Instants + sorceries"], ["artifact", "Artifacts"],
+      ["enchantment", "Enchantments"], ["planeswalker", "Planeswalkers"],
+    ];
+    function typeGuideHtml(typeCounts, targets) {
+      const chips = TYPE_GUIDE_ROWS.map(([key, label]) => {
+        const n = key === "spells" ? (typeCounts.instant || 0) + (typeCounts.sorcery || 0) : (typeCounts[key] || 0);
+        const [lo, hi] = targets[key];
+        const tone = n < lo ? "low" : n > hi ? "high" : "ok";
+        const hint = tone === "ok" ? "In the typical range" : tone === "low" ? `${lo - n} below the typical range` : `${n - hi} above the typical range`;
+        return `<span class="da2-chip da2-type-chip ${tone === "ok" ? "ok" : "bad"}" title="${hint}">${label} ${n}<small>${lo}–${hi}</small></span>`;
+      }).join("");
+      return `<div class="da2-chip-row da2-types-row"><div class="da2-chip-row-label">Card types</div><div class="da2-chips">${chips}</div></div>`;
+    }
+    const BASIC_NAMES = { W: "Plains", U: "Island", B: "Swamp", R: "Mountain", G: "Forest" };
+    // Suggested basics: split the deck's current basics (or, with none, the lands it's short
+    // of its target) by colored-symbol share. Shows the current count where it differs.
+    function basicsSuggestionHtml(cards, folderId, sources, landTargetLo, landCount) {
+      if (!sources.length) return "";
+      const have = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+      let basics = 0;
+      cards.forEach((c) => {
+        const tl = c.type_line || "";
+        if (!/Basic/.test(tl) || !/Land/.test(tl)) return;
+        const q = cardQty(folderId, c.id);
+        basics += q;
+        WUBRG.forEach((col) => { if (tl.includes(BASIC_NAMES[col])) have[col] += q; });
+      });
+      const n = basics || Math.max(0, landTargetLo - landCount);
+      if (!n) return "";
+      const pips = {};
+      sources.forEach((s) => { pips[s.c] = s.pips; });
+      const split = suggestBasicSplit(pips, n);
+      const parts = sources.filter((s) => split[s.c] || have[s.c]).map((s) => {
+        const want = split[s.c] || 0;
+        const diff = basics && have[s.c] !== want ? ` <span class="da2-basic-have">(now ${have[s.c]})</span>` : "";
+        return `<span class="da2-basic"><span class="da2-srcpip da2-sb-${s.c.toLowerCase()}">${MANA_SVG[s.c.toLowerCase()]}</span>${want} ${BASIC_NAMES[s.c]}${diff}</span>`;
+      }).join("");
+      const lead = basics ? `Suggested split of your ${basics} basics` : `Suggested basics to reach ${landTargetLo} lands`;
+      return `<div class="da2-basics"><div class="da2-basics-lead" title="Split by how many mana symbols of each color your spells need.">${lead}</div><div class="da2-basics-line">${parts}</div></div>`;
+    }
     function winConditionsLineHtml(wincons) {
       return wincons.length ? `Win conditions: ${wincons.slice(0, 8).map((w) => esc(w)).join(", ")}` : "Win conditions: none detected";
     }
@@ -5617,6 +5705,7 @@
           <div class="da2-card da2-overview-card">
             <div class="da2-chips-card" id="da2-chips-card">${chipsCardHtml(grade.items)}</div>
             <div class="da2-role-detail" id="da2-role-detail" hidden></div>
+            ${typeGuideHtml(s.typeCounts, typeTargetsFor(identityLensKeys(identityTags)))}
             <div class="da2-wc">
               <div class="da2-wc-line" id="da2-wc-line">${winConditionsLineHtml(wincons)}</div>
               <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
@@ -5629,6 +5718,7 @@
             <div class="da2-section-rule"></div>
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
+            ${basicsSuggestionHtml(cards, folderId, sources, profile.landTarget[0], s.lands)}
           </div>
           </div>
         </div>

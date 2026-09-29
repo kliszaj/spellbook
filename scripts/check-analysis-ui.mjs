@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -304,6 +304,26 @@ test("typicalCurve: scales to the selection size and keeps a ~3.1 average MV", (
   const avg = c.reduce((s, v, i) => s + v * i, 0) / 63;
   assert.ok(avg > 2.9 && avg < 3.3, `avg MV ${avg}`);
   assert.equal(Math.max(...c), c[2], "peaks at MV 2");
+});
+
+
+test("typeTargetsFor: defaults without a lens, archetypes shift creatures and spells", () => {
+  assert.deepEqual(h.typeTargetsFor([]).creature, [25, 30]);
+  assert.deepEqual(h.typeTargetsFor(["spellslinger"]).creature, [8, 15]);
+  assert.deepEqual(h.typeTargetsFor(["spellslinger"]).artifact, [5, 10]);
+  assert.deepEqual(h.typeTargetsFor(["spellslinger", "aggro"]).creature, [19, 27]);
+  assert.deepEqual(h.typeTargetsFor(["casual"]), h.typeTargetsFor([]));
+});
+
+test("suggestBasicSplit: proportional to symbols, always sums to n, skips unused colors", () => {
+  const split = h.suggestBasicSplit({ W: 10, U: 20, B: 0, R: 10, G: 10 }, 10);
+  assert.equal(Object.values(split).reduce((a, b) => a + b, 0), 10);
+  assert.equal(split.B, undefined);
+  assert.equal(split.U, 4);
+  const five = h.suggestBasicSplit({ W: 12, U: 12, B: 14, R: 11, G: 13 }, 7);
+  assert.equal(Object.values(five).reduce((a, b) => a + b, 0), 7);
+  assert.deepEqual(h.suggestBasicSplit({ W: 0 }, 5), {});
+  assert.deepEqual(h.suggestBasicSplit({ W: 3 }, 0), {});
 });
 
 await run("Deck analysis UI helpers");
