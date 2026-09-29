@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -291,6 +291,19 @@ test("oddsTone: bands per stat — 36 lands in 99 reads as good for 3+ lands", (
   assert.equal(h.oddsTone("landsIn7", 0.2), "bad");
   assert.equal(h.oddsTone("keepableLands", 0.7), "ok");
   assert.equal(h.oddsTone("rampByT2", 0.3), "bad");
+});
+
+
+test("typicalCurve: scales to the selection size and keeps a ~3.1 average MV", () => {
+  for (const n of [0, 23, 63]) {
+    const c = h.typicalCurve(n);
+    assert.equal(c.length, 8);
+    assert.ok(Math.abs(c.reduce((a, b) => a + b, 0) - n) < 1e-9, `sums to ${n}`);
+  }
+  const c = h.typicalCurve(63);
+  const avg = c.reduce((s, v, i) => s + v * i, 0) / 63;
+  assert.ok(avg > 2.9 && avg < 3.3, `avg MV ${avg}`);
+  assert.equal(Math.max(...c), c[2], "peaks at MV 2");
 });
 
 await run("Deck analysis UI helpers");

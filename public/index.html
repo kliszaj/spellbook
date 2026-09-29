@@ -1396,7 +1396,12 @@
     .da-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; margin-bottom: 15px; }
 
     .curve { display: flex; align-items: flex-end; gap: 6px; height: 92px; }
-    .curve-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+    .curve-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+    .curve-track { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; }
+    /* Dashed step line for the typical curve; extends half the column gap each side so steps meet. */
+    .curve-ideal { position: absolute; left: -3px; right: -3px; height: 0; border-top: 1.5px dashed #B9892A; pointer-events: none; }
+    .curve-legend { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-size: 10.5px; color: #9E9B92; }
+    .curve-legend-line { width: 16px; height: 0; border-top: 1.5px dashed #B9892A; flex: none; }
     .curve-count { font-size: 10px; color: #9E9B92; font-variant-numeric: tabular-nums; }
     .curve-bar { width: 100%; max-width: 26px; min-height: 2px; background: #BEB7A9; border-radius: 4px 4px 0 0; transition: height 0.35s cubic-bezier(0.2,0.7,0.2,1); }
     .curve-bar.peak { background: #6E675A; }
@@ -4176,6 +4181,10 @@
       requestAnimationFrame(() => window.scrollTo(0, y));
     }
 
+    // Set by renderSavedCards: the filtered main-deck cards on screen, which the deck
+    // analysis's mana curve follows (so "Creatures only" shows where the creatures sit).
+    let deckCurveView = null; // { folderId, cards, filtered }
+
     function renderSavedCards() {
       renderFolderRail();
       const filter = savedFilter.value.toLowerCase();
@@ -4217,7 +4226,12 @@
 
       // "All" and "Unsorted" are library buckets, not decks — analysis only for real decks.
       if (!isRealDeck) { dA.style.display = "none"; dA.innerHTML = ""; }
-      else renderDeckAnalysis(deck, getFolderCards(state.activeFolder).filter((c) => !isMaybe(state.activeFolder, c.id))); // whole deck minus Maybeboard, not the filtered view
+      else {
+        const wholeDeck = getFolderCards(state.activeFolder).filter((c) => !isMaybe(state.activeFolder, c.id));
+        // The mana curve follows the on-screen selection; everything else measures the whole deck.
+        deckCurveView = { folderId: state.activeFolder, cards: mainVisible.slice(), filtered: mainVisible.length !== wholeDeck.length };
+        renderDeckAnalysis(deck, wholeDeck); // whole deck minus Maybeboard, not the filtered view
+      }
 
       savedGrid.innerHTML = "";
       // Divider counts are quantity-weighted (basics ×N) so they match the deck totals.
@@ -4431,16 +4445,27 @@
       return `<div class="da-tile ${stt}"><span class="da-num">${num}</span><span class="da-cap">${cap}</span>${hasT ? `<span class="da-tgt"><span class="dot ${stt}"></span>${tgt}</span>` : ""}</div>`;
     }
 
-    function curveHtml(curve) {
-      const max = Math.max(1, ...curve);
+    function curveHtml(curve, { scoped = false } = {}) {
+      const n = curve.reduce((a, b) => a + b, 0);
+      const ideal = typicalCurve(n);
+      const max = Math.max(1, ...curve, ...ideal);
       const peak = Math.max(...curve);
       const labels = ["0", "1", "2", "3", "4", "5", "6", "7+"];
-      return `<div class="curve">${curve.map((n, i) => `
-        <div class="curve-col">
-          <span class="curve-count">${n}</span>
-          <span class="curve-bar ${n === peak && n > 0 ? "peak" : ""}" style="height:${Math.round((n / max) * 100)}%"></span>
+      // Heights are a share of the track minus the count label (≈18px) above each bar.
+      const h = (v) => `calc((100% - 18px) * ${(v / max).toFixed(4)})`;
+      const cols = curve.map((c, i) => `
+        <div class="curve-col" title="MV ${labels[i]}: ${c} card${c === 1 ? "" : "s"}${n ? ` · typical ≈ ${ideal[i].toFixed(1)}` : ""}">
+          <span class="curve-track">
+            <span class="curve-count">${c}</span>
+            <span class="curve-bar ${c === peak && c > 0 ? "peak" : ""}" style="height:${h(c)}"></span>
+            ${n ? `<span class="curve-ideal" style="bottom:${h(ideal[i])}"></span>` : ""}
+          </span>
           <span class="curve-x">${labels[i]}</span>
-        </div>`).join("")}</div>`;
+        </div>`).join("");
+      const legend = n
+        ? `<span class="curve-legend-line"></span>Typical Commander curve${scoped ? `, scaled to these ${n} cards` : ""}`
+        : "No nonland cards in this selection";
+      return `<div class="curve">${cols}</div><div class="curve-legend">${legend}</div>`;
     }
 
     // A light, honest read of the curve against a typical *midrange* Commander deck.
@@ -4895,6 +4920,13 @@
         out.commanderOnCurve = hypergeomAtLeast(N, lands + ramp, seenBy, mv);
       }
       return out;
+    }
+    // Typical Commander nonland curve (MV 0..6, 7+) for a ~63-spell midrange deck —
+    // avg MV ≈ 3.1. Stored as shares so it scales to any selection (e.g. just creatures).
+    const TYPICAL_CURVE = [1, 10, 15, 14, 10, 7, 4, 2];
+    function typicalCurve(n) {
+      const total = TYPICAL_CURVE.reduce((a, b) => a + b, 0);
+      return TYPICAL_CURVE.map((v) => (v / total) * n);
     }
     // [good, borderline] floors per opening-hand stat, calibrated on a 99-card library:
     // 36 lands → 3+ lands 50%, keepable 79%; 10 ramp → ramp by T2 59%; 36 lands + 10 ramp
@@ -5512,6 +5544,7 @@
       const commander = deck && deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
       const colors = deckColors(cards, commander);
       const deckName = deck ? deck.name : "All saved cards";
+      const curveScoped = Boolean(deckCurveView && deckCurveView.folderId === folderId && deckCurveView.filtered);
 
       // Below a near-complete count, targets calibrated for a 100-card deck would flag
       // everything as "short" — noise. Show only the deck's identity + a build prompt.
@@ -5591,8 +5624,8 @@
           </div>
           <div class="da2-side">
           <div class="da2-card da2-mana-card">
-            <div class="da-h">Mana curve</div>
-            ${curveHtml(s.curve)}
+            <div class="da-h">Mana curve${curveScoped ? ` <span class="da2-approx">· current selection</span>` : ""}</div>
+            ${curveHtml(curveScoped ? computeDeckStats(deckCurveView.cards, folderId).curve : s.curve, { scoped: curveScoped })}
             <div class="da2-section-rule"></div>
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
