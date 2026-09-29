@@ -1560,18 +1560,25 @@
     .da2-wc-line { font-size: 12.5px; font-weight: 650; color: #57524A; }
     .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
 
-    .da2-hand-odds { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-    .da2-hand-line { font-size: 12px; color: #57524A; display: flex; justify-content: space-between; gap: 10px; }
-    .da2-hand-line b { color: #2A2721; font-weight: 700; }
-    .da2-hand-line[title] { cursor: help; border-bottom: 1px dotted #C8B88D; padding-bottom: 1px; }
+    #da2-opening-hand { margin-top: 12px; padding: 14px 15px; }
+    .da2-hand-odds { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .da2-hand-line { font-size: 12px; color: #57524A; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 10px; background: #FFFEFA; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; }
+    .da2-hand-line[title] { cursor: help; }
+    .da2-hand-line[title] > span { border-bottom: 1px dotted #C8B88D; }
+    .da2-odds { font-weight: 700; font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid transparent; flex: none; }
+    .da2-odds-good { color: #2F6A2C; background: #E8F3E4; border-color: #B6D4AC; }
+    .da2-odds-ok { color: #7A5A0C; background: #FBF1D6; border-color: #E6CF8C; }
+    .da2-odds-bad { color: #9A3A22; background: #F8E4DC; border-color: #E4B6A5; }
     .da2-hand-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .da2-hand-btn { font-family: inherit; font-size: 11.5px; font-weight: 600; padding: 6px 11px; border: 1px solid rgba(31,29,25,0.14); border-radius: 8px; background: #FFFEFA; color: #504B42; cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s; }
     .da2-hand-btn:hover:not(:disabled) { border-color: rgba(31,29,25,0.24); background: #F2EFE8; color: #181715; }
     .da2-hand-btn:disabled { opacity: 0.45; cursor: default; }
     .da2-hand-mull { margin: 10px 0 6px; font-size: 11px; color: #8A6B2A; }
-    .da2-hand-cards { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .da2-hand-card { padding: 0; border: none; background: none; cursor: pointer; width: 62px; }
-    .da2-hand-card img { width: 100%; display: block; border-radius: 6px; aspect-ratio: 488 / 680; object-fit: cover; border: 1px solid rgba(31,29,25,0.16); background: #efeae1; }
+    .da2-hand-cards { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    @media (max-width: 700px) { .da2-hand-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .da2-hand-card { padding: 0; border: none; background: none; cursor: pointer; width: 100%; transition: transform 0.12s ease; }
+    .da2-hand-card:hover { transform: translateY(-2px); }
+    .da2-hand-card img { width: 100%; display: block; border-radius: 4.75% / 3.5%; aspect-ratio: 488 / 680; object-fit: cover; border: 1px solid rgba(31,29,25,0.16); background: #efeae1; }
     .da2-hand-card:hover img { filter: brightness(1.05); }
     .da2-hand-card:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; border-radius: 6px; }
     .da2-hand-lands { margin-top: 8px; font-size: 11px; color: #78726A; }
@@ -2085,6 +2092,7 @@
                 <button class="color-toggle" data-color="b" title="Black" aria-label="Black" aria-pressed="false"></button>
                 <button class="color-toggle" data-color="r" title="Red" aria-label="Red" aria-pressed="false"></button>
                 <button class="color-toggle" data-color="g" title="Green" aria-label="Green" aria-pressed="false"></button>
+                <button class="color-toggle" data-color="c" title="Colorless only" aria-label="Colorless only" aria-pressed="false"></button>
               </div>
               <span class="identity-display" id="identity-display" aria-live="polite"></span>
             </div>
@@ -2516,7 +2524,7 @@
       b: "<svg class=\"mana-glyph\" viewBox=\"0 0 367.108 380.936\" preserveAspectRatio=\"xMidYMid meet\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M366.883 184.193c0 24.875-9.018 41.859-27.129 50.877-5.261 2.63-21.869 6.237-49.75 10.746-18.111 3.006-27.129 9.995-27.129 20.892v45.766c0 1.879.601 7.741 1.728 17.51l1.729 18.111c0 5.637-1.353 14.88-3.983 27.731a2504 2504 0 0 1-24.875 5.11c-3.006-11.348-4.509-19.013-4.509-23.221 0-1.879.451-4.735 1.428-8.492.902-3.758 1.428-6.614 1.428-8.492 0-2.631-2.33-9.995-7.064-22.019h-8.793c-1.127 1.878-1.578 4.358-1.202 7.364 1.503 6.388 2.104 11.874 1.728 16.383-6.387 4.509-15.255 10.596-26.603 18.111-2.63-.751-3.607-1.127-2.856-1.127v-40.13q-1.127-2.818-5.636-2.255h-6.763l-6.764 53.132c-5.26.375-11.723.375-19.238 0-2.631-12.4-7.365-30.887-14.129-55.386h-4.509c-4.133 13.226-6.387 20.366-6.763 21.493 0 1.503.451 4.434 1.428 8.792.902 4.359 1.428 7.29 1.428 8.793 0 1.127-.376 3.983-1.128 8.492l-1.728 13.602c-.752.752-1.728 1.127-2.856 1.127-11.272 0-18.862-2.855-22.62-8.492-3.757-5.636-5.26-13.602-4.509-23.747l4.509-67.861q0-1.69 1.127-4.509c.752-1.878 1.128-3.231 1.128-3.983 0-3.006-3.232-9.018-9.62-18.111-1.127-.376-6.989-1.728-17.51-3.983q-9.581-2.254-37.875-7.891C13.001 233.642 0 212.75 0 175.776c0-55.01 22.62-100.851 67.86-137.374 1.879 10.145 5.111 23.747 9.62 40.731 3.381.752 10.746 2.48 22.019 5.11 2.254.752 13.752 4.885 34.493 12.475q-15.894-9.582-41.257-31.112c-6.388-7.515-9.619-20.14-9.619-37.876 0-4.133 7.139-9.018 21.493-14.729 12.775-5.261 22.47-8.267 28.857-9.018C153.832 1.353 169.463 0 180.435 0c47.119 0 85.221 12.099 114.228 36.222-9.393 10.972-25.626 22.621-48.622 35.02 9.094.376 22.245-3.156 39.604-10.746 17.36-7.515 24.725-11.273 22.019-11.273 3.006 0 9.094 6.012 18.112 18.111 6.763 9.018 12.249 17.135 16.382 24.349 12.024 21.493 20.141 44.714 24.349 69.589 0 8.718.15 14.88.601 18.637v4.509zM150.3 194.338c0-16.232-7.064-31.563-21.192-46.067s-29.309-21.793-45.541-21.793c-14.354 0-26.979 6.087-37.876 18.186-10.972 12.174-16.383 25.626-16.383 40.431 0 12.926 6.238 21.267 18.638 25.025 7.89 2.254 19.013 3.607 33.366 3.983h31.112c25.251.375 37.876-6.238 37.876-19.765m61.623 70.115v-17.51a572 572 0 0 1-7.891-15.255c-2.254-7.515-6.387-18.111-12.475-31.638l-6.237 66.132q0 7.89-3.382 7.89-2.255 0-3.381-1.127c-2.631-39.98-3.983-57.264-3.983-52.004v-19.764c-.752-1.127-1.654-1.729-2.781-1.729-12.851 13.227-19.238 34.494-19.238 63.878q0 24.348 4.509 29.985c3.006-.752 6.387-2.104 10.145-3.983 1.503-.752 5.862-1.127 13.001-1.127s15.856 2.254 26.002 6.763c3.757 0 5.636-10.145 5.636-30.511m127.83-78.757c0-15.18-5.636-28.707-16.984-40.656-11.347-11.949-24.348-17.886-39.002-17.886-15.857 0-30.662 7.214-44.414 21.794-13.753 14.504-20.666 29.684-20.666 45.541 0 13.226 6.387 19.764 19.238 19.764h65.005c24.499-.376 36.748-9.845 36.748-28.482\" style=\"fill-rule:nonzero\"/></svg>",
       r: "<svg class=\"mana-glyph\" viewBox=\"0 0 347.72 387.035\" preserveAspectRatio=\"xMidYMid meet\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M341.482 269.789c-16.833 40.206-50.35 60.271-100.4 60.271-9.169 0-19.163 1.127-29.835 3.457-16.082 3.457-24.123 8.266-24.123 14.353 0 1.879 1.353 4.134 3.983 6.614 2.705 2.48 4.96 3.757 6.914 3.757-9.544 0-3.081.301 19.539.827 22.62.601 36.748.826 42.46.826-33.292 19.539-88.978 28.482-167.059 26.979-25.626-.375-47.645-11.648-65.982-33.892C8.943 331.939 0 308.417 0 282.415c0-27.505 9.244-50.952 27.881-70.341 18.562-19.313 41.633-29.008 69.138-29.008 6.087 0 14.279 1.353 24.424 3.983 10.145 2.706 16.909 3.983 20.365 3.983 14.129 0 31.789-5.862 52.831-17.51s31.037-17.51 29.835-17.51c-3.833 40.205-17.21 67.184-40.206 80.937-16.458 9.544-24.649 18.938-24.649 28.106 0 5.711 3.457 10.371 10.296 13.752q8.003 4.059 17.81 4.059c9.92 0 19.69-6.088 29.309-18.337 9.544-12.25 13.752-23.372 12.625-33.292-1.127-11.498-.376-25.25 2.33-41.332q1.127-6.876 8.341-16.909c4.81-6.688 9.093-10.822 12.926-12.325 0 3.457-1.202 9.169-3.757 17.21-2.48 8.041-3.758 13.978-3.758 17.81 0 8.417 2.255 14.955 6.914 19.539 6.914-2.705 13.001-11.272 18.337-25.851 4.584-11.122 7.289-21.794 8.041-32.164-16.083-.752-31.488-8.042-46.218-21.794-14.729-13.752-22.094-28.707-22.094-44.789 0-2.706.376-5.336 1.127-8.042 2.255 3.457 5.712 8.793 10.296 16.083 6.538 9.544 11.498 14.353 14.955 14.353 4.584 0 6.914-4.809 6.914-14.353 0-12.25-3.232-23.372-9.77-33.292-7.289-11.874-16.683-17.811-28.106-17.811-5.336 0-13.377 2.856-24.123 8.643-10.747 5.711-20.516 8.642-29.309 8.642q-4.058 0-35.621-10.371c37.124-6.087 55.686-11.648 55.686-16.608 0-13.001-25.476-21.793-76.352-26.378-4.96-.375-14.128-1.127-27.58-2.329q2.254-2.818 32.69-6.313C118.737.977 130.837 0 137.675 0c91.082 0 148.873 44.189 173.372 132.64 4.208-3.456 6.312-9.318 6.312-17.434 0-10.446-3.081-23.673-9.168-39.605-2.33-6.162-5.937-15.48-10.897-27.955 31.338 39.98 47.044 77.855 47.044 113.627 0 18.862-4.434 35.921-13.226 51.327-5.712 10.371-16.458 23.672-32.165 39.83-15.706 16.157-26.377 28.632-32.164 37.5 21.042-5.712 34.87-10.146 41.333-13.227 14.504-6.463 27.73-16.232 39.604-29.308 0 4.96-2.104 12.475-6.313 22.394M91.232 44.189c0 6.914-3.832 11.272-11.498 13.226l-14.954 2.33c-5.336 2.705-13.227 13.226-23.522 31.563q-1.691-8.568-5.186-24.123c-3.457.375-9.168 3.457-17.209 9.168-3.457 2.705-9.018 6.688-16.683 12.024 2.329-13.752 9.919-27.73 22.995-41.934C38.928 30.737 52.38 22.921 65.381 22.921c17.209 0 25.851 7.064 25.851 21.268m99.875 52.83c0 6.538-3.532 11.949-10.596 16.383s-14.053 6.613-20.967 6.613c-9.168 0-17.435-5.185-24.649-15.481-8.793-12.625-17.811-20.816-26.979-24.724 1.879-1.879 4.208-2.856 6.914-2.856 3.456 0 9.243 2.706 17.51 8.041 8.191 5.336 13.451 8.041 15.781 8.041 1.879 0 5.035-2.705 9.469-8.041 4.434-5.335 9.243-8.041 14.654-8.041q18.938 0 18.938 20.065\" style=\"fill-rule:nonzero\"/></svg>",
       g: "<svg class=\"mana-glyph\" viewBox=\"0 0 393.786 400.476\" preserveAspectRatio=\"xMidYMid meet\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M393.711 224.699c0 7.515-2.931 14.279-8.717 20.291s-12.475 9.018-19.99 9.018c-12.024 0-20.817-5.636-26.453-16.909l-26.453-1.127c-5.636 0-16.758 2.48-33.216 7.365-17.661 4.884-27.806 8.792-30.436 11.798q-6.2 6.763-10.145 31.563c-2.255 13.527-3.382 23.447-3.382 29.835 0 10.145 1.578 17.585 4.81 22.244 3.231 4.66 9.769 8.643 19.689 11.799s16.082 4.96 18.337 5.335c1.503 0 3.907-.15 7.364-.526h6.764c4.885 0 9.92.752 15.18 2.255 7.515 2.254 10.747 5.26 9.619 9.018-5.26-.752-14.429.376-27.58 3.382l15.782 7.89q0 6.764-19.164 6.764c-3.381 0-7.965-.752-13.827-2.255-5.787-1.503-9.695-2.254-11.573-2.254h-7.29q-.564 5.636-3.382 16.909-9.58-.564-22.545-11.273c-8.642-7.139-14.053-10.671-16.307-10.671-2.255 0-5.486 3.607-9.544 10.671-4.134 7.139-6.163 12.024-6.163 14.655q-7.327-3.947-12.399-14.655c-1.503-4.885-3.157-9.769-5.035-14.654-3.758.376-10.672 8.266-20.817 23.672h-2.856c-.751-1.127-3.607-9.018-8.417-23.672q-17.472-5.637-32.69-5.636-7.327 0-22.545 3.381l-15.781-1.127c2.254-2.254 8.792-6.538 19.689-12.926q19.163-11.272 29.308-11.272c1.128 0 2.631.225 4.509.601s3.382.601 4.509.601c2.631 0 6.839-1.428 12.701-4.208 5.786-2.781 9.168-5.336 10.145-7.59.977-2.255 1.428-8.117 1.428-17.435 0-21.418-5.636-37.35-16.909-47.871q-14.654-14.09-48.472-20.29c-6.012 21.417-22.92 32.089-50.651 32.089-9.018 0-18.036-5.411-27.054-16.308C4.509 252.054 0 242.134 0 233.116c0-13.903 5.786-25.325 17.434-34.343-9.393-9.77-14.053-19.69-14.053-29.835 0-9.394 2.931-17.66 8.718-24.8 5.786-7.139 13.452-11.272 22.845-12.399-.751-12.024 3.157-20.291 11.799-24.8-4.133-4.133-6.162-11.423-6.162-21.944 0-12.4 4.133-22.695 12.399-30.962 8.267-8.266 18.563-12.399 30.962-12.399 13.527 0 24.574 4.734 33.217 14.128C128.055 18.563 151.502 0 187.574 0q28.182 0 49.599 22.545 7.891 8.456 7.891 9.018c-4.509 0-2.254-.826 6.764-2.555 9.018-1.653 15.556-2.555 19.689-2.555 14.654 0 27.58 5.411 38.853 16.308q14.654 14.654 20.29 37.199 3.946.564 12.4 3.382 12.4 6.2 12.4 21.418c0 1.878-1.503 5.486-4.509 10.671q36.072 20.29 36.072 56.363 0 10.145-7.891 28.181 14.654 8.454 14.654 24.799m-232.063 24.8v-7.29c0-8.642-4.209-16.533-12.701-23.672-8.416-7.139-16.984-10.671-25.626-10.671-10.521 0-20.29 2.405-29.308 7.289 19.914-1.127 42.459 10.371 67.56 34.344m-10.146-69.814c-5.636-6.388-10.521-12.926-14.654-19.69-15.782 4.133-23.672 8.793-23.672 14.053 4.509-.375 11.047.451 19.689 2.555s14.805 3.082 18.637 3.082m34.344-17.435v-24.8c-9.018-1.503-14.504-2.254-16.308-2.254v8.416l16.308 18.563m73.196-15.782c-4.509-1.879-12.926-5.636-25.325-11.272v48.471c17.66-10.145 26.077-22.545 25.325-37.199m30.962 66.508-12.4-15.18a4706 4706 0 0 0-22.845 16.082c-7.741 5.411-14.354 11.573-19.99 18.336 16.908-9.018 35.32-15.405 55.16-19.163\" style=\"fill-rule:nonzero\"/></svg>",
-      c: "<svg class=\"mana-glyph\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"xMidYMid meet\" fill=\"currentColor\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M49.687 12.026c2.475 4.968 5.504 9.793 9.096 14.475 1.528 1.966 3.279 4.021 5.254 6.147 1.948 2.126 4.11 4.253 6.451 6.344 2.359 2.091 4.941 4.074 7.756 5.951 2.815 1.876 5.843 3.592 9.096 5.129-4.78 2.556-9.516 5.665-14.225 9.346-1.956 1.537-4.003 3.306-6.147 5.325-2.126 2.002-4.217 4.2-6.263 6.576-2.046 2.412-4.012 5.004-5.897 7.827-1.877 2.806-3.583 5.79-5.12 8.953-2.395-4.7-5.379-9.346-8.962-13.956-3.074-3.931-6.96-8.059-11.66-12.42-4.691-4.36-10.373-8.238-17.03-11.651 4.789-2.484 9.525-5.557 14.224-9.221 4.012-3.163 8.149-7.112 12.411-11.848 4.27-4.736 7.933-10.383 11.016-16.977zm-5.504 52.895c2.225 2.824 4.056 5.683 5.504 8.578 1.885-4.021 4.146-7.47 6.781-10.365 2.645-2.913 5.218-5.343 7.693-7.309 2.814-2.198 5.754-4.128 8.837-5.772-4.101-1.859-7.586-4.128-10.436-6.773-2.868-2.645-5.281-5.2-7.237-7.684-2.225-2.805-4.11-5.79-5.638-8.953-1.876 4.092-4.128 7.595-6.719 10.49-2.609 2.913-5.146 5.325-7.622 7.309-2.823 2.216-5.763 4.074-8.837 5.629 4.101 2.127 7.595 4.521 10.499 7.166 2.904 2.645 5.299 5.218 7.175 7.684z\"/></svg>",
+      c: "<svg class=\"mana-glyph\" viewBox=\"16 10 78 80\" preserveAspectRatio=\"xMidYMid meet\" fill=\"currentColor\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M49.687 12.026c2.475 4.968 5.504 9.793 9.096 14.475 1.528 1.966 3.279 4.021 5.254 6.147 1.948 2.126 4.11 4.253 6.451 6.344 2.359 2.091 4.941 4.074 7.756 5.951 2.815 1.876 5.843 3.592 9.096 5.129-4.78 2.556-9.516 5.665-14.225 9.346-1.956 1.537-4.003 3.306-6.147 5.325-2.126 2.002-4.217 4.2-6.263 6.576-2.046 2.412-4.012 5.004-5.897 7.827-1.877 2.806-3.583 5.79-5.12 8.953-2.395-4.7-5.379-9.346-8.962-13.956-3.074-3.931-6.96-8.059-11.66-12.42-4.691-4.36-10.373-8.238-17.03-11.651 4.789-2.484 9.525-5.557 14.224-9.221 4.012-3.163 8.149-7.112 12.411-11.848 4.27-4.736 7.933-10.383 11.016-16.977zM52.444 31.013c1.238 2.484 2.752 4.896 4.548 7.237 0.764 0.983 1.639 2.010 2.627 3.074 0.974 1.063 2.055 2.127 3.225 3.172 1.179 1.046 2.470 2.037 3.878 2.975 1.407 0.938 2.921 1.796 4.548 2.564-2.390 1.278-4.758 2.833-7.112 4.673-0.978 0.768-2.002 1.653-3.074 2.663-1.063 1.001-2.108 2.100-3.131 3.288-1.023 1.206-2.006 2.502-2.949 3.913-0.939 1.403-1.792 2.895-2.560 4.476-1.198-2.350-2.689-4.673-4.481-6.978-1.537-1.966-3.480-4.029-5.830-6.210-2.345-2.180-5.186-4.119-8.515-5.825 2.394-1.242 4.763-2.779 7.112-4.611 2.006-1.581 4.074-3.556 6.205-5.924 2.135-2.368 3.966-5.191 5.508-8.489z\"/></svg>",
     };
 
     function updateIdentityDisplay() {
@@ -2533,10 +2541,7 @@
       const svg = MANA_SVG[btn.dataset.color];
       if (svg) btn.innerHTML = svg;
       btn.addEventListener("click", () => {
-        const c = btn.dataset.color;
-        const idx = state.colorIdentity.indexOf(c);
-        if (idx >= 0) state.colorIdentity.splice(idx, 1);
-        else state.colorIdentity.push(c);
+        state.colorIdentity = toggleIdentityColor(state.colorIdentity, btn.dataset.color);
         updateIdentityDisplay(); // colour identity is session-only — not persisted or synced
       });
     });
@@ -4862,6 +4867,19 @@
       }
       return out;
     }
+    // [good, borderline] floors per opening-hand stat, calibrated on a 99-card library:
+    // 36 lands → 3+ lands 50%, keepable 79%; 10 ramp → ramp by T2 59%; 36 lands + 10 ramp
+    // → a 3-drop commander on curve 88%. Below the borderline floor reads as bad.
+    const ODDS_BANDS = {
+      landsIn7: [0.48, 0.35],
+      keepableLands: [0.75, 0.6],
+      rampByT2: [0.55, 0.35],
+      commanderOnCurve: [0.75, 0.55],
+    };
+    function oddsTone(stat, p) {
+      const [good, ok] = ODDS_BANDS[stat] || [0.6, 0.4];
+      return p >= good ? "good" : p >= ok ? "ok" : "bad";
+    }
     // Fisher–Yates partial shuffle — draws min(n, cards.length) distinct elements uniformly
     // without replacement. `rng` is injectable so callers/tests can seed it.
     function drawRandom(cards, n, rng = Math.random) {
@@ -5290,8 +5308,13 @@
 
     function openingHandSectionHtml(odds, commander) {
       const pct = (p) => Math.round(p * 100);
+      const toneLabel = { good: "Good odds", ok: "Borderline", bad: "Poor odds" };
+      const stat = (key, label, title = "") => {
+        const tone = oddsTone(key, odds[key]);
+        return `<div class="da2-hand-line"${title ? ` title="${escAttr(title)}"` : ""}><span>${label}</span><b class="da2-odds da2-odds-${tone}" title="${toneLabel[tone]}">${pct(odds[key])}%</b></div>`;
+      };
       const commanderLine = (odds.commanderOnCurve != null && commander)
-        ? `<div class="da2-hand-line" title="Approximation — counts lands and ramp together; assumes each ramp piece gives one extra mana.">${esc(frontFaceName(commander.name))} on curve (turn ${Math.round(commander.cmc || 0)}) <b>${pct(odds.commanderOnCurve)}%</b></div>`
+        ? stat("commanderOnCurve", `${esc(frontFaceName(commander.name))} on curve (turn ${Math.round(commander.cmc || 0)})`, "Approximation — counts lands and ramp together; assumes each ramp piece gives one extra mana.")
         : "";
       const hand = handState?.hand || [];
       const handHtml = hand.length ? `
@@ -5301,9 +5324,9 @@
       return `
         <div class="da-h">Opening hand</div>
         <div class="da2-hand-odds">
-          <div class="da2-hand-line">3+ lands in opening 7 <b>${pct(odds.landsIn7)}%</b></div>
-          <div class="da2-hand-line">2–5 lands (keepable) <b>${pct(odds.keepableLands)}%</b></div>
-          <div class="da2-hand-line">Ramp by turn 2 <b>${pct(odds.rampByT2)}%</b></div>
+          ${stat("landsIn7", "3+ lands in opening 7")}
+          ${stat("keepableLands", "2–5 lands (keepable)")}
+          ${stat("rampByT2", "Ramp by turn 2")}
           ${commanderLine}
         </div>
         <div class="da2-hand-actions">
@@ -5545,9 +5568,9 @@
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
           </div>
-          <section class="da2-card" id="da2-opening-hand" hidden></section>
           </div>
         </div>
+        <section class="da2-card" id="da2-opening-hand" hidden></section>
         <section class="da2-card" id="da2-edhrec" hidden></section>
         </div>`;
       dA.style.display = "block";
@@ -6433,6 +6456,13 @@
       const oid = card.oracle_id || card.card_faces?.[0]?.oracle_id;
       return (oid && index.byOracle.get(oid)?.qty) || 0;
     }
+    // Identity pickers ("fits within" semantics): C means colorless-only, so it can't be
+    // combined with colors — picking C clears the colors and picking a color clears C.
+    function toggleIdentityColor(selected, key) {
+      const isC = (k) => k.toLowerCase() === "c";
+      if (selected.includes(key)) return selected.filter((k) => k !== key);
+      return isC(key) ? [key] : [...selected.filter((k) => !isC(k)), key];
+    }
     function filterCollectionItems(items, { query = "", colors = [], binder = "" } = {}) {
       const q = query.trim().toLowerCase();
       const allowed = new Set([...colors].map((c) => c.toUpperCase()));
@@ -6540,8 +6570,10 @@
     }
     const hasCollection = () => Boolean(collectionIndex && collectionIndex.list.length);
 
-    function buildColorPicker(container, selected, onChange, { colorless = false } = {}) {
+    // exclusiveColorless: C is "colorless only" and can't be combined with colors (identity pickers).
+    function buildColorPicker(container, selected, onChange, { colorless = false, exclusiveColorless = false } = {}) {
       container.replaceChildren();
+      const syncAll = () => container.querySelectorAll(".color-toggle").forEach((b) => b._sync());
       (colorless ? ["w", "u", "b", "r", "g", "c"] : ["w", "u", "b", "r", "g"]).forEach((c) => {
         const key = c.toUpperCase();
         const btn = document.createElement("button");
@@ -6552,7 +6584,17 @@
         btn.setAttribute("aria-label", COLOR_NAMES[c]);
         btn.innerHTML = MANA_SVG[c];
         const sync = () => { const on = selected.has(key); btn.classList.toggle("active", on); btn.setAttribute("aria-pressed", String(on)); };
-        btn.addEventListener("click", () => { if (selected.has(key)) selected.delete(key); else selected.add(key); sync(); onChange(); });
+        btn._sync = sync;
+        btn.addEventListener("click", () => {
+          if (exclusiveColorless) {
+            const next = toggleIdentityColor([...selected], key);
+            selected.clear();
+            next.forEach((k) => selected.add(k));
+          } else if (selected.has(key)) selected.delete(key);
+          else selected.add(key);
+          syncAll();
+          onChange();
+        });
         sync();
         container.appendChild(btn);
       });
@@ -6689,7 +6731,7 @@
       }
     }
 
-    buildColorPicker($("#collection-colors"), collectionUi.colors, () => renderCollection(true));
+    buildColorPicker($("#collection-colors"), collectionUi.colors, () => renderCollection(true), { colorless: true, exclusiveColorless: true });
     $("#collection-filter").addEventListener("input", (e) => { collectionUi.query = e.target.value; renderCollection(true); });
     $("#collection-binder").addEventListener("change", (e) => { collectionUi.binder = e.target.value; renderCollection(true); });
     $("#collection-sort").addEventListener("change", (e) => { collectionUi.sortField = e.target.value; renderCollection(true); });

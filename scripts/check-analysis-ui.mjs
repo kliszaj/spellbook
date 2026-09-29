@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -278,6 +278,19 @@ test("escAttr: also escapes & < > (same as esc(), plus quotes)", () => {
 test("escAttr: null/undefined become an empty string", () => {
   assert.equal(h.escAttr(null), "");
   assert.equal(h.escAttr(undefined), "");
+});
+
+
+test("oddsTone: bands per stat — 36 lands in 99 reads as good for 3+ lands", () => {
+  const odds = h.openingHandOdds({ N: 99, lands: 36, ramp: 10 });
+  assert.equal(h.oddsTone("landsIn7", odds.landsIn7), "good");
+  assert.equal(h.oddsTone("keepableLands", odds.keepableLands), "good");
+  assert.equal(h.oddsTone("landsIn7", 0.4), "ok");
+  assert.equal(h.oddsTone("keepableLands", 0.49), "bad");
+  assert.equal(h.oddsTone("commanderOnCurve", 0.6), "ok");
+  assert.equal(h.oddsTone("landsIn7", 0.2), "bad");
+  assert.equal(h.oddsTone("keepableLands", 0.7), "ok");
+  assert.equal(h.oddsTone("rampByT2", 0.3), "bad");
 });
 
 await run("Deck analysis UI helpers");

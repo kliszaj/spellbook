@@ -8,7 +8,7 @@ const BEGIN = "// @testable collection-helpers begin";
 const END = "// @testable collection-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("collection helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { buildCollectionIndex, ownedQty, filterCollectionItems, collectionTotals, deckColorMatch, ownCount };`)();
+const h = Function(`${block}; return { buildCollectionIndex, ownedQty, filterCollectionItems, collectionTotals, deckColorMatch, ownCount, toggleIdentityColor };`)();
 
 const card = (id, name, extra = {}) => ({ id, oracle_id: `o-${name}`, name, cmc: 2, color_identity: ["W"], prices: { eur: "1.00", eur_foil: "3.00" }, ...extra });
 const data = {
@@ -65,6 +65,25 @@ test("deckColorMatch uses contains semantics with a Colorless option", () => {
 test("ownCount counts distinct owned cards", () => {
   const deck = [card("d1", "Alpha Strike"), card("d2", "Alpha Strike"), card("d3", "Missing Card")];
   assert.deepEqual(h.ownCount(index, deck), { owned: 1, total: 2 });
+});
+
+
+test("toggleIdentityColor: C is exclusive with colors, colors combine", () => {
+  assert.deepEqual(h.toggleIdentityColor([], "w"), ["w"]);
+  assert.deepEqual(h.toggleIdentityColor(["w"], "u"), ["w", "u"]);
+  assert.deepEqual(h.toggleIdentityColor(["w", "u"], "c"), ["c"]);
+  assert.deepEqual(h.toggleIdentityColor(["c"], "g"), ["g"]);
+  assert.deepEqual(h.toggleIdentityColor(["c"], "c"), []);
+  assert.deepEqual(h.toggleIdentityColor(["W", "U"], "C"), ["C"]);
+  assert.deepEqual(h.toggleIdentityColor(["W", "U"], "U"), ["W"]);
+});
+
+test("filterCollectionItems: C alone keeps only colorless cards", () => {
+  const items = [
+    { card: { name: "Sol Ring", color_identity: [] }, binders: new Set() },
+    { card: { name: "Llanowar Elves", color_identity: ["G"] }, binders: new Set() },
+  ];
+  assert.deepEqual(h.filterCollectionItems(items, { colors: ["C"] }).map((it) => it.card.name), ["Sol Ring"]);
 });
 
 await run("Collection UI helpers");

@@ -44,7 +44,7 @@ const DEFAULT_APP_STATE = {
   openaiModel: DEFAULT_OPENAI_MODEL,
   forceAiSearch: false,
 };
-const COLOR_IDS = new Set(["w", "u", "b", "r", "g"]);
+const COLOR_IDS = new Set(["w", "u", "b", "r", "g", "c"]);
 
 function plainObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
