@@ -77,7 +77,7 @@ Heuristic-first and instant (no tokens), with an optional AI pass:
   Y", and a color filter (including Colorless) narrows the grid. Like the type chips,
   Export copies the visible cards; deck analysis always uses the whole deck.
 - **AI cost** — Swaps use the AI provider and model from Settings (default
-  `claude-sonnet-5`). Every card in the collection is profiled once (what it does, its
+  `claude-sonnet-5-5`). Every card in the collection is profiled once (what it does, its
   mechanics, what it works with); Spellbook asks before profiling more than 50 cards
   and shows an estimate. Measured on Sonnet 5 (2026-09-27 pilot): about **$0.0012 per
   card**, so **≈ $2.40 for ~1,900 unique cards**, once. New pack scans (≤ 50 cards)
@@ -95,7 +95,7 @@ Both providers are supported; pick a preferred one in Settings.
 
 | Provider  | Default model        | Key            |
 |-----------|----------------------|----------------|
-| Anthropic | `claude-sonnet-5`    | `ANTHROPIC_API_KEY` |
+| Anthropic | `claude-sonnet-5-5`  | `ANTHROPIC_API_KEY` |
 | OpenAI    | `gpt-4.1`            | `OPENAI_API_KEY`    |
 
 Environment variables override stored settings: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
