@@ -685,6 +685,13 @@
       grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
     }
 
+    /* Beyond the old 2040px shell width, keep cards at their full 300px size
+       and only add columns as the center area grows. */
+    @media (min-width: 2072px) {
+      #results,
+      #saved-grid { grid-template-columns: repeat(auto-fill, 300px); }
+    }
+
     .card-item {
       position: relative;
       background: #fff;
