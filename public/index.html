@@ -2258,6 +2258,7 @@
               <option value="eur">Price</option>
             </select>
             <button class="sort-dir-btn" id="collection-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
+            <div class="mv-chips" id="collection-mv-chips" aria-label="Filter by mana value" hidden></div>
             <select id="collection-binder" aria-label="Binder"></select>
           </div>
           <div class="collection-header">
@@ -4237,24 +4238,25 @@
     // Lands have no real mana value, so any MV selection hides them.
     const savedMvFilter = new Set();
     const mvBucket = (c) => Math.min(7, Math.max(0, Math.round(Number(c.cmc || 0))));
-    function renderMvChips(cards) {
-      const el = $("#saved-mv-chips");
+    // Shared by the Decks and Collection sort rows: chips 0..7+ with nonland counts, shown
+    // only while sorting by Mana value (on === false hides them). Toggles `selected`.
+    function renderMvChips(el, cards, { on, selected, onChange }) {
       if (!el) return;
-      const on = state.savedSortField === "cmc";
       el.hidden = !on;
       if (!on) { el.replaceChildren(); return; }
       const counts = [0, 0, 0, 0, 0, 0, 0, 0];
       cards.forEach((c) => { if (!isLandCard(c)) counts[mvBucket(c)] += 1; });
       el.innerHTML = counts.map((n, i) => {
-        const active = savedMvFilter.has(i);
+        const active = selected.has(i);
         return `<button type="button" class="mv-chip${active ? " active" : ""}" data-mv="${i}" aria-pressed="${active}" title="${n} card${n === 1 ? "" : "s"} at MV ${i === 7 ? "7+" : i}">${i === 7 ? "7+" : i}</button>`;
       }).join("");
       el.querySelectorAll(".mv-chip").forEach((b) => b.addEventListener("click", () => {
         const v = Number(b.dataset.mv);
-        if (savedMvFilter.has(v)) savedMvFilter.delete(v); else savedMvFilter.add(v);
-        renderSavedCards({ filtersOnly: true });
+        if (selected.has(v)) selected.delete(v); else selected.add(v);
+        onChange();
       }));
     }
+    const mvMatches = (c, selected) => !isLandCard(c) && selected.has(mvBucket(c));
     let trimOpenKey = null; // trim-planner category whose cut list is open
     let trimShowAll = false;
     let trimCtx = null;
@@ -4293,7 +4295,7 @@
 
       // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
       renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, () => renderSavedCards({ filtersOnly: true }));
-      renderMvChips(cards);
+      renderMvChips($("#saved-mv-chips"), cards, { on: state.savedSortField === "cmc", selected: savedMvFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
       const mvActive = state.savedSortField === "cmc" && savedMvFilter.size > 0;
       const preMv = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter));
       const visible = preMv.filter((c) => !mvActive || (!isLandCard(c) && savedMvFilter.has(mvBucket(c))));
@@ -6994,6 +6996,7 @@
     const COLLECTION_PAGE = 60;
     const COLOR_NAMES = { w: "White", u: "Blue", b: "Black", r: "Red", g: "Green", c: "Colorless" };
     const collectionUi = { colors: new Set(), query: "", binder: "", sortField: "name", sortDir: "asc", shown: 0, notice: "" };
+    const collectionMvFilter = new Set(); // mana-value chips (while sorting by Mana value)
     let collectionLoading = null;
     let swapsStatusTimer = null;
 
@@ -7107,7 +7110,10 @@
         const byId = new Map(filtered.map((it) => [it.card.id, it]));
         renderTypeFilterChips(collectionTypeFilterEl, filtered.map((it) => it.card), collectionTypeFilter, () => renderCollection(true));
         const typeFiltered = filtered.filter((it) => matchesTypeFilter(it.card, collectionTypeFilter));
-        items = sortCardsByField(typeFiltered.map((it) => it.card), collectionUi.sortField, collectionUi.sortDir).map((c) => byId.get(c.id));
+        const mvOn = collectionUi.sortField === "cmc";
+        renderMvChips($("#collection-mv-chips"), typeFiltered.map((it) => it.card), { on: mvOn, selected: collectionMvFilter, onChange: () => renderCollection(true) });
+        const mvFiltered = mvOn && collectionMvFilter.size ? typeFiltered.filter((it) => mvMatches(it.card, collectionMvFilter)) : typeFiltered;
+        items = sortCardsByField(mvFiltered.map((it) => it.card), collectionUi.sortField, collectionUi.sortDir).map((c) => byId.get(c.id));
       } else {
         collectionTypeFilterEl.style.display = "none";
         collectionTypeFilterEl.replaceChildren();
