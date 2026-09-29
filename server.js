@@ -33,6 +33,7 @@ const DEFAULT_APP_STATE = {
   membership: null,
   quantities: {}, // { [folderId]: { [cardId]: count } } — per-deck basic-land counts
   maybeboard: {}, // { [folderId]: { [cardId]: true } } — per-deck Maybeboard flags
+  pins: {}, // { [folderId]: { [cardId]: true } } — per-deck "keep" pins (never suggested as cuts)
   deckNotes: {}, // { [folderId]: string } — per-deck Game plan used by View Swaps
   colorIdentity: [],
   translateCache: {},
@@ -58,6 +59,7 @@ function normalizeAppState(value = {}) {
     membership: plainObject(input.membership),
     quantities: plainObject(input.quantities) || {},
     maybeboard: plainObject(input.maybeboard) || {},
+    pins: plainObject(input.pins) || {},
     deckNotes: normalizeDeckNotes(input.deckNotes),
     colorIdentity: Array.isArray(input.colorIdentity) ? input.colorIdentity.filter((c) => COLOR_IDS.has(c)) : [],
     translateCache: plainObject(input.translateCache) || {},
@@ -177,6 +179,7 @@ function mergeStates(base, incoming) {
     membership: mergeMembership(base.membership, incoming.membership),
     quantities: mergeQuantities(base.quantities, incoming.quantities),
     maybeboard: mergeMaybeboard(base.maybeboard, incoming.maybeboard),
+    pins: mergeMaybeboard(base.pins, incoming.pins), // same per-deck flag shape
     deckNotes: mergeDeckNotes(base.deckNotes, incoming.deckNotes),
     colorIdentity: Array.isArray(incoming.colorIdentity) && incoming.colorIdentity.length ? incoming.colorIdentity : base.colorIdentity,
     translateCache: mergeTranslateCache(base.translateCache, incoming.translateCache),
@@ -231,6 +234,9 @@ function applyOps(state, ops) {
         break;
       case "setMaybeboard":
         if (op.maybeboard && typeof op.maybeboard === "object") state.maybeboard = op.maybeboard;
+        break;
+      case "setPins":
+        if (op.pins && typeof op.pins === "object") state.pins = op.pins;
         break;
       case "setDeckNotes":
         if (op.deckNotes && typeof op.deckNotes === "object") state.deckNotes = normalizeDeckNotes(op.deckNotes);

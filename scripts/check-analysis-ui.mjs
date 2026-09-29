@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99 };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -324,6 +324,35 @@ test("suggestBasicSplit: proportional to symbols, always sums to n, skips unused
   assert.equal(Object.values(five).reduce((a, b) => a + b, 0), 7);
   assert.deepEqual(h.suggestBasicSplit({ W: 0 }, 5), {});
   assert.deepEqual(h.suggestBasicSplit({ W: 3 }, 0), {});
+});
+
+
+test("trimBudget: cut/add/ok per row, cuts first, headline is total - 100", () => {
+  const b = h.trimBudget([
+    { key: "ramp", label: "Ramp", have: 23, lo: 10, hi: 12 },
+    { key: "wipes", label: "Wipes", have: 1, lo: 2, hi: 4 },
+    { key: "draw", label: "Draw", have: 18, lo: 10, hi: null },
+    { key: "creature", label: "Creatures", have: 41, lo: 25, hi: 30 },
+  ], 147);
+  assert.equal(b.toCut, 47);
+  assert.deepEqual(b.rows.map((r) => [r.key, r.action, r.n]), [
+    ["ramp", "cut", 11], ["creature", "cut", 11], ["wipes", "add", 1], ["draw", "ok", 0],
+  ]);
+  assert.equal(h.trimBudget([], 95).toCut, 0);
+});
+
+test("cutKeepScore: popular, synergistic, multi-role, cheap cards score higher", () => {
+  const base = { inclusion: 0.2, synergy: 0, roles: 1, cmc: 3 };
+  assert.ok(h.cutKeepScore({ ...base, inclusion: 0.6 }) > h.cutKeepScore(base));
+  assert.ok(h.cutKeepScore({ ...base, synergy: 0.4 }) > h.cutKeepScore(base));
+  assert.ok(h.cutKeepScore({ ...base, roles: 2 }) > h.cutKeepScore(base));
+  assert.ok(h.cutKeepScore({ ...base, cmc: 2 }) > h.cutKeepScore(base));
+});
+
+test("projectTo99: scales counts from a big pool, leaves decks at or under 99 alone", () => {
+  assert.equal(h.projectTo99(35, 146), 24);
+  assert.equal(h.projectTo99(36, 99), 36);
+  assert.equal(h.projectTo99(10, 60), 10);
 });
 
 await run("Deck analysis UI helpers");

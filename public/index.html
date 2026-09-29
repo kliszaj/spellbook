@@ -984,6 +984,11 @@
     .import-status { font-size: 12.5px; color: #6D685F; min-height: 18px; margin-bottom: 14px; }
 
     .deck-io { margin-left: auto; display: flex; gap: 8px; }
+    .mv-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
+    .mv-chips[hidden] { display: none; }
+    .mv-chip { min-width: 28px; height: 28px; padding: 0 7px; border-radius: 999px; border: 1px solid rgba(31,29,25,0.14); background: #FFFEFA; color: #57524A; font: 650 12px/1 ui-monospace, "SF Mono", Menlo, monospace; cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s; }
+    .mv-chip:hover { border-color: rgba(31,29,25,0.28); background: #F2EFE8; }
+    .mv-chip.active { background: #2A2721; border-color: #2A2721; color: #FFFEFA; }
     .deck-io .export-btn { margin-left: 0; }
 
     .modal-actions {
@@ -1533,6 +1538,23 @@
     .da2-chip-row:first-child { margin-top: 0; }
     .da2-chip-row-label { flex: none; width: 92px; padding-top: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #A39E93; }
     .da2-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .da2-trim-total { color: #A45636; }
+    .da2-trim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; margin-top: 12px; }
+    .da2-trim-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; background: none; font: inherit; font-size: 12px; color: #57524A; text-align: left; cursor: pointer; transition: background 0.12s, border-color 0.12s; }
+    .da2-trim-row:hover { background: #F2EFE8; }
+    .da2-trim-row.open { border-color: #C8B88D; background: #FFFDF7; }
+    .da2-trim-have { font-weight: 700; color: #2A2721; font-variant-numeric: tabular-nums; }
+    .da2-trim-range { font-size: 11px; color: #9E9B92; font-variant-numeric: tabular-nums; }
+    .da2-trim-act { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+    .da2-trim-row.cut .da2-trim-act { color: #9A3A22; background: #F8E4DC; }
+    .da2-trim-row.add .da2-trim-act { color: #7A5A0C; background: #FBF1D6; }
+    .da2-trim-row.ok .da2-trim-act { color: #2F6A2C; background: #E8F3E4; }
+    .da2-trim-list { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(31,29,25,0.08); display: flex; flex-direction: column; gap: 6px; }
+    .da2-trim-list-head { font-size: 12px; color: #78726A; margin-bottom: 2px; }
+    .da2-trim-cand { display: flex; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 9px; }
+    .da2-trim-cand:hover { background: #F2EFE8; }
+    .da2-trim-meta { flex: 1; min-width: 0; }
+    .da2-cut-btn:hover:not(:disabled) { color: #9A3A22; border-color: #E4B6A5; background: #F8E4DC; }
     .da2-types-row { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(31,29,25,0.08); }
     .da2-type-chip small { margin-left: 6px; font-size: 10px; font-weight: 600; opacity: 0.6; }
     .da2-basics { margin-top: 12px; }
@@ -1931,7 +1953,11 @@
     .deck-section-divider::after { content: ""; flex: 1; height: 1px; background: rgba(31,29,25,0.12); }
 
     /* ── Maybeboard card treatment ── */
-    .card-item.maybe img { opacity: 0.5; filter: saturate(0.7); }
+    .card-item.maybe { outline: 2px dashed #A8A399; outline-offset: 3px; }
+    .card-item.maybe img { filter: saturate(0.85); }
+    .pin-badge { position: absolute; top: 8px; right: 8px; z-index: 4; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(20,20,20,0.62); color: #E7CE8C; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .pin-badge.stacked { top: 40px; }
+    .pin-badge svg { width: 13px; height: 13px; }
     .maybe-badge {
       position: absolute; top: 8px; left: 8px; z-index: 3;
       padding: 3px 8px; border-radius: 999px;
@@ -2189,6 +2215,7 @@
               <option value="eur">Price</option>
             </select>
             <button class="sort-dir-btn" id="saved-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
+            <div class="mv-chips" id="saved-mv-chips" aria-label="Filter by mana value" hidden></div>
             <div class="deck-io">
               <button class="export-btn" id="saved-import-btn" title="Import a card list into this deck" aria-label="Import card list">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
@@ -2412,6 +2439,7 @@
     <button class="ctx-item" data-act="details">Details</button>
     <button class="ctx-item" data-act="commander" style="display:none">Set as commander</button>
     <button class="ctx-item" data-act="maybe" style="display:none">Mark as Maybe</button>
+    <button class="ctx-item" data-act="pin" style="display:none">Pin (keep)</button>
     <button class="ctx-item danger" data-act="remove" style="display:none">Remove from deck</button>
     <button class="ctx-item" data-act="owned" style="display:none">Mark as owned</button>
   </div>
@@ -2435,6 +2463,7 @@
       membership: JSON.parse(localStorage.getItem("card_membership") || "null"),
       quantities: JSON.parse(localStorage.getItem("card_quantities") || "{}"),
       maybeboard: JSON.parse(localStorage.getItem("card_maybeboard") || "{}"),
+      pins: JSON.parse(localStorage.getItem("card_pins") || "{}"),
       deckNotes: JSON.parse(localStorage.getItem("deck_notes") || "{}"),
       activeFolder: "all",
       popoverCard: null,
@@ -2939,6 +2968,7 @@
         membership: state.membership,
         quantities: state.quantities,
         maybeboard: state.maybeboard,
+        pins: state.pins,
         deckNotes: state.deckNotes,
         colorIdentity: state.colorIdentity,
         translateCache: readTranslateCache(),
@@ -2954,6 +2984,7 @@
         (data.membership && typeof data.membership === "object" && Object.keys(data.membership).length) ||
         (data.quantities && typeof data.quantities === "object" && Object.keys(data.quantities).length) ||
         (data.maybeboard && typeof data.maybeboard === "object" && Object.keys(data.maybeboard).length) ||
+        (data.pins && typeof data.pins === "object" && Object.keys(data.pins).length) ||
         (data.deckNotes && typeof data.deckNotes === "object" && Object.keys(data.deckNotes).length) ||
         (Array.isArray(data.colorIdentity) && data.colorIdentity.length) ||
         data.forceAiSearch ||
@@ -2983,6 +3014,10 @@
       if (data.maybeboard && typeof data.maybeboard === "object") {
         state.maybeboard = data.maybeboard;
         localStorage.setItem("card_maybeboard", JSON.stringify(state.maybeboard));
+      }
+      if (data.pins && typeof data.pins === "object") {
+        state.pins = data.pins;
+        localStorage.setItem("card_pins", JSON.stringify(state.pins));
       }
       if (data.deckNotes && typeof data.deckNotes === "object") {
         state.deckNotes = data.deckNotes;
@@ -3083,6 +3118,7 @@
         membership: mergeMembership(serverState.membership, localState.membership),
         quantities: mergeQuantities(serverState.quantities, localState.quantities),
         maybeboard: mergeMaybeboard(serverState.maybeboard, localState.maybeboard),
+        pins: mergeMaybeboard(serverState.pins, localState.pins),
         // Server-authoritative: edits already reach the server via the setDeckNotes op, so a
         // stale device merging here must never revert a newer Game plan or resurrect a cleared
         // one. Local notes only seed an empty/new server (first-device migration).
@@ -3113,7 +3149,7 @@
         if (putRes.ok) {
           const synced = await putRes.json();
           lastSyncedSig = JSON.stringify([
-            synced.savedCards, synced.folders, synced.membership, synced.quantities, synced.maybeboard, synced.deckNotes,
+            synced.savedCards, synced.folders, synced.membership, synced.quantities, synced.maybeboard, synced.pins, synced.deckNotes,
             synced.colorIdentity, synced.forceAiSearch,
             synced.searchHistory, synced.translateCache,
           ]);
@@ -3142,7 +3178,7 @@
     function adoptServerState(serverState) {
       if (!serverState || typeof serverState !== "object") return;
       const sig = JSON.stringify([
-        serverState.savedCards, serverState.folders, serverState.membership, serverState.quantities, serverState.maybeboard, serverState.deckNotes,
+        serverState.savedCards, serverState.folders, serverState.membership, serverState.quantities, serverState.maybeboard, serverState.pins, serverState.deckNotes,
         serverState.colorIdentity, serverState.forceAiSearch,
         serverState.searchHistory, serverState.translateCache,
       ]);
@@ -3723,6 +3759,7 @@
 
     // Inline icons for the card hover overlay
     const ICON_DOTS = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>`;
+    const ICON_PIN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>`;
     const ICON_CROWN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>`;
     function bookmarkIcon(filled) {
       return `<svg viewBox="0 0 24 24" fill="${filled ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
@@ -4193,6 +4230,31 @@
     // Set by renderSavedCards: the filtered main-deck cards on screen, which the deck
     // analysis's mana curve follows (so "Creatures only" shows where the creatures sit).
     let deckCurveView = null; // { folderId, cards, filtered }
+    // Mana-value filter chips (shown while sorting by Mana value). Buckets 0..6, 7 = 7+.
+    // Lands have no real mana value, so any MV selection hides them.
+    const savedMvFilter = new Set();
+    const mvBucket = (c) => Math.min(7, Math.max(0, Math.round(Number(c.cmc || 0))));
+    function renderMvChips(cards) {
+      const el = $("#saved-mv-chips");
+      if (!el) return;
+      const on = state.savedSortField === "cmc";
+      el.hidden = !on;
+      if (!on) { el.replaceChildren(); return; }
+      const counts = [0, 0, 0, 0, 0, 0, 0, 0];
+      cards.forEach((c) => { if (!isLandCard(c)) counts[mvBucket(c)] += 1; });
+      el.innerHTML = counts.map((n, i) => {
+        const active = savedMvFilter.has(i);
+        return `<button type="button" class="mv-chip${active ? " active" : ""}" data-mv="${i}" aria-pressed="${active}" title="${n} card${n === 1 ? "" : "s"} at MV ${i === 7 ? "7+" : i}">${i === 7 ? "7+" : i}</button>`;
+      }).join("");
+      el.querySelectorAll(".mv-chip").forEach((b) => b.addEventListener("click", () => {
+        const v = Number(b.dataset.mv);
+        if (savedMvFilter.has(v)) savedMvFilter.delete(v); else savedMvFilter.add(v);
+        renderSavedCards();
+      }));
+    }
+    let trimOpenKey = null; // trim-planner category whose cut list is open
+    let trimShowAll = false;
+    let trimCtx = null;
 
     function renderSavedCards() {
       renderFolderRail();
@@ -4206,7 +4268,10 @@
 
       // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
       renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, renderSavedCards);
-      const visible = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter));
+      renderMvChips(cards);
+      const mvActive = state.savedSortField === "cmc" && savedMvFilter.size > 0;
+      const visible = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter))
+        .filter((c) => !mvActive || (!isLandCard(c) && savedMvFilter.has(mvBucket(c))));
 
       // Maybeboard cards stay in the deck but are excluded from the main section and
       // everything that measures the deck (analysis, size, export) — see below.
@@ -4281,6 +4346,7 @@
         ${countBadge}
         ${isCommander ? `<span class="commander-badge">${ICON_CROWN}Commander</span>` : ""}
         ${isMaybeCard ? `<span class="maybe-badge">Maybe</span>` : ""}
+        ${deck && isPinned(deck.id, card.id) ? `<span class="pin-badge${countBadge ? " stacked" : ""}" title="Pinned — kept when trimming">${ICON_PIN}</span>` : ""}
         ${ownedQty(collectionIndex, card) > 0 ? `<span class="owned-chip${isCommander || isMaybeCard ? " stacked" : ""}">Owned</span>` : ""}
         <div class="card-info">
           <div class="card-text">
@@ -4975,6 +5041,29 @@
       for (let i = 0; left > 0; i = (i + 1) % raw.length, left--) out[raw[i].c] += 1;
       return out;
     }
+    // Trim planner: per category, how a >100-card pool compares with the final deck's
+    // targets. Categories overlap (a ramp creature counts twice), so the per-row cuts are
+    // guidance; the headline is total - 100. hi == null means "no upper limit" (never cut).
+    function trimBudget(rows, total) {
+      const out = rows.map((r) => {
+        const cut = r.hi != null && r.have > r.hi ? r.have - r.hi : 0;
+        const add = r.have < r.lo ? r.lo - r.have : 0;
+        return { ...r, action: cut ? "cut" : add ? "add" : "ok", n: cut || add };
+      });
+      const rank = { cut: 0, add: 1, ok: 2 };
+      out.sort((a, b) => rank[a.action] - rank[b.action] || b.n - a.n);
+      return { toCut: Math.max(0, total - 100), rows: out };
+    }
+    // Keep-score for ranking cut candidates (higher = keep). EDHREC inclusion (0..1) and
+    // synergy (-1..1) for this commander when known, a bonus per extra role the card fills,
+    // and a small mana-value penalty (a pricier card doing the same job cuts first).
+    function cutKeepScore({ inclusion = null, synergy = 0, roles = 0, cmc = 0 }) {
+      return (inclusion == null ? 0.15 : inclusion) * 60 + synergy * 25 + Math.max(0, roles - 1) * 10 - cmc * 2.5;
+    }
+    // Scales a count from an N-card library to a 99-card one (projected odds for a pool).
+    function projectTo99(count, N) {
+      return N > 99 ? Math.round((count * 99) / N) : count;
+    }
     // [good, borderline] floors per opening-hand stat, calibrated on a 99-card library:
     // 36 lands → 3+ lands 50%, keepable 79%; 10 ramp → ramp by T2 59%; 36 lands + 10 ramp
     // → a 3-drop commander on curve 88%. Below the borderline floor reads as bad.
@@ -5371,6 +5460,79 @@
       }).join("");
       return `<div class="da2-colors-line">${items}</div>`;
     }
+    // Candidate cards for one trim category: main-deck cards in it, minus the commander and
+    // pinned cards, weakest (lowest keep-score) first.
+    function trimCandidates(key, ctx) {
+      const { cards, folderId, commander, roleDetails, edhrecByName } = ctx;
+      let inCat;
+      if (key === "lands") inCat = cards.filter((c) => isLandCard(c) && !isBasicLand(c));
+      else if (ROLE_KEYS.includes(key)) {
+        const names = new Set((roleDetails[key]?.cards || []).map((c) => c.name));
+        inCat = cards.filter((c) => names.has(c.name));
+      } else if (key === "spells") inCat = cards.filter((c) => { const t = cardTypes(c); return t.has("instant") || t.has("sorcery"); });
+      else inCat = cards.filter((c) => cardTypes(c).has(key) && !isLandCard(c));
+      const roleCount = new Map();
+      ROLE_KEYS.forEach((k) => (roleDetails[k]?.cards || []).forEach((c) => roleCount.set(c.name, (roleCount.get(c.name) || 0) + 1)));
+      return inCat
+        .filter((c) => c.id !== commander?.id && !isPinned(folderId, c.id))
+        .map((c) => {
+          const e = edhrecByName ? edhrecByName.get(edhrecNameKey(c.name)) : null;
+          const roles = roleCount.get(c.name) || 0;
+          const cmc = Number(c.cmc || 0);
+          const why = [
+            e ? `in ${Math.round(e.inclusion * 100)}% of decks` : (edhrecByName ? "not on EDHREC's list" : null),
+            e && e.synergy ? `${e.synergy > 0 ? "+" : ""}${Math.round(e.synergy * 100)}% synergy` : null,
+            `${roles} role${roles === 1 ? "" : "s"}`,
+            `MV ${cmc}`,
+          ].filter(Boolean).join(" · ");
+          return { card: c, score: cutKeepScore({ inclusion: e ? e.inclusion : (edhrecByName ? 0 : null), synergy: e ? e.synergy : 0, roles, cmc }), why };
+        })
+        .sort((a, b) => a.score - b.score);
+    }
+    function trimPanelHtml(budget, ctx) {
+      const pinnedCount = ctx.cards.filter((c) => isPinned(ctx.folderId, c.id)).length;
+      const rows = budget.rows.map((r) => {
+        const range = r.hi != null ? `${r.lo}–${r.hi}` : `${r.lo}+`;
+        const act = r.action === "cut" ? `cut ~${r.n}` : r.action === "add" ? `add ${r.n}` : "on target";
+        const open = trimOpenKey === r.key;
+        return `<button type="button" class="da2-trim-row ${r.action}${open ? " open" : ""}" data-trim-key="${r.key}" aria-expanded="${open}">
+          <span class="da2-trim-label">${esc(r.label)}</span><span class="da2-trim-have">${r.have}</span><span class="da2-trim-range">${range}</span><span class="da2-trim-act">${act}</span></button>`;
+      }).join("");
+      let list = "";
+      if (trimOpenKey) {
+        const cands = trimCandidates(trimOpenKey, ctx);
+        const shown = trimShowAll ? cands : cands.slice(0, 12);
+        const label = budget.rows.find((r) => r.key === trimOpenKey)?.label || "";
+        list = `<div class="da2-trim-list">
+          <div class="da2-trim-list-head"><b>${esc(label)}</b> — weakest first${ctx.edhrecByName ? "" : " (EDHREC data not loaded yet)"}</div>
+          ${shown.length ? shown.map((x) => `<div class="da2-trim-cand">
+            <button type="button" class="da2-edhrec-thumb" data-open-card="${esc(x.card.id)}" title="Show ${escAttr(x.card.name)}"><img src="${getCardImage(x.card)}" alt="" loading="lazy" style="width:100%;border-radius:5px;display:block"></button>
+            <div class="da2-trim-meta"><div class="da2-edhrec-name">${esc(x.card.name)}</div><div class="da2-edhrec-stats">${esc(x.why)}</div></div>
+            <button type="button" class="da2-hand-btn" data-pin-card="${esc(x.card.id)}" title="Keep this card — never suggest it">Pin</button>
+            <button type="button" class="da2-hand-btn da2-cut-btn" data-cut-card="${esc(x.card.id)}" title="Move to the Maybeboard">Cut</button>
+          </div>`).join("") : `<div class="da2-edhrec-stats">Nothing to cut here${pinnedCount ? " (pinned cards are hidden)" : ""}.</div>`}
+          ${!trimShowAll && cands.length > shown.length ? `<button type="button" class="da2-hand-btn" id="da2-trim-more">Show all ${cands.length}</button>` : ""}
+        </div>`;
+      }
+      return `<div class="da-h">Trimming to 100 · <span class="da2-trim-total">${budget.toCut} to cut</span></div>
+        <div class="da2-vsub">Targets are for the final deck. Categories overlap, so one cut can count twice. Cuts go to the Maybeboard${pinnedCount ? ` · ${pinnedCount} pinned` : ""}.</div>
+        <div class="da2-trim-grid">${rows}</div>${list}`;
+    }
+    function renderTrimPanel() {
+      const el = $("#da2-trim");
+      if (!el || !trimCtx) return;
+      el.innerHTML = trimPanelHtml(trimCtx.budget, trimCtx);
+      el.querySelectorAll("[data-trim-key]").forEach((b) => b.addEventListener("click", () => {
+        trimOpenKey = trimOpenKey === b.dataset.trimKey ? null : b.dataset.trimKey;
+        trimShowAll = false;
+        renderTrimPanel();
+      }));
+      $("#da2-trim-more")?.addEventListener("click", () => { trimShowAll = true; renderTrimPanel(); });
+      const byId = (id) => trimCtx.cards.find((c) => c.id === id);
+      el.querySelectorAll("[data-open-card]").forEach((b) => b.addEventListener("click", () => { const c = byId(b.dataset.openCard); if (c) showDetail(c); }));
+      el.querySelectorAll("[data-cut-card]").forEach((b) => b.addEventListener("click", () => { setMaybe(trimCtx.folderId, b.dataset.cutCard, true); renderSavedCards(); }));
+      el.querySelectorAll("[data-pin-card]").forEach((b) => b.addEventListener("click", () => { setPinned(trimCtx.folderId, b.dataset.pinCard, true); renderSavedCards(); }));
+    }
     const TYPE_GUIDE_ROWS = [
       ["creature", "Creatures"], ["spells", "Instants + sorceries"], ["artifact", "Artifacts"],
       ["enchantment", "Enchantments"], ["planeswalker", "Planeswalkers"],
@@ -5455,7 +5617,7 @@
     let handState = null; // { hand: Card[], mulligans: number }
     let handStateSig = null;
 
-    function openingHandSectionHtml(odds, commander) {
+    function openingHandSectionHtml(odds, commander, { projected = false } = {}) {
       const pct = (p) => Math.round(p * 100);
       const toneLabel = { good: "Good odds", ok: "Borderline", bad: "Poor odds" };
       const stat = (key, label, title = "") => {
@@ -5471,7 +5633,7 @@
         <div class="da2-hand-cards">${hand.map((c) => `<button class="da2-hand-card" type="button" data-id="${esc(c.id)}" title="${esc(c.name)}"><img src="${getCardImage(c)}" alt="${esc(c.name)}" loading="lazy"></button>`).join("")}</div>
         <div class="da2-hand-lands">${hand.filter(isLandCard).length} lands</div>` : "";
       return `
-        <div class="da-h">Opening hand</div>
+        <div class="da-h">Opening hand${projected ? ` <span class="da2-approx">· odds projected to a 99-card deck</span>` : ""}</div>
         <div class="da2-hand-odds">
           ${stat("landsIn7", "3+ lands in opening 7")}
           ${stat("keepableLands", "2–5 lands (keepable)")}
@@ -5485,13 +5647,13 @@
         ${handHtml}`;
     }
 
-    function renderOpeningHandSection(library, odds, commander) {
+    function renderOpeningHandSection(library, odds, commander, opts = {}) {
       const section = $("#da2-opening-hand");
       if (!section) return;
       if (!library.length) { section.hidden = true; section.innerHTML = ""; return; }
       section.hidden = false;
-      section.innerHTML = openingHandSectionHtml(odds, commander);
-      const redraw = () => renderOpeningHandSection(library, odds, commander);
+      section.innerHTML = openingHandSectionHtml(odds, commander, opts);
+      const redraw = () => renderOpeningHandSection(library, odds, commander, opts);
       $("#da2-hand-sample").addEventListener("click", () => {
         handState = { hand: drawRandom(library, 7), mulligans: 0 };
         redraw();
@@ -5701,6 +5863,7 @@
             <div class="da2-fix-wrap" id="da2-fix-wrap">${reviewing ? `<div class="da2-fix"><span class="da2-chip muted">Analyzing ${cards.length} cards…</span></div>` : (cached ? fixRowsHtml(cached) : "")}</div>
           </div>
         </div>
+        ${s.total > 100 ? `<section class="da2-card" id="da2-trim"></section>` : ""}
         <div class="da2-layout">
           <div class="da2-card da2-overview-card">
             <div class="da2-chips-card" id="da2-chips-card">${chipsCardHtml(grade.items)}</div>
@@ -5759,8 +5922,23 @@
       if (deck) {
         const library = openingHandLibrary(cards, folderId, deck.commanderId || null);
         const ramp = rampCountForLibrary(roleDetails, cards, commander);
-        const odds = openingHandOdds({ N: library.length, lands: s.lands, ramp, commanderMv: commander ? (commander.cmc || 0) : undefined });
-        renderOpeningHandSection(library, odds, commander);
+        // A >100-card pool is judged as if already trimmed: same ratios, 99-card library.
+        const N = library.length;
+        const odds = openingHandOdds({ N: Math.min(N, 99), lands: projectTo99(s.lands, N), ramp: projectTo99(ramp, N), commanderMv: commander ? (commander.cmc || 0) : undefined });
+        renderOpeningHandSection(library, odds, commander, { projected: N > 99 });
+        if (s.total > 100) {
+          const ed = commander ? edhrecCache.get(commanderSlug(commander.name)) : null;
+          const edhrecByName = ed && ed.status === "ready" ? new Map((ed.data.cards || []).map((c) => [edhrecNameKey(c.name), c])) : null;
+          const typeTargets = typeTargetsFor(identityLensKeys(identityTags));
+          const spellsHave = (s.typeCounts.instant || 0) + (s.typeCounts.sorcery || 0);
+          const rows = [
+            { key: "lands", label: "Lands", have: s.lands, lo: profile.landTarget[0], hi: profile.landTarget[1] },
+            ...ROLE_KEYS.map((k) => ({ key: k, label: AI_LABEL[k] || k, have: counts[k] || 0, lo: profile.roleTargets[k][0], hi: profile.roleTargets[k][1] })),
+            ...TYPE_GUIDE_ROWS.map(([k, label]) => ({ key: k, label, have: k === "spells" ? spellsHave : (s.typeCounts[k] || 0), lo: typeTargets[k][0], hi: typeTargets[k][1] })),
+          ];
+          trimCtx = { budget: trimBudget(rows, s.total), cards, folderId, commander, roleDetails, edhrecByName };
+          renderTrimPanel();
+        }
         renderEdhrecSection(deck, commander, folderId);
       }
     }
@@ -6078,6 +6256,25 @@
       }
       persistMaybeboard();
     }
+    // ── Pins (per deck): "keep this card" — never offered as a cut in the trim planner.
+    function isPinned(folderId, id) {
+      return Boolean(state.pins[folderId] && state.pins[folderId][id]);
+    }
+    function setPinned(folderId, id, on) {
+      if (!folderId || folderId === "all" || folderId === DEFAULT_FOLDER) return;
+      if (on) {
+        if (!state.pins[folderId]) state.pins[folderId] = {};
+        state.pins[folderId][id] = true;
+      } else if (state.pins[folderId]) {
+        delete state.pins[folderId][id];
+        if (!Object.keys(state.pins[folderId]).length) delete state.pins[folderId];
+      }
+      persistPins();
+    }
+    function persistPins() {
+      localStorage.setItem("card_pins", JSON.stringify(state.pins));
+      queueOp({ type: "setPins", pins: state.pins });
+    }
     function persistMaybeboard() {
       localStorage.setItem("card_maybeboard", JSON.stringify(state.maybeboard));
       queueOp({ type: "setMaybeboard", maybeboard: state.maybeboard });
@@ -6145,6 +6342,7 @@
       });
       if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
       if (state.maybeboard[id]) { delete state.maybeboard[id]; persistMaybeboard(); }
+      if (state.pins[id]) { delete state.pins[id]; persistPins(); }
       if (state.deckNotes[id]) { delete state.deckNotes[id]; persistDeckNotes(); }
       if (deckReviewCache[id]) { delete deckReviewCache[id]; persistDeckReviews(); }
       saveFolders();
@@ -6300,6 +6498,7 @@
       const commanderItem = cardContextMenu.querySelector('[data-act="commander"]');
       const maybeItem = cardContextMenu.querySelector('[data-act="maybe"]');
       const removeItem = cardContextMenu.querySelector('[data-act="remove"]');
+      const pinItem = cardContextMenu.querySelector('[data-act="pin"]');
       const ownedItem = cardContextMenu.querySelector('[data-act="owned"]');
 
       if (deckActions && deck && isLegendaryCreature(card)) {
@@ -6317,6 +6516,12 @@
       }
 
       removeItem.style.display = (deckActions && deck) ? "" : "none";
+      if (deckActions && deck && !isCommanderCard) {
+        pinItem.style.display = "";
+        pinItem.textContent = isPinned(deck.id, card.id) ? "Unpin" : "Pin (keep)";
+      } else {
+        pinItem.style.display = "none";
+      }
 
       if (hasCollection()) {
         const info = ownedInfo(card);
@@ -6369,6 +6574,12 @@
             setMaybe(deck.id, card.id, !isMaybe(deck.id, card.id));
             renderSavedCards();
             if (state.detailCard && state.detailCard.id === card.id) showDetail(state.detailCard);
+          }
+          break;
+        case "pin":
+          if (deck) {
+            setPinned(deck.id, card.id, !isPinned(deck.id, card.id));
+            renderSavedCards();
           }
           break;
         case "remove":
