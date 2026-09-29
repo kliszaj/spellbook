@@ -1408,6 +1408,7 @@
     .curve-legend { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-size: 10.5px; color: #9E9B92; }
     .curve-legend-line { width: 16px; height: 0; border-top: 1.5px dashed #B9892A; flex: none; }
     .curve-count { font-size: 10px; color: #9E9B92; font-variant-numeric: tabular-nums; }
+    .curve-col.dim { opacity: 0.35; }
     .curve-count.over { color: #A45636; font-weight: 700; }
     .curve-bar { width: 100%; max-width: 26px; min-height: 2px; background: #BEB7A9; border-radius: 4px 4px 0 0; transition: height 0.35s cubic-bezier(0.2,0.7,0.2,1); }
     .curve-bar.peak { background: #6E675A; }
@@ -4549,7 +4550,8 @@
       return { n, label: `Target for this share of a 100-card deck (~${n} spells)` };
     }
 
-    function curveHtml(curve, target) {
+    // mvOnly: when the MV chips narrow the view, only those columns are live; the rest dim.
+    function curveHtml(curve, target, mvOnly = null) {
       const n = curve.reduce((a, b) => a + b, 0);
       const ideal = typicalCurve(target.n);
       const max = Math.max(1, ...curve, ...ideal);
@@ -4558,15 +4560,16 @@
       // Heights are a share of the track minus the count label (≈18px) above each bar.
       const h = (v) => `calc((100% - 18px) * ${(v / max).toFixed(4)})`;
       const cols = curve.map((c, i) => {
+        const live = !mvOnly || mvOnly.has(i);
         const tgt = Math.round(ideal[i]);
         const over = target.n ? c - tgt : 0;
         const tip = `MV ${labels[i]}: ${c} card${c === 1 ? "" : "s"}${target.n ? ` · target ≈ ${tgt}${over >= 2 ? ` · cut ~${over}` : over <= -2 ? ` · room for ~${-over}` : ""}` : ""}`;
         return `
-        <div class="curve-col" title="${tip}">
+        <div class="curve-col${live ? "" : " dim"}" title="${live ? tip : `MV ${labels[i]}: not in the selected mana values`}">
           <span class="curve-track">
             <span class="curve-count${over >= 2 ? " over" : ""}">${c}</span>
             <span class="curve-bar ${c === peak && c > 0 ? "peak" : ""}" style="height:${h(c)}"></span>
-            ${target.n ? `<span class="curve-ideal" style="bottom:${h(ideal[i])}"></span>` : ""}
+            ${target.n && live ? `<span class="curve-ideal" style="bottom:${h(ideal[i])}"></span>` : ""}
           </span>
           <span class="curve-x">${labels[i]}</span>
         </div>`;
@@ -5912,7 +5915,8 @@
           <div class="da2-card da2-mana-card">
             <div class="da-h">Mana curve${curveScoped ? ` <span class="da2-approx">· current selection</span>` : ""}</div>
             ${curveHtml(curveScoped ? computeDeckStats(deckCurveView.cards, folderId).curve : s.curve,
-              curveTarget(curveScoped ? deckCurveView.targetCards : cards, cards, 100 - Math.round((profile.landTarget[0] + profile.landTarget[1]) / 2), typeTargetsFor(identityLensKeys(identityTags))))}
+              curveTarget(curveScoped ? deckCurveView.targetCards : cards, cards, 100 - Math.round((profile.landTarget[0] + profile.landTarget[1]) / 2), typeTargetsFor(identityLensKeys(identityTags))),
+              curveScoped && state.savedSortField === "cmc" && savedMvFilter.size ? savedMvFilter : null)}
             <div class="da2-section-rule"></div>
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
