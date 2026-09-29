@@ -1612,6 +1612,27 @@
     .sim-x { font-size: 10.5px; color: #78726A; }
     .sim-cap { font-size: 10.5px; color: #9E9B92; margin: 6px 0 12px; }
     .sim-note { font-size: 10.5px; color: #B0A99E; margin-top: 6px; line-height: 1.4; }
+    /* ── Colour balance + land swaps ── */
+    .cb-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 10.5px; color: #9E9B92; margin-bottom: 8px; }
+    .cb-legend i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+    .cb-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 82px; align-items: center; gap: 10px; margin: 6px 0; }
+    .cb-row .da2-srcpip { width: 20px; height: 20px; } .cb-row .da2-srcpip svg { width: 11px; height: 11px; }
+    .cb-bars { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .cb-bar { height: 7px; border-radius: 999px; background: #F0EDE5; overflow: hidden; }
+    .cb-bar i, .cb-legend i { display: block; height: 100%; border-radius: 999px; }
+    i.need { background: #8C8579; }
+    i.have.ok { background: #8FB08A; } i.have.short { background: #D9876A; } i.have.over { background: #D8C38E; }
+    .cb-nums { font: 650 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #57524A; text-align: right; font-variant-numeric: tabular-nums; }
+    .cb-nums span { color: #B0A99E; }
+    .cb-msg { margin-top: 10px; font-size: 12.5px; line-height: 1.45; color: #57524A; }
+    .cb-msg.warn { color: #9A3A22; }
+    .ls-list { display: flex; flex-direction: column; gap: 8px; }
+    .ls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .ls-price { font-size: 11px; color: #9E9B92; font-variant-numeric: tabular-nums; }
+    .ls-price.own { color: #2F6A2C; font-weight: 700; }
+    .sim-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+    .sim-color { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 7px 10px; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; font-size: 12px; color: #57524A; }
+    .sim-color .da2-srcpip { width: 20px; height: 20px; } .sim-color .da2-srcpip svg { width: 11px; height: 11px; }
     /* ── Toast ── */
     .app-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 400; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); background: #181715; color: #FFFEFA; padding: 11px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55); }
     .app-toast button { border: 0; background: none; color: #E7CE8C; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
@@ -5264,14 +5285,21 @@
     // when the hand has one, then casts ramp greedily (cheapest first); every ramp piece
     // (rock, dork, land-fetch spell) adds one mana from the next turn.
     // `library` items: { land: bool, ramp: bool, cmc: number }.
-    function simulateTurns({ library, commanderMv = 0, trials = 4000, turns = 5, rng = Math.random }) {
-      const out = { trials, avgMana: Array(turns).fill(0), commanderOnCurve: null, commanderByNext: null, missedDrop: 0, avgLandsT5: 0 };
+    function simulateTurns({ library, commanderMv = 0, trials = 4000, turns = 5, rng = Math.random, spells = [] }) {
+      // library items: { land, ramp, cmc, produces?: ["U","R"], tapped?: bool }.
+      // spells: cheap-spell colour requirements { cmc, req: { U: 2, R: 1 } } to test on curve.
+      const COLORS = ["W", "U", "B", "R", "G"];
+      const out = {
+        trials, avgMana: Array(turns).fill(0), commanderOnCurve: null, commanderByNext: null, missedDrop: 0, avgLandsT5: 0,
+        colorByT2: {}, doubleByT3: {}, spellsOnCurve: null,
+      };
+      COLORS.forEach((c) => { out.colorByT2[c] = 0; out.doubleByT3[c] = 0; });
       if (!library.length) return out;
       const mv = Math.round(commanderMv);
-      let onCurve = 0, byNext = 0;
+      const cheap = spells.filter((s) => s.cmc >= 1 && s.cmc <= turns);
+      let onCurve = 0, byNext = 0, spellHits = 0;
       const deck = library.slice();
       for (let t = 0; t < trials; t++) {
-        // Partial Fisher–Yates: only the cards we can see this game need to be shuffled in.
         // (A >99-card pool needs no down-sampling: the first cards of a shuffled pool are
         // distributed like the first cards of a random 99-card deck drawn from it.)
         const need = Math.min(deck.length, 7 + turns);
@@ -5280,13 +5308,26 @@
           [deck[i], deck[j]] = [deck[j], deck[i]];
         }
         const hand = deck.slice(0, 7);
-        let next = 7, lands = 0, ramp = 0, pendingRamp = 0, missed = false, castTurn = null;
+        let next = 7, ramp = 0, pendingRamp = 0, missed = false, castTurn = null;
+        const ready = []; // lands usable this turn
+        let entering = null; // a tapped land played this turn — usable from the next
+        const perTurn = []; // { mana, sources } after each turn's land drop
         for (let turn = 1; turn <= turns; turn++) {
           if (turn > 1 && next < deck.length) hand.push(deck[next++]);
           ramp += pendingRamp; pendingRamp = 0;
-          const li = hand.findIndex((c) => c.land);
-          if (li >= 0) { hand.splice(li, 1); lands++; } else if (turn <= 4) missed = true;
-          const available = lands + ramp;
+          if (entering) { ready.push(entering); entering = null; }
+          // Prefer an untapped land when there's a choice.
+          let li = hand.findIndex((c) => c.land && !c.tapped);
+          if (li < 0) li = hand.findIndex((c) => c.land);
+          if (li >= 0) {
+            const land = hand.splice(li, 1)[0];
+            if (land.tapped) entering = land; else ready.push(land);
+          } else if (turn <= 4) missed = true;
+          const available = ready.length + ramp;
+          const sources = {};
+          COLORS.forEach((c) => { sources[c] = 0; });
+          ready.forEach((l) => (l.produces || []).forEach((c) => { if (c in sources) sources[c]++; }));
+          perTurn.push({ mana: available, sources });
           out.avgMana[turn - 1] += available;
           if (castTurn == null && mv > 0 && available >= mv) castTurn = turn;
           let spend = available;
@@ -5297,14 +5338,82 @@
         if (castTurn != null && castTurn <= mv) onCurve++;
         if (castTurn != null && castTurn <= mv + 1) byNext++;
         if (missed) out.missedDrop++;
-        out.avgLandsT5 += lands;
+        out.avgLandsT5 += ready.length + (entering ? 1 : 0);
+        if (turns >= 2) COLORS.forEach((c) => { if (perTurn[1].sources[c] >= 1) out.colorByT2[c]++; });
+        if (turns >= 3) COLORS.forEach((c) => { if (perTurn[2].sources[c] >= 2) out.doubleByT3[c]++; });
+        // Could each cheap spell be cast on the turn matching its mana value?
+        for (const sp of cheap) {
+          const st = perTurn[sp.cmc - 1];
+          if (st.mana >= sp.cmc && Object.entries(sp.req).every(([c, n]) => st.sources[c] >= n)) spellHits++;
+        }
       }
       out.avgMana = out.avgMana.map((m) => m / trials);
       out.missedDrop /= trials;
       out.avgLandsT5 /= trials;
+      COLORS.forEach((c) => { out.colorByT2[c] /= trials; out.doubleByT3[c] /= trials; });
+      if (cheap.length) out.spellsOnCurve = spellHits / (trials * cheap.length);
       if (mv > 0 && mv <= turns) out.commanderOnCurve = onCurve / trials;
       if (mv > 0 && mv + 1 <= turns) out.commanderByNext = byNext / trials;
       return out;
+    }
+
+    // Whether a land usually enters tapped in the early turns. Shocklands ("If you don't,
+    // it enters tapped") count as untapped — you pay the life. Check/fast lands ("unless you
+    // control…") are untapped early; slow lands (need two or more other lands) are tapped early.
+    function landEntersTapped(oracle) {
+      const t = String(oracle || "").toLowerCase();
+      if (!/enters (the battlefield )?tapped/.test(t)) return false;
+      if (/if you don't, (it|this land) enters (the battlefield )?tapped/.test(t)) return false;
+      if (/unless you control two or more other lands/.test(t)) return true;
+      if (/unless/.test(t)) return false;
+      return true;
+    }
+
+    // Supply vs demand per colour: each colour's share of the deck's coloured mana symbols
+    // next to its share of the lands' colour sources. A gap of 8+ points is flagged.
+    function colorBalance({ pips, landSources }) {
+      const cols = Object.keys(pips).filter((c) => pips[c] > 0 || landSources[c] > 0);
+      const pipTotal = cols.reduce((s, c) => s + (pips[c] || 0), 0) || 1;
+      const srcTotal = cols.reduce((s, c) => s + (landSources[c] || 0), 0) || 1;
+      return cols.map((c) => {
+        const pipShare = (pips[c] || 0) / pipTotal;
+        const srcShare = (landSources[c] || 0) / srcTotal;
+        const delta = srcShare - pipShare;
+        return { c, pips: pips[c] || 0, sources: landSources[c] || 0, pipShare, srcShare, delta, status: delta <= -0.08 ? "short" : delta >= 0.08 ? "over" : "ok" };
+      }).sort((a, b) => b.pipShare - a.pipShare);
+    }
+
+    // Lands to cut for a better colour mix: the ones whose colours lean most toward the
+    // over-supplied side, tapped lands first. Lands that make any colour are never cut.
+    function suggestLandCuts(lands, balance, max = 5) {
+      const byColor = Object.fromEntries(balance.map((b) => [b.c, b.delta]));
+      return lands
+        .filter((l) => l.produces.length > 0 && l.produces.length < 5)
+        .map((l) => ({ ...l, score: l.produces.reduce((s, c) => s + (byColor[c] || 0), 0) / l.produces.length + (l.tapped ? 0.03 : 0) }))
+        .filter((l) => l.score > 0.02)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, max);
+    }
+
+    // Pairs each land cut with an in-budget replacement that makes the short colours.
+    // Budget per swap: up to 1.5x the cut's price + €1; owned lands and basics count as
+    // free. Candidates { name, produces, tapped, eur, owned, basic }; better candidates
+    // make more of the short colours, enter untapped (strongly preferred), are owned, then cost less.
+    function pairLandSwaps(cuts, candidates, balance) {
+      const shortness = Object.fromEntries(balance.map((b) => [b.c, Math.max(0, -b.delta)]));
+      // A tapped land arrives a turn late, so it counts half — a tapped dual rarely beats an untapped basic.
+      const value = (c) => c.produces.reduce((s, col) => s + (shortness[col] || 0), 0) * (c.tapped ? 0.5 : 1) + (c.owned ? 0.02 : 0);
+      const pool = candidates.filter((c) => value(c) > 0).sort((a, b) => value(b) - value(a) || (a.eur || 0) - (b.eur || 0));
+      const used = new Set();
+      return cuts.map((cut) => {
+        const budget = (cut.eur || 0) * 1.5 + 1;
+        const cost = (c) => (c.owned || c.basic ? 0 : (c.eur || 0));
+        let pick = pool.find((c) => (c.basic || !used.has(c.name)) && cost(c) <= budget);
+        const overBudget = !pick;
+        if (!pick) pick = pool.find((c) => !used.has(c.name)) || null;
+        if (pick && !pick.basic) used.add(pick.name);
+        return { cut, add: pick, overBudget: Boolean(pick) && overBudget };
+      });
     }
 
     // ── One-click staples ─────────────────────────────────────────────
@@ -6122,6 +6231,110 @@
       });
     }
 
+    // ═══ Colour balance + land swaps (Mana tab) ═══════════════════════
+    const BASIC_OF = { W: "Plains", U: "Island", B: "Swamp", R: "Mountain", G: "Forest" };
+    // The deck's lands with the colours they make and whether they enter tapped early.
+    // Fetch lands count as every deck colour; basics are expanded to their quantity.
+    function deckLandInfo(cards, folderId, colors) {
+      return cards.filter(isLandCard).flatMap((c) => {
+        const oracle = getOracleText(c);
+        const fetches = /search your library for (a|an).*land|search your library for.*basic land/i.test(oracle);
+        const produces = fetches ? colors.slice() : [...new Set(cardProduces(c).filter((m) => WUBRG.includes(m)))];
+        const info = { name: c.name, id: c.id, produces, tapped: landEntersTapped(oracle), eur: priceNum(c) || 0, card: c };
+        return Array(isBasicLand(c) ? cardQty(folderId, c.id) : 1).fill(info);
+      });
+    }
+    function colorBalanceFor(cards, folderId, colors, sources) {
+      const lands = deckLandInfo(cards, folderId, colors);
+      const landSources = {};
+      colors.forEach((c) => { landSources[c] = 0; });
+      lands.forEach((l) => l.produces.forEach((c) => { if (c in landSources) landSources[c]++; }));
+      const pips = {};
+      sources.forEach((s) => { pips[s.c] = s.pips; });
+      return { lands, balance: colorBalance({ pips, landSources }) };
+    }
+    function colorBalanceHtml(balance) {
+      if (balance.length < 2) return "";
+      const rows = balance.map((b) => `
+        <div class="cb-row">
+          <span class="da2-srcpip da2-sb-${b.c.toLowerCase()}">${MANA_SVG[b.c.toLowerCase()]}</span>
+          <div class="cb-bars">
+            <div class="cb-bar"><i class="need" style="width:${(b.pipShare * 100).toFixed(1)}%"></i></div>
+            <div class="cb-bar"><i class="have ${b.status}" style="width:${(b.srcShare * 100).toFixed(1)}%"></i></div>
+          </div>
+          <span class="cb-nums">${Math.round(b.pipShare * 100)}% <span>/</span> ${Math.round(b.srcShare * 100)}%</span>
+        </div>`).join("");
+      const worst = balance.filter((b) => b.status === "short").sort((a, b) => a.delta - b.delta)[0];
+      const over = balance.filter((b) => b.status === "over").sort((a, b) => b.delta - a.delta)[0];
+      const name = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
+      const msg = worst
+        ? `${name[worst.c]} is ${Math.round(worst.pipShare * 100)}% of your mana symbols but only ${Math.round(worst.srcShare * 100)}% of your land colour sources${over ? `, while ${name[over.c].toLowerCase()} gets ${Math.round(over.srcShare * 100)}% for ${Math.round(over.pipShare * 100)}% of the symbols` : ""}.`
+        : "Your lands' colours match what your spells ask for.";
+      return `<div class="cb">
+        <div class="da-h" style="margin:0 0 6px">Colour balance</div>
+        <div class="cb-legend"><span><i class="need"></i>share of mana symbols</span><span><i class="have ok"></i>share of land colour sources</span></div>
+        ${rows}
+        <div class="cb-msg ${worst ? "warn" : ""}">${esc(msg)}</div>
+        <div id="da2-land-swaps"></div>
+      </div>`;
+    }
+
+    // Replacement candidates for the short colours: dual/tri land cycles from Scryfall
+    // (one search, cached per identity + short colours) plus the basics of those colours.
+    const landSwapCache = new Map();
+    async function landSwapCandidates(colors, shortColors, inDeck) {
+      const ci = colors.join("").toLowerCase();
+      const key = `${ci}|${shortColors.join("")}`;
+      if (!landSwapCache.has(key)) {
+        const cycles = ["shockland", "checkland", "fastland", "painland", "slowland", "tricycleland", "pathway", "bondland", "gainland", "scryland"];
+        const q = `t:land -t:basic id<=${ci} (${shortColors.map((c) => `produces:${c.toLowerCase()}`).join(" or ")}) (${cycles.map((c) => `is:${c}`).join(" or ")}) game:paper`;
+        const p = fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}&order=eur&dir=asc`)
+          .then((r) => (r.ok ? r.json() : { data: [] }))
+          .then((d) => (d.data || []).map((c) => ({
+            name: c.name, card: c, basic: false,
+            produces: [...new Set((c.produced_mana || []).filter((m) => WUBRG.includes(m)))],
+            tapped: landEntersTapped(c.oracle_text || (c.card_faces || []).map((f) => f.oracle_text).join("\n")),
+            eur: Number(c.prices?.eur || c.prices?.eur_foil || 0) || 0,
+          })))
+          .catch(() => []);
+        landSwapCache.set(key, p);
+      }
+      const fetched = (await landSwapCache.get(key)).filter((c) => !inDeck.has(c.name.toLowerCase()));
+      const basics = shortColors.map((c) => ({ name: BASIC_OF[c], basic: true, produces: [c], tapped: false, eur: 0 }));
+      return [...fetched, ...basics].map((c) => ({ ...c, owned: c.basic || ownsCardNamed(c.name) }));
+    }
+    async function renderLandSwaps(folderId, cards, colors, lands, balance) {
+      const el = $("#da2-land-swaps");
+      if (!el) return;
+      const shortColors = balance.filter((b) => b.status === "short").map((b) => b.c);
+      if (!shortColors.length) { el.innerHTML = ""; return; }
+      const cuts = suggestLandCuts([...new Map(lands.map((l) => [l.name, l])).values()], balance);
+      if (!cuts.length) { el.innerHTML = ""; return; }
+      el.innerHTML = `<div class="da2-vsub" style="margin-top:10px">Finding better lands…</div>`;
+      const inDeck = new Set(cards.map((c) => c.name.toLowerCase()));
+      const candidates = await landSwapCandidates(colors, shortColors, inDeck);
+      const target = $("#da2-land-swaps");
+      if (!target || state.activeFolder !== folderId) return;
+      const pairs = pairLandSwaps(cuts, candidates, balance).filter((p) => p.add);
+      const eur = (v) => `€${(v || 0).toFixed(2)}`;
+      const price = (c) => (c.basic ? "basic" : c.owned ? "owned" : eur(c.eur));
+      target.innerHTML = pairs.length ? `
+        <div class="da-h" style="margin:14px 0 8px">Land swaps · similar budget</div>
+        <div class="ls-list">${pairs.map(({ cut, add, overBudget }) => `
+          <div class="ls-row">
+            <span class="da2-chip trim da2-card-chip" data-card="${esc(cut.name)}" role="button" tabindex="0">− ${esc(cut.name)}</span>
+            <span class="ls-price">${eur(cut.eur)}${cut.tapped ? " · tapped" : ""}</span>
+            <span class="da2-swap-arrow" aria-hidden="true">→</span>
+            <span class="da2-chip add da2-card-chip" data-card="${esc(add.name)}" role="button" tabindex="0">${esc(add.name)}</span>
+            <span class="ls-price${add.owned ? " own" : ""}">${price(add)}${add.tapped ? " · tapped" : ""}${overBudget ? " · over budget" : ""}</span>
+          </div>`).join("")}</div>
+        <div class="sim-note">Cuts are lands whose colours lean toward what you have too much of; each replacement makes your short colours and costs at most about 1.5× the land it replaces. Lands you own and basics count as free.</div>` : "";
+      target.querySelectorAll(".da2-card-chip").forEach((chip) => {
+        chip.addEventListener("click", () => openCardByName(chip.dataset.card));
+        chip.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCardByName(chip.dataset.card); } });
+      });
+    }
+
     // ═══ Deck analysis tabs, sticky progress bar, staples, simulator ═════
     const DA_TABS = [["overview", "Overview"], ["build", "Build"], ["mana", "Mana"], ["playtest", "Playtest"], ["ideas", "Ideas"]];
     let daTab = (() => { try { return localStorage.getItem("deck_analysis_tab") || "overview"; } catch { return "overview"; } })();
@@ -6235,14 +6448,31 @@
       }
     }
 
-    // Playtest tab: turns 1–5 simulator (runs in the browser, free).
-    function renderSimSection(library, roleDetails, commander) {
+    // Playtest tab: turns 1–5 simulator (runs in the browser, free). Lands carry their
+    // colours and whether they enter tapped; cheap spells carry their colour needs.
+    function renderSimSection(library, roleDetails, commander, colors) {
       const el = $("#da2-sim");
       if (!el) return;
       const rampNames = new Set((roleDetails.ramp?.cards || []).map((c) => c.name));
-      const lib = library.map((c) => ({ land: isLandCard(c), ramp: rampNames.has(c.name), cmc: Number(c.cmc || 0) }));
+      const landMeta = new Map();
+      const lib = library.map((c) => {
+        const land = isLandCard(c);
+        if (land && !landMeta.has(c.id)) {
+          const oracle = getOracleText(c);
+          const fetches = /search your library for (a|an).*land|search your library for.*basic land/i.test(oracle);
+          landMeta.set(c.id, { produces: fetches ? colors.slice() : [...new Set(cardProduces(c).filter((m) => WUBRG.includes(m)))], tapped: fetches ? false : landEntersTapped(oracle) });
+        }
+        return { land, ramp: rampNames.has(c.name), cmc: Number(c.cmc || 0), ...(land ? landMeta.get(c.id) : {}) };
+      });
+      const spells = [...new Map(library.filter((c) => !isLandCard(c)).map((c) => [c.id, c])).values()]
+        .filter((c) => (c.cmc || 0) >= 1 && (c.cmc || 0) <= 3)
+        .map((c) => {
+          const req = {};
+          Object.entries(coloredPipCounts(c)).forEach(([col, n]) => { if (n > 0) req[col] = n; });
+          return { cmc: Math.round(c.cmc), req };
+        });
       const mv = commander ? Math.round(commander.cmc || 0) : 0;
-      const r = simulateTurns({ library: lib, commanderMv: mv, trials: 4000 });
+      const r = simulateTurns({ library: lib, commanderMv: mv, trials: 4000, spells });
       const pct = (p) => `${Math.round(p * 100)}%`;
       const maxMana = Math.max(1, ...r.avgMana);
       const bars = r.avgMana.map((m, i) => `<div class="sim-col"><span class="sim-val">${m.toFixed(1)}</span><i style="height:${(m / maxMana) * 100}%"></i><span class="sim-x">T${i + 1}</span></div>`).join("");
@@ -6251,17 +6481,27 @@
         ? stat(`${esc(frontFaceName(commander.name))} on turn ${mv}`, pct(r.commanderOnCurve), oddsTone("commanderOnCurve", r.commanderOnCurve))
           + (r.commanderByNext != null ? stat(`…or by turn ${mv + 1}`, pct(r.commanderByNext), oddsTone("commanderOnCurve", r.commanderByNext)) : "")
         : "";
+      // Per colour: a source by turn 2, two sources by turn 3 (for double-pip spells).
+      const doubles = new Set(spells.flatMap((s) => Object.entries(s.req).filter(([, n]) => n >= 2).map(([c]) => c)));
+      const colorTone = (p, good, ok) => (p >= good ? "good" : p >= ok ? "ok" : "bad");
+      const colorCells = colors.filter((c) => spells.some((s) => s.req[c]) || doubles.has(c)).map((c) => `
+        <div class="sim-color">
+          <span class="da2-srcpip da2-sb-${c.toLowerCase()}">${MANA_SVG[c.toLowerCase()]}</span>
+          <span>by T2 <b class="da2-odds da2-odds-${colorTone(r.colorByT2[c], 0.8, 0.65)}">${pct(r.colorByT2[c])}</b></span>
+          ${doubles.has(c) ? `<span>${c}${c} by T3 <b class="da2-odds da2-odds-${colorTone(r.doubleByT3[c], 0.6, 0.45)}">${pct(r.doubleByT3[c])}</b></span>` : ""}
+        </div>`).join("");
       el.innerHTML = `
         <div class="da-h">Turns 1–5 · ${r.trials.toLocaleString()} simulated games on the play</div>
         <div class="sim-chart" aria-label="Average mana available per turn">${bars}</div>
-        <div class="sim-cap">Average mana available each turn (lands + ramp)</div>
+        <div class="sim-cap">Average mana available each turn (lands + ramp; tapped lands count from the next turn)</div>
         <div class="da2-hand-odds">
+          ${r.spellsOnCurve != null ? stat("Cheap spells castable on curve (right colours)", pct(r.spellsOnCurve), r.spellsOnCurve >= 0.7 ? "good" : r.spellsOnCurve >= 0.55 ? "ok" : "bad", "Your 1–3 mana spells: the chance you have enough mana of the right colours on the turn matching their mana value.") : ""}
           ${cmdLines}
-          ${/* Bands calibrated on a 37-land / 10-ramp 99: misses a drop by T4 in ~44% of games, ~3.9 lands on T5. */ ""}
           ${stat("Missed a land drop by turn 4", pct(r.missedDrop), r.missedDrop <= 0.47 ? "good" : r.missedDrop <= 0.6 ? "ok" : "bad", "Lower is better. A typical 37-land deck misses one in about 44% of games.")}
           ${stat("Lands in play on turn 5", r.avgLandsT5.toFixed(1), r.avgLandsT5 >= 3.8 ? "good" : r.avgLandsT5 >= 3.4 ? "ok" : "bad", "A typical 37-land deck averages about 3.9.")}
         </div>
-        <div class="sim-note">Plays a land each turn when it can and casts ramp cheapest-first; each ramp piece adds one mana from the next turn. No mulligans.</div>`;
+        ${colorCells ? `<div class="da-h" style="margin-top:12px">Colours in time</div><div class="sim-colors">${colorCells}</div>` : ""}
+        <div class="sim-note">Plays a land each turn when it can (untapped first) and casts ramp cheapest-first; each ramp piece adds one colourless mana from the next turn. Shocklands count as untapped. No mulligans.</div>`;
     }
 
     function renderDeckAnalysis(deck, cards) {
@@ -6319,6 +6559,7 @@
       // something else entirely (profiles/EDHREC loading), not the review itself.
       const reviewing = daReviewInFlight.has(folderId);
 
+      const cb = colorBalanceFor(cards, folderId, colors, sources);
       const toCutKpi = s.total > 100
         ? { n: s.total - 100, label: "to cut", tone: "bad" }
         : s.total < 100 ? { n: 100 - s.total, label: "to go", tone: "" } : { n: 100, label: "cards · complete", tone: "good" };
@@ -6369,7 +6610,8 @@
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
             ${basicsSuggestionHtml(cards, folderId, sources, profile.landTarget[0], s.lands)}
-          </div>`)}
+          </div>
+          <div class="da2-card">${colorBalanceHtml(cb.balance)}</div>`)}
         ${pane("playtest", `
           <section class="da2-card" id="da2-opening-hand" hidden></section>
           <section class="da2-card" id="da2-sim"></section>`)}
@@ -6422,7 +6664,8 @@
         const N = library.length;
         const odds = openingHandOdds({ N: Math.min(N, 99), lands: projectTo99(s.lands, N), ramp: projectTo99(ramp, N), commanderMv: commander ? (commander.cmc || 0) : undefined });
         renderOpeningHandSection(library, odds, commander, { projected: N > 99 });
-        renderSimSection(library, roleDetails, commander);
+        renderSimSection(library, roleDetails, commander, colors);
+        renderLandSwaps(folderId, cards, colors, cb.lands, cb.balance);
         if (s.total > 100) {
           const ed = commander ? edhrecCache.get(commanderSlug(commander.name)) : null;
           const edhrecByName = ed && ed.status === "ready" ? new Map((ed.data.cards || []).map((c) => [edhrecNameKey(c.name), c])) : null;
@@ -7627,6 +7870,13 @@
       renderCollection(true);
     });
     $("#collection-more-btn").addEventListener("click", () => renderCollection(false));
+    // Endless scroll: load the next page as the bottom of the grid comes into view
+    // (the button stays as a fallback, e.g. for keyboard users).
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting) && $("#collection-more-wrap").style.display !== "none" && state.activeTab === "collection") renderCollection(false);
+      }, { rootMargin: "800px 0px" }).observe($("#collection-more-wrap"));
+    }
 
     // Upload: pick file → server preview → choose mode → confirm.
     const uploadModal = $("#collection-upload-modal");

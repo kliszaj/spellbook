@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99, simulateTurns, pickStaples };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99, simulateTurns, pickStaples, landEntersTapped, colorBalance, suggestLandCuts, pairLandSwaps };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -425,6 +425,57 @@ test("pickStaples: Game Changers only within the allowance; EDHREC staples by in
   assert.ok(!b2.includes("Reliquary Tower") && !b2.includes("Niche Card"));
   const b3 = h.pickStaples({ colors: ["U"], edhrec, gameChangers: gc, gcAllowance: 1 });
   assert.ok(b3.includes("Rhystic Study") && !b3.includes("Cyclonic Rift"));
+});
+
+
+test("landEntersTapped: tri-lands tapped; shocks, checks, fast lands untapped; slow lands tapped", () => {
+  assert.equal(h.landEntersTapped("Arcane Sanctum enters tapped.\n{T}: Add {W}, {U}, or {B}."), true);
+  assert.equal(h.landEntersTapped("As Steam Vents enters, you may pay 2 life. If you don't, it enters tapped."), false);
+  assert.equal(h.landEntersTapped("Sulfur Falls enters tapped unless you control an Island or a Mountain."), false);
+  assert.equal(h.landEntersTapped("Spirebluff Canal enters tapped unless you control two or fewer other lands."), false);
+  assert.equal(h.landEntersTapped("Stormcarved Coast enters tapped unless you control two or more other lands."), true);
+  assert.equal(h.landEntersTapped("{T}: Add {C}."), false);
+});
+
+test("colorBalance flags colours whose land share trails their symbol share", () => {
+  const bal = h.colorBalance({ pips: { U: 38, R: 30, B: 8 }, landSources: { U: 10, R: 10, B: 20 } });
+  const by = Object.fromEntries(bal.map((b) => [b.c, b]));
+  assert.equal(bal[0].c, "U"); // sorted by symbol share
+  assert.equal(by.U.status, "short");
+  assert.equal(by.B.status, "over");
+});
+
+test("simulateTurns: tapped lands give mana from the next turn; colours are tracked", () => {
+  const tappedLib = Array(99).fill({ land: true, ramp: false, cmc: 0, produces: ["U"], tapped: true });
+  const r = h.simulateTurns({ library: tappedLib, trials: 50, rng: seeded(4), spells: [{ cmc: 2, req: { U: 2 } }] });
+  assert.deepEqual(r.avgMana, [0, 1, 2, 3, 4]);
+  assert.equal(r.colorByT2.U, 1);
+  assert.equal(r.spellsOnCurve, 0); // UU on turn 2 is impossible when every land enters tapped
+  const untapped = Array(99).fill({ land: true, ramp: false, cmc: 0, produces: ["U"], tapped: false });
+  assert.equal(h.simulateTurns({ library: untapped, trials: 50, rng: seeded(4), spells: [{ cmc: 2, req: { U: 2 } }] }).spellsOnCurve, 1);
+});
+
+test("suggestLandCuts + pairLandSwaps: cut over-supplied lands, replace within budget, prefer untapped", () => {
+  const bal = h.colorBalance({ pips: { U: 40, R: 30, B: 5, G: 5 }, landSources: { U: 8, R: 8, B: 14, G: 14 } });
+  const lands = [
+    { name: "Llanowar Wastes", produces: ["B", "G"], tapped: false, eur: 1.5 },
+    { name: "Swamp", produces: ["B"], tapped: false, eur: 0 },
+    { name: "Command Tower", produces: ["W", "U", "B", "R", "G"], tapped: false, eur: 0.3 },
+    { name: "Steam Vents", produces: ["U", "R"], tapped: false, eur: 9 },
+  ];
+  const cuts = h.suggestLandCuts(lands, bal);
+  assert.deepEqual(cuts.map((c) => c.name).sort(), ["Llanowar Wastes", "Swamp"]);
+  const cands = [
+    { name: "Shivan Reef", produces: ["U", "R"], tapped: false, eur: 0.6 },
+    { name: "Volcanic Island", produces: ["U", "R"], tapped: false, eur: 600 },
+    { name: "Swiftwater Cliffs", produces: ["U", "R"], tapped: true, eur: 0.1 },
+    { name: "Island", basic: true, produces: ["U"], tapped: false, eur: 0 },
+  ];
+  const pairs = h.pairLandSwaps(cuts, cands, bal);
+  const by = Object.fromEntries(pairs.map((p) => [p.cut.name, p.add.name]));
+  assert.equal(by["Llanowar Wastes"], "Shivan Reef");
+  assert.equal(by["Swamp"], "Island"); // free untapped basic beats a tapped dual
+  assert.ok(!pairs.some((p) => p.add.name === "Volcanic Island"));
 });
 
 await run("Deck analysis UI helpers");
