@@ -120,4 +120,50 @@ test("usage log sums this month's spend only", async () => {
   assert.ok(close(await log.monthUsd(), 1.75));
 });
 
+
+test("jsonBatch submits once, polls until ended, and halves the price per result", async () => {
+  const created = [];
+  let polls = 0;
+  const msg = (text, stop = "end_turn") => ({ stop_reason: stop, content: [{ type: "text", text }], usage: { input_tokens: 1_000_000, output_tokens: 0 } });
+  const anthropic = {
+    messages: {
+      batches: {
+        create: async (p) => { created.push(p); return { id: "batch_x" }; },
+        retrieve: async () => ({ processing_status: ++polls < 3 ? "in_progress" : "ended" }),
+        results: async () => (async function* () {
+          yield { custom_id: "a", result: { type: "succeeded", message: msg('{"ok":1}') } };
+          yield { custom_id: "b", result: { type: "succeeded", message: msg("{}", "max_tokens") } };
+          yield { custom_id: "c", result: { type: "errored" } };
+        })(),
+      },
+    },
+  };
+  const ai = createAiClient({ provider: "anthropic", apiKey: "k", model: "claude-sonnet-5-5", anthropic });
+  let submitted = null;
+  const out = await ai.jsonBatch(
+    [{ id: "a", system: "S", user: "U", effort: "low" }, { id: "b", system: "S", user: "U" }, { id: "c", system: "S", user: "U" }],
+    { onSubmitted: async (id) => { submitted = id; }, sleep: async () => {} },
+  );
+  assert.equal(created.length, 1);
+  assert.deepEqual(created[0].requests[0].params.output_config, { effort: "low" });
+  assert.equal(submitted, "batch_x");
+  assert.equal(polls, 3);
+  assert.deepEqual(out.get("a").data, { ok: 1 });
+  assert.equal(out.get("a").usd, 1); // $2/M input at half price
+  assert.equal(out.get("b").error, "max_tokens");
+  assert.equal(out.get("c").error, "errored");
+});
+
+test("jsonBatch resumes an existing batch without creating a new one", async () => {
+  let created = 0;
+  const anthropic = { messages: { batches: {
+    create: async () => { created++; return { id: "new" }; },
+    retrieve: async (id) => { assert.equal(id, "old"); return { processing_status: "ended" }; },
+    results: async () => (async function* () {})(),
+  } } };
+  const ai = createAiClient({ provider: "anthropic", apiKey: "k", model: "claude-sonnet-5-5", anthropic });
+  await ai.jsonBatch([{ id: "a", system: "S", user: "U" }], { resumeBatchId: "old", sleep: async () => {} });
+  assert.equal(created, 0);
+});
+
 await run("AI client");

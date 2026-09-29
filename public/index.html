@@ -1586,6 +1586,7 @@
     .da2-role-cards { display: flex; flex-wrap: wrap; gap: 5px; }
     .da2-role-key { margin-top: 8px; color: #A39E93; font-size: 10px; }
     .da2-side { display: flex; flex-direction: column; min-width: 0; }
+    #da2-curve-wrap { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
     .da2-mana-card { display: flex; flex-direction: column; flex: 1; padding: 14px 15px 12px; }
     /* The side column stretches to the ledger's height; the curve flex-grows to absorb
        the slack (bars are %-height, so they scale with it) instead of leaving a gap. */
@@ -4251,14 +4252,36 @@
       el.querySelectorAll(".mv-chip").forEach((b) => b.addEventListener("click", () => {
         const v = Number(b.dataset.mv);
         if (savedMvFilter.has(v)) savedMvFilter.delete(v); else savedMvFilter.add(v);
-        renderSavedCards();
+        renderSavedCards({ filtersOnly: true });
       }));
     }
     let trimOpenKey = null; // trim-planner category whose cut list is open
     let trimShowAll = false;
     let trimCtx = null;
 
-    function renderSavedCards() {
+    // Mana-curve block of the deck analysis. Depends on the on-screen selection (deckCurveView),
+    // so filter changes repaint just this (refreshDeckCurve) instead of the whole analysis.
+    let daCurveCtx = null; // { folderId, cards, stats, profile, identityTags } from the last analysis render
+    function deckCurveBlockHtml(ctx) {
+      if (!ctx) return "";
+      const { folderId, cards, stats, profile, identityTags } = ctx;
+      const scoped = Boolean(deckCurveView && deckCurveView.folderId === folderId && deckCurveView.filtered);
+      const spellsTarget = 100 - Math.round((profile.landTarget[0] + profile.landTarget[1]) / 2);
+      const target = curveTarget(scoped ? deckCurveView.targetCards : cards, cards, spellsTarget, typeTargetsFor(identityLensKeys(identityTags)));
+      const curve = scoped ? computeDeckStats(deckCurveView.cards, folderId).curve : stats.curve;
+      const mvOnly = scoped && state.savedSortField === "cmc" && savedMvFilter.size ? savedMvFilter : null;
+      return `<div class="da-h">Mana curve${scoped ? ` <span class="da2-approx">· current selection</span>` : ""}</div>${curveHtml(curve, target, mvOnly)}`;
+    }
+    function refreshDeckCurve() {
+      const wrap = $("#da2-curve-wrap");
+      if (!wrap || !daCurveCtx || daCurveCtx.folderId !== state.activeFolder) return false;
+      wrap.innerHTML = deckCurveBlockHtml(daCurveCtx);
+      return true;
+    }
+
+    // filtersOnly: only the view filters changed (text, type/color/MV chips) — the deck
+    // itself didn't, so the analysis stays and only its mana curve is repainted.
+    function renderSavedCards({ filtersOnly = false } = {}) {
       renderFolderRail();
       const filter = savedFilter.value.toLowerCase();
       const cards = sortCardsByField(
@@ -4269,7 +4292,7 @@
       const isRealDeck = state.activeFolder !== "all" && state.activeFolder !== DEFAULT_FOLDER;
 
       // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
-      renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, renderSavedCards);
+      renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, () => renderSavedCards({ filtersOnly: true }));
       renderMvChips(cards);
       const mvActive = state.savedSortField === "cmc" && savedMvFilter.size > 0;
       const preMv = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter));
@@ -4309,7 +4332,7 @@
         // bars without shrinking the target the dashed line is drawn from.
         const targetCards = isRealDeck ? preMv.filter((c) => !isMaybe(state.activeFolder, c.id)) : preMv;
         deckCurveView = { folderId: state.activeFolder, cards: mainVisible.slice(), targetCards, filtered: mainVisible.length !== wholeDeck.length };
-        renderDeckAnalysis(deck, wholeDeck); // whole deck minus Maybeboard, not the filtered view
+        if (!(filtersOnly && refreshDeckCurve())) renderDeckAnalysis(deck, wholeDeck); // whole deck minus Maybeboard, not the filtered view
       }
 
       savedGrid.innerHTML = "";
@@ -4402,7 +4425,12 @@
       input.addEventListener("blur", commit);
     }
 
-    savedFilter.addEventListener("input", renderSavedCards);
+    // Debounced: rebuilding the grid on every keystroke is wasted work mid-word.
+    let savedFilterTimer = null;
+    savedFilter.addEventListener("input", () => {
+      clearTimeout(savedFilterTimer);
+      savedFilterTimer = setTimeout(() => renderSavedCards({ filtersOnly: true }), 160);
+    });
 
     // ── Deck analysis ─────────────────────────────────────────────────
     const dA = $("#deck-analysis");
@@ -5833,7 +5861,6 @@
       const commander = deck && deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
       const colors = deckColors(cards, commander);
       const deckName = deck ? deck.name : "All saved cards";
-      const curveScoped = Boolean(deckCurveView && deckCurveView.folderId === folderId && deckCurveView.filtered);
 
       // Below a near-complete count, targets calibrated for a 100-card deck would flag
       // everything as "short" — noise. Show only the deck's identity + a build prompt.
@@ -5877,6 +5904,7 @@
         : `<div class="da2-badge in-progress" title="${s.total} of 100 cards · a full grade appears at 90"><b>${100 - s.total}</b><small>to go</small></div>`;
 
       daCtx = { folderId, sources, stats: s, profile, roleDetails, flow, counts }; // let AI review refine the grade while retaining card-level evidence
+      daCurveCtx = { folderId, cards, stats: s, profile, identityTags }; // lets filter changes repaint only the mana curve
       // A review for this exact deck is still running (see reviewDeckWithAI) — the button
       // and fix-wrap must keep showing that, even though this render was triggered by
       // something else entirely (profiles/EDHREC loading), not the review itself.
@@ -5915,10 +5943,7 @@
           </div>
           <div class="da2-side">
           <div class="da2-card da2-mana-card">
-            <div class="da-h">Mana curve${curveScoped ? ` <span class="da2-approx">· current selection</span>` : ""}</div>
-            ${curveHtml(curveScoped ? computeDeckStats(deckCurveView.cards, folderId).curve : s.curve,
-              curveTarget(curveScoped ? deckCurveView.targetCards : cards, cards, 100 - Math.round((profile.landTarget[0] + profile.landTarget[1]) / 2), typeTargetsFor(identityLensKeys(identityTags))),
-              curveScoped && state.savedSortField === "cmc" && savedMvFilter.size ? savedMvFilter : null)}
+            <div id="da2-curve-wrap">${deckCurveBlockHtml(daCurveCtx)}</div>
             <div class="da2-section-rule"></div>
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
@@ -7104,8 +7129,10 @@
     function swapsStatusText(st) {
       switch (st.phase) {
         case "awaiting-confirmation":
-          return `Profile ${st.pending.toLocaleString()} cards for swaps${st.estimate ? ` (≈ $${st.estimate.usd.toFixed(2)} on ${st.estimate.model})` : ""}`;
-        case "profiling": return `Profiling cards for swaps… ${(st.total - st.pending).toLocaleString()} / ${st.total.toLocaleString()}`;
+          return `Profile ${st.pending.toLocaleString()} cards for swaps${st.estimate ? ` (≈ $${st.estimate.usd.toFixed(2)} on ${st.estimate.model}${st.estimate.batch ? ", half-price batch — takes a few minutes, up to an hour" : ""})` : ""}`;
+        case "profiling":
+          if (st.batch && !st.profiled) return `Profiling ${st.pending.toLocaleString()} cards as a half-price batch… usually a few minutes, up to an hour. You can leave this page.`;
+          return `Profiling cards for swaps… ${(st.total - st.pending).toLocaleString()} / ${st.total.toLocaleString()}`;
         case "embedding": return `Preparing matching… ${st.embedded.toLocaleString()} cards`;
         case "ready": return st.aiAvailable ? "Ready for swaps" : "Ready for swaps · add an API key in Settings for deck-aware matches";
         case "error": return `Preparing swaps failed: ${st.error}`;
@@ -7144,7 +7171,12 @@
     }
 
     buildColorPicker($("#collection-colors"), collectionUi.colors, () => renderCollection(true), { colorless: true, exclusiveColorless: true });
-    $("#collection-filter").addEventListener("input", (e) => { collectionUi.query = e.target.value; renderCollection(true); });
+    let collectionFilterTimer = null;
+    $("#collection-filter").addEventListener("input", (e) => {
+      collectionUi.query = e.target.value;
+      clearTimeout(collectionFilterTimer);
+      collectionFilterTimer = setTimeout(() => renderCollection(true), 160);
+    });
     $("#collection-binder").addEventListener("change", (e) => { collectionUi.binder = e.target.value; renderCollection(true); });
     $("#collection-sort").addEventListener("change", (e) => { collectionUi.sortField = e.target.value; renderCollection(true); });
     const collectionSortDirBtn = $("#collection-sort-dir");
@@ -7489,7 +7521,7 @@
       planBtn.textContent = state.deckNotes[state.activeFolder] ? "Game plan ✓" : "Game plan";
     }
 
-    buildColorPicker($("#deck-colors"), deckColorFilter, () => renderSavedCards(), { colorless: true });
+    buildColorPicker($("#deck-colors"), deckColorFilter, () => renderSavedCards({ filtersOnly: true }), { colorless: true });
 
     const gameplanModal = $("#gameplan-modal");
     function updateGameplanCount() {

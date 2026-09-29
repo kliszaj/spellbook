@@ -183,4 +183,64 @@ test("concurrent cold access to the store doesn't lose writes", async () => {
   for (const [id, profile] of entries) assert.deepEqual(await reloaded.get(id), profile);
 });
 
+
+// Wraps fakeAi with a jsonBatch that answers each item through the same json() logic.
+function fakeBatchAi(opts = {}, { failIds = [] } = {}) {
+  const ai = fakeAi(opts);
+  ai.batchCalls = [];
+  ai.jsonBatch = async (items, { resumeBatchId = null, onSubmitted = async () => {} } = {}) => {
+    ai.batchCalls.push({ items, resumeBatchId });
+    if (!resumeBatchId) await onSubmitted("batch_1");
+    const out = new Map();
+    for (const it of items) {
+      if (failIds.includes(it.id)) { out.set(it.id, { error: "errored" }); continue; }
+      const r = await ai.json(it);
+      out.set(it.id, { ...r, usd: r.usd / 2 });
+    }
+    return out;
+  };
+  return ai;
+}
+
+test("runProfileJob with useBatch profiles through one batch and records half-price usage", async () => {
+  const dir = await tempDir();
+  const store = createProfileStore({ dataDir: dir });
+  const ai = fakeBatchAi();
+  const log = usageLog();
+  const cards = Array.from({ length: 60 }, (_, i) => card(i + 1));
+  const r = await runProfileJob({ cards, store, ai, usageLog: log, useBatch: true, batchStatePath: join(dir, "pb.json") });
+  assert.equal(r.profiled, 60);
+  assert.equal(ai.batchCalls.length, 1);
+  assert.equal(ai.batchCalls[0].items.length, 3); // 25 + 25 + 10
+  assert.ok(log.entries.every((e) => e.usd === 0.0005));
+  assert.equal(JSON.parse(await readFile(join(dir, "pb.json"), "utf8")), null); // cleared when done
+});
+
+test("runProfileJob with useBatch falls back to normal calls for failed batch items", async () => {
+  const dir = await tempDir();
+  const store = createProfileStore({ dataDir: dir });
+  const ai = fakeBatchAi({}, { failIds: ["b1"] });
+  const cards = Array.from({ length: 30 }, (_, i) => card(i + 1));
+  const r = await runProfileJob({ cards, store, ai, usageLog: usageLog(), useBatch: true });
+  assert.equal(r.profiled, 30);
+  assert.deepEqual(r.failed, []);
+});
+
+test("runProfileJob resumes a saved batch instead of submitting a new one", async () => {
+  const dir = await tempDir();
+  const store = createProfileStore({ dataDir: dir });
+  const ai = fakeBatchAi();
+  const cards = Array.from({ length: 3 }, (_, i) => card(i + 1));
+  const statePath = join(dir, "pb.json");
+  await writeFile(statePath, JSON.stringify({ batchId: "batch_old", model: ai.model, chunks: [{ id: "b0", oids: ["o1", "o2"] }] }));
+  const r = await runProfileJob({ cards, store, ai, usageLog: usageLog(), useBatch: true, batchStatePath: statePath });
+  assert.equal(ai.batchCalls[0].resumeBatchId, "batch_old");
+  assert.equal(ai.batchCalls[0].items.length, 1);
+  assert.equal(r.profiled, 3); // o3 wasn't in the old batch — profiled through the normal loop
+});
+
+test("estimateProfileUsd halves for a batch", () => {
+  assert.equal(estimateProfileUsd(1000, "claude-sonnet-5-5", { batch: true }), estimateProfileUsd(1000, "claude-sonnet-5-5") / 2);
+});
+
 await run("Card profiles");

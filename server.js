@@ -1,7 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import express from "express";
-import { callOpenAIJsonRaw, parseJsonObject, createAiClient } from "./lib/ai-client.js";
-import { mkdir, readFile, writeFile } from "fs/promises";
+import compression from "compression";
+import { callOpenAIJsonRaw, parseJsonObject, createAiClient, priceUsd, supportsEffort } from "./lib/ai-client.js";
+import { copyFile, mkdir, readdir, readFile, rename, unlink, writeFile } from "fs/promises";
+import { constants as fsConstants } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { mergeDeckNotes, normalizeDeckNotes } from "./lib/deck-notes.js";
@@ -19,6 +21,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 // Saved-card snapshots (full Scryfall card objects + translate cache) easily
 // exceed body-parser's 100 KB default, so raise the JSON body limit.
+app.use(compression()); // gzip the ~350 KB page and large JSON (collection, app state)
 app.use(express.json({ limit: "25mb" }));
 app.use(express.static(join(__dirname, "public")));
 
@@ -88,10 +91,36 @@ async function readAppState() {
   }
 }
 
+// state.json holds every deck, so it's written atomically (temp file + rename — a crash
+// mid-write can't leave it half-written) and copied to backups/state-YYYY-MM-DD.json once
+// a day before the first write of that day (the last 14 days are kept).
+const BACKUP_DIR = join(DATA_DIR, "backups");
+const BACKUP_KEEP = 14;
+let lastBackupDay = null;
+async function backupStateOncePerDay() {
+  const day = new Date().toISOString().slice(0, 10);
+  if (lastBackupDay === day) return;
+  lastBackupDay = day;
+  try {
+    await mkdir(BACKUP_DIR, { recursive: true });
+    const target = join(BACKUP_DIR, `state-${day}.json`);
+    await copyFile(STATE_FILE, target, fsConstants.COPYFILE_EXCL).catch((err) => {
+      if (err.code !== "EEXIST" && err.code !== "ENOENT") throw err;
+    });
+    const old = (await readdir(BACKUP_DIR)).filter((f) => /^state-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().slice(0, -BACKUP_KEEP);
+    await Promise.all(old.map((f) => unlink(join(BACKUP_DIR, f)).catch(() => {})));
+  } catch (err) {
+    console.warn("state backup failed:", err.message); // never block a save on a backup
+  }
+}
+
 async function writeAppState(nextState) {
   await mkdir(DATA_DIR, { recursive: true });
   const state = normalizeAppState({ ...DEFAULT_APP_STATE, ...nextState });
-  await writeFile(STATE_FILE, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+  await backupStateOncePerDay();
+  const tmp = `${STATE_FILE}.tmp`;
+  await writeFile(tmp, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+  await rename(tmp, STATE_FILE);
   return state;
 }
 
@@ -660,19 +689,51 @@ async function callOpenAIJson(args) {
   return (await callOpenAIJsonRaw(args)).data;
 }
 
-async function translateWithAnthropic({ apiKey, model, userMessage, colorIdentity }) {
-  const client = new Anthropic({ apiKey });
-  const message = await client.messages.create({
-    model,
-    max_tokens: 8192,
-    thinking: { type: "adaptive" },
-    system: SCRYFALL_SYSTEM_PROMPT,
-    tools: [RECOMMEND_TOOL, WEB_SEARCH_TOOL],
-    tool_choice: { type: "auto" },
-    messages: [{ role: "user", content: userMessage }],
-  });
+// The dynamic-filtering web search (trims results before the model reads them) needs
+// Opus/Sonnet 4.6+; older models (Haiku 4.5) keep the basic tool.
+const DYNAMIC_SEARCH_MODELS = /^claude-(opus-(4-[6-9]|5)|sonnet-(4-6|5)|fable-5)/;
+const WEB_SEARCH_PRICE_USD = 0.01; // $10 per 1,000 searches
 
-  const rec = message.content.find((b) => b.type === "tool_use" && b.name === "recommend_cards");
+async function translateWithAnthropic({ apiKey, model, userMessage, colorIdentity, forceAiSearch }) {
+  const client = new Anthropic({ apiKey });
+  const webSearch = DYNAMIC_SEARCH_MODELS.test(model) ? { ...WEB_SEARCH_TOOL, type: "web_search_20260209" } : WEB_SEARCH_TOOL;
+  const messages = [{ role: "user", content: userMessage }];
+  const usage = { inputTokens: 0, outputTokens: 0, cacheWriteTokens: 0, cacheReadTokens: 0 };
+  let searches = 0;
+  const content = [];
+  let message;
+  // A server-tool (web search) turn can come back paused; continue it (bounded) by
+  // resending the conversation with the paused assistant turn appended.
+  for (let turn = 0; turn < 4; turn++) {
+    message = await client.messages.create({
+      model,
+      max_tokens: 8192,
+      thinking: { type: "adaptive" },
+      // Low effort is plenty to write a Scryfall query; recommendations get a bit more.
+      ...(supportsEffort(model) ? { output_config: { effort: forceAiSearch ? "medium" : "low" } } : {}),
+      // Tools render before system, so caching the system block caches both (~2.5k tokens).
+      system: [{ type: "text", text: SCRYFALL_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      tools: [RECOMMEND_TOOL, webSearch],
+      tool_choice: { type: "auto" },
+      messages,
+    });
+    const u = message.usage || {};
+    usage.inputTokens += u.input_tokens || 0;
+    usage.outputTokens += u.output_tokens || 0;
+    usage.cacheWriteTokens += u.cache_creation_input_tokens || 0;
+    usage.cacheReadTokens += u.cache_read_input_tokens || 0;
+    searches += u.server_tool_use?.web_search_requests || 0;
+    content.push(...message.content);
+    if (message.stop_reason !== "pause_turn") break;
+    messages.push({ role: "assistant", content: message.content });
+  }
+  const usd = (priceUsd(model, usage) ?? 0) + searches * WEB_SEARCH_PRICE_USD;
+  await usageLog.record({ feature: "search", provider: "anthropic", model, ...usage, usd }).catch(() => {});
+  if (message.stop_reason === "refusal") {
+    throw Object.assign(new Error("The AI declined this search. Try rephrasing it."), { status: 422 });
+  }
+
+  const rec = content.find((b) => b.type === "tool_use" && b.name === "recommend_cards");
   if (rec) {
     return {
       type: "cards",
@@ -681,13 +742,13 @@ async function translateWithAnthropic({ apiKey, model, userMessage, colorIdentit
     };
   }
 
-  const textBlock = message.content.find((b) => b.type === "text");
+  const textBlock = [...content].reverse().find((b) => b.type === "text");
   const scryfallQuery = enforceCommanderFilters(extractQuery((textBlock?.text || "").trim()), colorIdentity);
   return { type: "query", query: scryfallQuery, scryfallQuery };
 }
 
 async function translateWithOpenAI({ apiKey, model, userMessage, colorIdentity }) {
-  const parsed = await callOpenAIJson({
+  const { data: parsed, usage } = await callOpenAIJsonRaw({
     apiKey,
     model,
     maxTokens: 4096,
@@ -699,6 +760,7 @@ Respond only as JSON. Use one of these shapes:
 For plain Scryfall-searchable requests, return type "query". For curated recommendations, return type "cards" with real Magic card names.`,
     user: userMessage,
   });
+  await usageLog.record({ feature: "search", provider: "openai", model, ...usage, usd: priceUsd(model, usage) }).catch(() => {});
   if (parsed.type === "cards") {
     return {
       type: "cards",
@@ -740,7 +802,7 @@ ${userMessage}`;
   try {
     const result = ai.provider === "openai"
       ? await translateWithOpenAI({ apiKey: ai.apiKey, model: ai.model, userMessage, colorIdentity })
-      : await translateWithAnthropic({ apiKey: ai.apiKey, model: ai.model, userMessage, colorIdentity });
+      : await translateWithAnthropic({ apiKey: ai.apiKey, model: ai.model, userMessage, colorIdentity, forceAiSearch: Boolean(forceAiSearch) });
     res.json({ ...result, provider: ai.provider, model: ai.model });
   } catch (err) {
     const status = err.status || 500;
@@ -995,6 +1057,7 @@ const getAi = async () => {
 };
 let embedderPromise = null;
 const swapsService = createSwapsService({
+  batchStatePath: join(DATA_DIR, "profile-batch.json"),
   collectionStore,
   profileStore,
   embeddingStore: createEmbeddingStore({ dataDir: DATA_DIR }),

@@ -19,6 +19,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
     "@huggingface/transformers": "^3.8.1",
+    "compression": "^1.8.2",
     "express": "^4.21.0"
   }
 }
