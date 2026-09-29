@@ -3830,6 +3830,20 @@
       const extraSelected = facets.filter((f) => selected.has(f.value) && !shown.has(f.value));
       return extraSelected.length ? [...top, ...extraSelected] : top;
     }
+
+    // Flips the selection within each row that has one: selected values become
+    // unselected and every other present facet becomes selected. Rows with no
+    // selection stay empty (an empty row already means "everything").
+    function invertTypeFilter(filter, facets) {
+      const flip = (selected, present) => {
+        if (!selected.size) return;
+        const next = present.map((f) => f.value).filter((v) => !selected.has(v));
+        selected.clear();
+        next.forEach((v) => selected.add(v));
+      };
+      flip(filter.types, facets.types);
+      flip(filter.subtypes, facets.subtypes);
+    }
     // @testable type-helpers end
 
     function makeTypeFilterState() { return { types: new Set(), subtypes: new Set(), expanded: false }; }
@@ -3867,12 +3881,17 @@
       if (!showTypesRow && !showSubtypesRow) { container.style.display = "none"; return; }
       container.style.display = "flex";
 
+      const hasSelection = filter.types.size > 0 || filter.subtypes.size > 0;
+      const invertChip = typeChip("Invert", false, () => { invertTypeFilter(filter, facets); onChange(); }, "type-chip-more");
+      invertChip.title = "Select everything else instead";
+
       if (showTypesRow) {
         const row = document.createElement("div");
         row.className = "type-row";
         facets.types.forEach(({ value, count }) => {
           row.appendChild(typeChip(`${value} ${count}`, filter.types.has(value), () => { toggleSet(filter.types, value); onChange(); }));
         });
+        if (hasSelection) row.appendChild(invertChip);
         container.appendChild(row);
       }
 
@@ -3887,6 +3906,7 @@
           const label = filter.expanded ? "Show less" : `+${facets.subtypes.length - SUBTYPES_SHOWN} more`;
           row.appendChild(typeChip(label, false, () => { filter.expanded = !filter.expanded; renderTypeFilterChips(container, cards, filter, onChange); }, "type-chip-more"));
         }
+        if (hasSelection && !showTypesRow) row.appendChild(invertChip);
         container.appendChild(row);
       }
     }
