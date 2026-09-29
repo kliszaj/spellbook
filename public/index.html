@@ -4908,6 +4908,19 @@
         .filter((c) => c.card && !edhrecIsBasicLand(c.card) && !deckNames.has(edhrecNameKey(c.name)))
         .sort((a, b) => b.synergy - a.synergy || b.inclusion - a.inclusion);
     }
+    // Escapes a string for safe interpolation inside a double-quoted HTML attribute (e.g.
+    // title="..."). esc() (the DOM textContent→innerHTML round-trip used for element text)
+    // escapes &, <, > but not quotes — fine for text nodes, not for an attribute value: AI-
+    // or card-derived text containing a `"` would otherwise break out of the attribute and
+    // inject markup. Self-contained (no DOM) so it can live in this pure block.
+    function escAttr(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
     // @testable analysis-helpers end
 
     function bracketDialHtml(bracket) {
@@ -4961,13 +4974,14 @@
     const deckReviewCache = JSON.parse(localStorage.getItem("deck_reviews") || "{}");
     function persistDeckReviews() { try { localStorage.setItem("deck_reviews", JSON.stringify(deckReviewCache)); } catch (e) { /* quota — keep the in-memory copy */ } }
     let daCtx = null; // current panel context — lets AI extras recompute grade/gaps/drawer
-    // folderId currently running a POST /api/deck-review, or null. While it matches the
-    // panel being rendered, renderDeckAnalysis paints the Analyze button disabled with an
-    // in-progress label and a pending note instead of a fresh clickable button — an async
-    // re-render triggered by something else (profiles/EDHREC loading) while a review is in
-    // flight must not resurrect a clickable "Analyze" (a second click would be a second
-    // paid review) or drop the pending note.
-    let daReviewInFlight = null;
+    // folderIds currently running a POST /api/deck-review — one in-flight review per deck,
+    // and a different deck's review may run concurrently. While a folderId is in this set,
+    // renderDeckAnalysis paints that deck's Analyze button disabled with an in-progress
+    // label and a pending note instead of a fresh clickable button — an async re-render
+    // triggered by something else (profiles/EDHREC loading) while a review is in flight
+    // must not resurrect a clickable "Analyze" (a second click would be a second paid
+    // review) or drop the pending note.
+    const daReviewInFlight = new Set();
     // Role key whose detail panel is open (see wireDeckAnalysisChips), or null. Remembered
     // so an incidental re-render (profiles/EDHREC loading, grade recompute) reopens it
     // instead of silently closing it.
@@ -5152,7 +5166,7 @@
       const { attention, onTarget } = chipGroups(items);
       const chipHtml = (c) => {
         const cls = `da2-chip ${c.pass ? "ok" : "bad"}`;
-        const title = c.note ? ` title="${esc(c.note)}"` : ""; // carries the AI role note (applyAiGradeContext), when there is one
+        const title = c.note ? ` title="${escAttr(c.note)}"` : ""; // carries the AI role note (applyAiGradeContext), when there is one
         if (ROLE_KEYS.includes(c.key)) return `<button class="${cls}" type="button" data-role-key="${c.key}" aria-expanded="false" aria-controls="da2-role-detail"${title}>${esc(c.text)}</button>`;
         return `<span class="${cls}"${title}>${esc(c.text)}</span>`;
       };
@@ -5492,7 +5506,7 @@
       // A review for this exact deck is still running (see reviewDeckWithAI) — the button
       // and fix-wrap must keep showing that, even though this render was triggered by
       // something else entirely (profiles/EDHREC loading), not the review itself.
-      const reviewing = daReviewInFlight === folderId;
+      const reviewing = daReviewInFlight.has(folderId);
 
       dA.innerHTML = `
         <div class="da2-strip">
@@ -5577,16 +5591,18 @@
     }
 
     // `daReviewInFlight` guards this against a second paid request while one is already
-    // running for this deck: a click is ignored (the button is also rendered disabled —
+    // running for THIS deck: a click is ignored (the button is also rendered disabled —
     // see renderDeckAnalysis — but this is the authoritative guard, since that render may
-    // be stale). Elements are re-queried once the request settles rather than using `btn`/
-    // `fixWrap` captured before the await, since an async re-render triggered by something
-    // else (profiles/EDHREC loading) may have replaced the panel — and with it those
-    // elements — while this was in flight.
+    // be stale). It's per-deck (a Set of folderIds) — a different deck's review may run
+    // concurrently; only a second click for the same deck is a no-op. Elements are
+    // re-queried once the request settles rather than using `btn`/`fixWrap` captured
+    // before the await, since an async re-render triggered by something else (profiles/
+    // EDHREC loading) may have replaced the panel — and with it those elements — while
+    // this was in flight.
     async function reviewDeckWithAI(cards, folderId, commander, winConditions) {
       if (!state.hasApiKey) return showSettings();
-      if (daReviewInFlight) return; // a review is already running — ignore the click
-      daReviewInFlight = folderId;
+      if (daReviewInFlight.has(folderId)) return; // this deck's review is already running — ignore the click
+      daReviewInFlight.add(folderId);
       rerenderDeckAnalysisIfActive(folderId); // paint the disabled "Analyzing…" button + pending note now
       let err = null;
       try {
@@ -5602,7 +5618,7 @@
       } catch (e) {
         err = e;
       } finally {
-        daReviewInFlight = null;
+        daReviewInFlight.delete(folderId);
       }
       if (state.activeFolder !== folderId) return; // deck switched while this was in flight
       if (err) {

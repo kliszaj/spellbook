@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -256,6 +256,28 @@ test("commanderSlug: the client's copy matches the server's for the same inputs"
     "K'rrik, Son of Yawgmoth",
   ];
   for (const name of names) assert.equal(h.commanderSlug(name), serverCommanderSlug(name));
+});
+
+// ── escAttr ──────────────────────────────────────────────────────────
+test("escAttr: a double quote and an apostrophe don't break out of a double-quoted attribute", () => {
+  const note = `He said "counter it" and it's still good.`;
+  const escaped = h.escAttr(note);
+  assert.ok(!escaped.includes('"'), "raw double quote must not survive");
+  assert.ok(!escaped.includes("'") || escaped.includes("&#39;"), "raw apostrophe must not survive unescaped");
+  // Round-trips: parsing `<b title="${escaped}">` back out (naively, via a DOM-less regex
+  // stand-in — a real attribute parser) recovers the original text.
+  const unescape = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  assert.equal(unescape(escaped), note);
+});
+
+test("escAttr: also escapes & < > (same as esc(), plus quotes)", () => {
+  assert.equal(h.escAttr(`<script>alert("x")</script> & "quoted" 'single'`),
+    "&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; &quot;quoted&quot; &#39;single&#39;");
+});
+
+test("escAttr: null/undefined become an empty string", () => {
+  assert.equal(h.escAttr(null), "");
+  assert.equal(h.escAttr(undefined), "");
 });
 
 await run("Deck analysis UI helpers");
