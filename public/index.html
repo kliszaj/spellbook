@@ -984,6 +984,14 @@
     .import-status { font-size: 12.5px; color: #6D685F; min-height: 18px; margin-bottom: 14px; }
 
     .deck-io { margin-left: auto; display: flex; gap: 8px; }
+    .export-wrap { position: relative; }
+    .export-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; min-width: 250px; background: #FFFEFA; border: 1px solid rgba(31,29,25,0.14); border-radius: 12px; padding: 6px; box-shadow: 0 16px 40px -18px rgba(28,24,18,0.45); display: flex; flex-direction: column; gap: 2px; }
+    .export-menu[hidden] { display: none; }
+    .export-menu button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; border: 0; background: none; border-radius: 8px; padding: 8px 10px; font: inherit; text-align: left; cursor: pointer; color: #181715; }
+    .export-menu button b { font-size: 13px; font-weight: 650; }
+    .export-menu button span { font-size: 11.5px; color: #9E9B92; }
+    .export-menu button:hover:not(:disabled), .export-menu button:focus-visible { background: #F2EFE8; outline: none; }
+    .export-menu button:disabled { cursor: default; opacity: 0.55; }
     .mv-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
     .mv-chips[hidden] { display: none; }
     .mv-chip { min-width: 28px; height: 28px; padding: 0 7px; border-radius: 999px; border: 1px solid rgba(31,29,25,0.14); background: #FFFEFA; color: #57524A; font: 650 12px/1 ui-monospace, "SF Mono", Menlo, monospace; cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s; }
@@ -2293,10 +2301,16 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                 <span>Import</span>
               </button>
-              <button class="export-btn" id="saved-export-btn" title="Copy the visible cards as a Cardmarket import list" aria-label="Copy list to clipboard">
+              <div class="export-wrap">
+              <button class="export-btn" id="saved-export-btn" title="Copy the visible cards as a Cardmarket list" aria-label="Export list" aria-haspopup="menu" aria-expanded="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 <span class="export-label">Export</span>
               </button>
+              <div class="export-menu" id="saved-export-menu" role="menu" hidden>
+                <button type="button" role="menuitem" data-export="all"><b>Export all</b><span id="export-all-sub"></span></button>
+                <button type="button" role="menuitem" data-export="missing"><b>Export cards I don't own</b><span id="export-missing-sub"></span></button>
+              </div>
+              </div>
             </div>
           </div>
           <div class="type-filter" id="saved-type-filter" style="display:none" aria-label="Filter by card type"></div>
@@ -3724,14 +3738,31 @@
       }
     }
     let exportFlashTimer = null;
-    async function exportSavedList() {
+    // "missing": only what you'd have to buy — the deck's count minus the copies you own,
+    // skipping basic lands (nobody orders those). Needs an uploaded collection.
+    function exportLines(mode) {
       const cards = state.savedVisible || [];
-      if (!cards.length) return;
-      const text = cards.map((c) => cardmarketLine(c, cardQty(state.activeFolder, c.id))).join("\n");
-      // Quantity-weighted so the flash matches what actually pastes (basics carry ×N).
-      const totalCards = cards.reduce((n, c) => n + cardQty(state.activeFolder, c.id), 0);
-      const ok = await copyText(text);
+      return cards.flatMap((c) => {
+        const want = cardQty(state.activeFolder, c.id);
+        if (mode !== "missing") return [{ c, qty: want }];
+        if (isBasicLand(c)) return [];
+        const need = want - ownedQty(collectionIndex, c);
+        return need > 0 ? [{ c, qty: need }] : [];
+      });
+    }
+    async function exportSavedList(mode = "all") {
+      const lines = exportLines(mode);
       const label = savedExportBtn.querySelector(".export-label");
+      if (!lines.length) {
+        clearTimeout(exportFlashTimer);
+        label.textContent = mode === "missing" ? "You own them all" : "Nothing to copy";
+        exportFlashTimer = setTimeout(() => { label.textContent = "Export"; }, 1600);
+        return;
+      }
+      const text = lines.map(({ c, qty }) => cardmarketLine(c, qty)).join("\n");
+      // Quantity-weighted so the flash matches what actually pastes (basics carry ×N).
+      const totalCards = lines.reduce((n, l) => n + l.qty, 0);
+      const ok = await copyText(text);
       clearTimeout(exportFlashTimer);
       if (ok) {
         savedExportBtn.classList.add("copied");
@@ -3744,7 +3775,35 @@
         label.textContent = "Export";
       }, 1600);
     }
-    savedExportBtn.addEventListener("click", exportSavedList);
+    const exportMenu = $("#saved-export-menu");
+    function closeExportMenu() { exportMenu.hidden = true; savedExportBtn.setAttribute("aria-expanded", "false"); }
+    savedExportBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!exportMenu.hidden) { closeExportMenu(); return; }
+      const count = (mode) => exportLines(mode).reduce((n, l) => n + l.qty, 0);
+      $("#export-all-sub").textContent = `${count("all")} cards · Cardmarket list`;
+      const missingBtn = exportMenu.querySelector('[data-export="missing"]');
+      if (hasCollection()) {
+        const n = count("missing");
+        const eur = exportLines("missing").reduce((s, l) => s + (priceNum(l.c) || 0) * l.qty, 0);
+        $("#export-missing-sub").textContent = n ? `${n} cards · ≈ €${eur.toFixed(2)}` : "You own every card shown";
+        missingBtn.disabled = n === 0;
+      } else {
+        $("#export-missing-sub").textContent = "Upload your collection first";
+        missingBtn.disabled = true;
+      }
+      exportMenu.hidden = false;
+      savedExportBtn.setAttribute("aria-expanded", "true");
+      exportMenu.querySelector("button:not(:disabled)")?.focus();
+    });
+    exportMenu.addEventListener("click", (e) => {
+      const item = e.target.closest("[data-export]");
+      if (!item || item.disabled) return;
+      closeExportMenu();
+      exportSavedList(item.dataset.export);
+    });
+    document.addEventListener("click", (e) => { if (!exportMenu.hidden && !e.target.closest(".export-wrap")) closeExportMenu(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !exportMenu.hidden) { closeExportMenu(); savedExportBtn.focus(); } });
 
     // ── Import a pasted card list into the current deck ──
     const importModal = $("#import-modal");
