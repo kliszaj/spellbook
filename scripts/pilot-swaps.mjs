@@ -49,7 +49,7 @@ const sample = [...chosen.values()];
 // 3. AI settings from the app's state (same key/model the app uses).
 const appState = JSON.parse(await readFile(join(root, "data", "state.json"), "utf8").catch(() => "{}"));
 const apiKey = process.env.ANTHROPIC_API_KEY || appState.apiKey;
-const model = process.env.ANTHROPIC_MODEL || appState.anthropicModel || "claude-sonnet-5";
+const model = process.env.ANTHROPIC_MODEL || appState.anthropicModel || "claude-sonnet-5-5";
 const ai = apiKey ? createAiClient({ provider: "anthropic", apiKey, model }) : null;
 
 // 4. Decks: Hei Bai (with primer) + three fixture decks (without a game plan).

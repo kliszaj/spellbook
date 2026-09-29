@@ -25,7 +25,7 @@ app.use(express.static(join(__dirname, "public")));
 const DATA_DIR = process.env.DATA_DIR || join(__dirname, "data");
 const STATE_FILE = join(DATA_DIR, "state.json");
 const AI_PROVIDERS = new Set(["anthropic", "openai"]);
-const DEFAULT_ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+const DEFAULT_ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1";
 const DEFAULT_APP_STATE = {
   savedCards: [],
