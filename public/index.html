@@ -1452,6 +1452,7 @@
     /* ── Deck Analysis 2.0 (Command Table) ── */
     .da2-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; padding-bottom: 13px; border-bottom: 1px solid rgba(31,29,25,0.10); flex-wrap: wrap; }
     .deck-analysis.collapsed .da2-strip { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .da2-body { display: flex; flex-direction: column; gap: 12px; }
     .deck-analysis.collapsed .da2-body { display: none; }
     .da2-id { font-size: 13px; font-weight: 700; color: #57524A; display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; }
     .da2-id small { font-weight: 500; color: #9E9B92; }
@@ -1469,7 +1470,7 @@
     .da2-collapse-btn svg { width: 16px; height: 16px; transition: transform 0.18s ease; }
     .deck-analysis.collapsed .da2-collapse-btn svg { transform: rotate(180deg); }
 
-    .da2-score { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; padding: 14px 15px; background: #FAF8F2; border: 1px solid #ECE7DB; border-radius: 12px; margin-bottom: 14px; }
+    .da2-score { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; padding: 14px 15px; background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; }
     .da2-gradebox { display: grid; gap: 8px; justify-items: center; align-self: start; }
     .da2-badge { width: 58px; height: 58px; border-radius: 14px; display: grid; place-items: center; align-self: center; background: #F1F4EF; border: 1px solid #DCE4D8; }
     .da2-badge b { font-size: 21px; font-weight: 780; color: #5E8A5E; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -1509,10 +1510,9 @@
     .da2-card-chip { cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease; }
     .da2-chip.add.da2-card-chip:hover { background: #EEF5EA; border-color: #B6CFAC; }
     .da2-chip.trim.da2-card-chip:hover { background: #F7ECE6; border-color: #E0C0B2; }
-    .da2-layout { display: grid; grid-template-columns: minmax(0, 1.32fr) minmax(300px, 0.82fr); gap: 12px; margin-bottom: 14px; align-items: stretch; }
-    .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 12px; }
-    .da2-main { display: flex; flex-direction: column; gap: 12px; }
-    .da2-chips-card { padding: 14px 15px; }
+    .da2-layout { display: grid; grid-template-columns: minmax(0, 1.32fr) minmax(300px, 0.82fr); gap: 12px; align-items: stretch; }
+    .da2-card { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
+    .da2-overview-card { display: flex; flex-direction: column; min-width: 0; }
     .da2-chip-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 11px; }
     .da2-chip-row:first-child { margin-top: 0; }
     .da2-chip-row-label { flex: none; width: 92px; padding-top: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #A39E93; }
@@ -1528,7 +1528,7 @@
     .da2-chip.role.conditional { border-style: dashed; color: #8A6B2A; }
     .da2-chip.role.da2-card-chip:hover { background: #FFFDF7; border-color: #C8B88D; color: #2A2721; }
     .da2-chip.role.da2-card-chip:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; }
-    .da2-role-detail { padding: 12px 14px; }
+    .da2-role-detail { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(31,29,25,0.08); }
     .da2-role-detail[hidden] { display: none; }
     .da2-role-detail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
     .da2-role-detail-head b { font-size: 12.5px; font-weight: 720; color: #2A2721; }
@@ -1536,8 +1536,8 @@
     .da2-role-detail-flow { margin-bottom: 9px; font-size: 11px; color: #78726A; }
     .da2-role-cards { display: flex; flex-wrap: wrap; gap: 5px; }
     .da2-role-key { margin-top: 8px; color: #A39E93; font-size: 10px; }
-    .da2-side { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; height: 100%; }
-    .da2-mana-card { display: flex; flex-direction: column; height: 100%; padding: 14px 12px 12px; }
+    .da2-side { display: flex; flex-direction: column; min-width: 0; }
+    .da2-mana-card { display: flex; flex-direction: column; flex: 1; padding: 14px 15px 12px; }
     /* The side column stretches to the ledger's height; the curve flex-grows to absorb
        the slack (bars are %-height, so they scale with it) instead of leaving a gap. */
     .da2-mana-card .curve { height: auto; flex: 1 1 102px; min-height: 102px; max-height: 300px; margin-top: 2px; }
@@ -1554,15 +1554,15 @@
     .da2-sb-w { background: #C9A24B; } .da2-sb-u { background: #5F86B0; } .da2-sb-b { background: #6E675A; } .da2-sb-r { background: #C0704E; } .da2-sb-g { background: #7FA07A; }
 
     .da2-strip-min { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-    .da2-building { margin-top: 12px; padding: 14px 15px; background: #FAF8F2; border: 1px dashed #E0DACD; border-radius: 12px; color: #78726A; font-size: 12.5px; line-height: 1.5; }
+    .da2-building { margin-top: 12px; padding: 14px 15px; background: #FBFAF6; border: 1px dashed #E0DACD; border-radius: 12px; color: #78726A; font-size: 12.5px; line-height: 1.5; }
     .da2-building b { color: #57524A; font-weight: 700; }
-    .da2-wc { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 14px 15px; }
+    .da2-wc { margin-top: auto; padding-top: 14px; }
+    .da2-wc::before { content: ""; display: block; height: 1px; margin-bottom: 12px; background: rgba(31,29,25,0.08); }
     .da2-wc-line { font-size: 12.5px; font-weight: 650; color: #57524A; }
     .da2-wc-sub { margin-top: 10px; font-size: 11.5px; color: #78726A; display: flex; align-items: center; gap: 7px; }
 
-    #da2-opening-hand { margin-top: 12px; padding: 14px 15px; }
     .da2-hand-odds { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-bottom: 12px; }
-    .da2-hand-line { font-size: 12px; color: #57524A; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 10px; background: #FFFEFA; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; }
+    .da2-hand-line { font-size: 12px; color: #57524A; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; }
     .da2-hand-line[title] { cursor: help; }
     .da2-hand-line[title] > span { border-bottom: 1px dotted #C8B88D; }
     .da2-odds { font-weight: 700; font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid transparent; flex: none; }
@@ -5552,10 +5552,10 @@
           </div>
         </div>
         <div class="da2-layout">
-          <div class="da2-main">
-            <div class="da2-card da2-chips-card" id="da2-chips-card">${chipsCardHtml(grade.items)}</div>
+          <div class="da2-card da2-overview-card">
+            <div class="da2-chips-card" id="da2-chips-card">${chipsCardHtml(grade.items)}</div>
             <div class="da2-role-detail" id="da2-role-detail" hidden></div>
-            <div class="da2-card da2-wc">
+            <div class="da2-wc">
               <div class="da2-wc-line" id="da2-wc-line">${winConditionsLineHtml(wincons)}</div>
               <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
             </div>
