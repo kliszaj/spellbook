@@ -994,6 +994,10 @@
     .export-menu button:disabled { cursor: default; opacity: 0.55; }
     .mv-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
     .mv-chips[hidden] { display: none; }
+    .land-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
+    .land-chips[hidden] { display: none; }
+    .land-chips .color-toggle { width: 28px; height: 28px; }
+    .land-chips .color-toggle .mana-glyph { width: 14px; height: 14px; }
     .mv-chip { min-width: 28px; height: 28px; padding: 0 7px; border-radius: 999px; border: 1px solid rgba(31,29,25,0.14); background: #FFFEFA; color: #57524A; font: 650 12px/1 ui-monospace, "SF Mono", Menlo, monospace; cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s; }
     .mv-chip:hover { border-color: rgba(31,29,25,0.28); background: #F2EFE8; }
     .mv-chip.active { background: #2A2721; border-color: #2A2721; color: #FFFEFA; }
@@ -2317,6 +2321,7 @@
             </select>
             <button class="sort-dir-btn" id="saved-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
             <div class="mv-chips" id="saved-mv-chips" aria-label="Filter by mana value" hidden></div>
+            <div class="land-chips" id="saved-land-chips" aria-label="Filter lands by the colours they make" hidden></div>
             <div class="deck-io">
               <button class="export-btn" id="saved-import-btn" title="Import a card list into this deck" aria-label="Import card list">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
@@ -2363,6 +2368,7 @@
             </select>
             <button class="sort-dir-btn" id="collection-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
             <div class="mv-chips" id="collection-mv-chips" aria-label="Filter by mana value" hidden></div>
+            <div class="land-chips" id="collection-land-chips" aria-label="Filter lands by the colours they make" hidden></div>
             <select id="collection-binder" aria-label="Binder"></select>
           </div>
           <div class="collection-header">
@@ -4406,6 +4412,42 @@
       }));
     }
     const mvMatches = (c, selected) => !isLandCard(c) && selected.has(mvBucket(c));
+
+    // Land-colour chips (shown while the type filter is on Lands). One colour = every land
+    // that makes it; several = lands that make all of them (e.g. U+R finds Izzet duals and
+    // Triomes); ◇ = lands that make no coloured mana (exclusive, like the identity pickers).
+    // Fetch lands count as every colour — they can find any basic.
+    function landColors(card) {
+      if (/search your library for (a|an).*land|search your library for.*basic land/i.test(getOracleText(card))) return new Set(WUBRG);
+      return new Set(cardProduces(card).filter((m) => WUBRG.includes(m)));
+    }
+    function landColorMatches(card, selected) {
+      if (!selected.length) return true;
+      if (!isLandCard(card)) return false;
+      const made = landColors(card);
+      if (selected.includes("C")) return made.size === 0;
+      return selected.every((c) => made.has(c));
+    }
+    const typeFilterIsLands = (filter) => !filter.excludeMode && filter.types.has("Land");
+    function renderLandChips(el, cards, { on, selected, onChange }) {
+      if (!el) return;
+      el.hidden = !on;
+      if (!on) { el.replaceChildren(); return; }
+      const lands = cards.filter(isLandCard);
+      el.innerHTML = ["W", "U", "B", "R", "G", "C"].map((c) => {
+        const n = lands.filter((l) => landColorMatches(l, [c])).length;
+        const active = selected.includes(c);
+        const label = c === "C" ? "Colourless only" : { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" }[c];
+        return `<button type="button" class="color-toggle land-chip${active ? " active" : ""}" data-color="${c.toLowerCase()}" data-land="${c}" aria-pressed="${active}" title="${label} · ${n} land${n === 1 ? "" : "s"}">${MANA_SVG[c.toLowerCase()]}</button>`;
+      }).join("");
+      el.querySelectorAll("[data-land]").forEach((b) => b.addEventListener("click", () => {
+        const next = toggleIdentityColor(selected, b.dataset.land);
+        selected.splice(0, selected.length, ...next);
+        onChange();
+      }));
+    }
+    const savedLandFilter = [];
+    const collectionLandFilter = [];
     let trimOpenKey = null; // trim-planner category whose cut list is open
     let trimShowAll = false;
     let trimCtx = null;
@@ -4446,7 +4488,11 @@
       renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, () => renderSavedCards({ filtersOnly: true }));
       renderMvChips($("#saved-mv-chips"), cards, { on: state.savedSortField === "cmc", selected: savedMvFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
       const mvActive = state.savedSortField === "cmc" && savedMvFilter.size > 0;
-      const preMv = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter));
+      const landsOn = typeFilterIsLands(savedTypeFilter);
+      if (!landsOn) savedLandFilter.length = 0;
+      renderLandChips($("#saved-land-chips"), cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)), { on: landsOn, selected: savedLandFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
+      const preMv = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter))
+        .filter((c) => landColorMatches(c, savedLandFilter));
       const visible = preMv.filter((c) => !mvActive || (!isLandCard(c) && savedMvFilter.has(mvBucket(c))));
 
       // Maybeboard cards stay in the deck but are excluded from the main section and
@@ -7786,7 +7832,11 @@
         const filtered = filterCollectionItems(collectionIndex.list, { query: collectionUi.query, colors: [...collectionUi.colors], binder: collectionUi.binder });
         const byId = new Map(filtered.map((it) => [it.card.id, it]));
         renderTypeFilterChips(collectionTypeFilterEl, filtered.map((it) => it.card), collectionTypeFilter, () => renderCollection(true));
-        const typeFiltered = filtered.filter((it) => matchesTypeFilter(it.card, collectionTypeFilter));
+        const landsOn = typeFilterIsLands(collectionTypeFilter);
+        if (!landsOn) collectionLandFilter.length = 0;
+        const typeOnly = filtered.filter((it) => matchesTypeFilter(it.card, collectionTypeFilter));
+        renderLandChips($("#collection-land-chips"), typeOnly.map((it) => it.card), { on: landsOn, selected: collectionLandFilter, onChange: () => renderCollection(true) });
+        const typeFiltered = typeOnly.filter((it) => landColorMatches(it.card, collectionLandFilter));
         const mvOn = collectionUi.sortField === "cmc";
         renderMvChips($("#collection-mv-chips"), typeFiltered.map((it) => it.card), { on: mvOn, selected: collectionMvFilter, onChange: () => renderCollection(true) });
         const mvFiltered = mvOn && collectionMvFilter.size ? typeFiltered.filter((it) => mvMatches(it.card, collectionMvFilter)) : typeFiltered;
