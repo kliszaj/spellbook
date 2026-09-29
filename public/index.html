@@ -5353,6 +5353,7 @@
       await runDeckProfilePrepare(folderId, cards, sig, nonBasic, { confirm: false, missingCount: missing.length });
     }
 
+    const deckBracket = {}; // folderId -> estimated minimum bracket (2–4)
     async function enhanceBracket(cards, folderId) {
       const gc = await loadGameChangers();
       const el = $("#da2-bracket");
@@ -5360,6 +5361,7 @@
       const hits = cards.filter((c) => gc.has(frontFaceName(c.name).toLowerCase())).map((c) => c.name);
       const mld = detectMassLandDenial(cards);
       const bracket = (hits.length >= 4 || mld) ? 4 : (hits.length >= 1 ? 3 : 2);
+      deckBracket[folderId] = bracket; // sent with the AI review as power-level context
       el.innerHTML = bracketDialHtml(bracket);
       el.title = `${hits.length} Game Changer${hits.length === 1 ? "" : "s"}${mld ? ", mass land denial" : ""} → minimum Bracket ${bracket} (${BRACKET_NAMES[bracket]})` + (hits.length ? `\n${hits.join(", ")}` : "");
     }
@@ -6001,7 +6003,15 @@
         const payload = cards.slice(0, 250).map((c) => ({ name: c.name, type_line: c.type_line || "", oracle_text: getOracleText(c), cmc: c.cmc || 0 }));
         const res = await fetch("/api/deck-review", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cards: payload, commander: commander?.name || "", winConditions: winConditions || [] }),
+          body: JSON.stringify({
+            cards: payload,
+            commander: commander?.name || "",
+            commanderText: commander ? `${commander.type_line || ""} :: ${getOracleText(commander)}` : "",
+            colorIdentity: deckColors(cards, commander),
+            bracket: deckBracket[folderId] ?? null,
+            gamePlan: state.deckNotes[folderId] || "",
+            winConditions: winConditions || [],
+          }),
         });
         if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Review failed"); }
         const data = await res.json();

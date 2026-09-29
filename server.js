@@ -754,57 +754,92 @@ const DECK_IDENTITY_TAGS = [
 ];
 const DECK_IDENTITY_LOOKUP = new Map(DECK_IDENTITY_TAGS.map((tag) => [tag.toLowerCase(), tag]));
 
-const DECK_REVIEW_PROMPT = `You are a Magic: The Gathering Commander (EDH) deck reviewer. You will be given a commander, possible win-condition signals, and a deck's cards (name, type, mana value, oracle text). Count how many cards fill each role, judging by function (not just keywords); a card may count in more than one role.
+const REVIEW_ROLES = ["ramp", "draw", "removal", "wipes", "tutors", "interaction", "graveyardHate", "protection"];
 
-Roles and healthy Commander targets (context only):
-- ramp: mana acceleration, mana rocks/dorks, extra lands (target 8-12)
-- draw: repeatable or net-positive card advantage (target 10+)
-- removal: single-target removal — destroy/exile/bounce/-X/fight (target 6-10)
-- wipes: true board wipes / mass removal that remove multiple opposing permanents or creatures. Do not count token makers, cards whose rules text merely says "for each creature", self-blink/protection effects, or one-for-one removal.
-- tutors: search library for a specific card (target 2-8)
-- interaction: reactive, opponent-facing interaction (instant-speed removal, counterspells, disruptive activated abilities; do not count instant-speed card draw or token creation) (target 8+)
-- graveyardHate: graveyard exile/disruption (target 1+)
-- protection: protect your board/commander — hexproof, indestructible, counters, protective equipment (target 3+)
+// The app grades role counts itself (from per-card profiles, with archetype-adjusted
+// targets), so the review is only asked for what it uniquely adds: the deck's identity, a
+// verdict, short role notes, and concrete adds/cuts. Kept stable so it can be prompt-cached.
+const DECK_REVIEW_PROMPT = `You review Magic: The Gathering Commander (EDH) decks for a deck-building app. The app already counts each role (ramp, draw, removal, board wipes, tutors, interaction, graveyard hate, protection) from per-card data and grades them against targets tuned to the deck's archetype — so you don't count or grade. Your job is the judgment a count can't make: what this deck is trying to do, how well its cards serve that plan, and the few changes that would matter most.
 
-Respond with ONLY minified JSON, no prose or code fences:
-{"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"confidence":{"ramp":0.8,"draw":0.8,"removal":0.8,"wipes":0.8,"tutors":0.8,"interaction":0.8,"graveyardHate":0.8,"protection":0.8},"roleNotes":{"ramp":"...","draw":"...","removal":"...","wipes":"...","tutors":"...","interaction":"...","graveyardHate":"...","protection":"..."},"identityTags":["Tokens","Sacrifice"],"verdict":"...","add":["Card Name","..."],"trim":["-Card Name","..."]}
-- verdict: ONE sentence (under 140 chars) — the deck's overall standing and its most meaningful improvement. Do not call missing board wipes the biggest weakness by default; frame them as a consideration when the rest of the deck is healthy, especially for tokens, aristocrats, graveyard, or reanimator strategies.
-- add: 3-6 SPECIFIC real Magic card names to add that fill the deck's biggest gaps. Each must be a real, exactly-spelled card legal in this deck's color identity and on-strategy for it. Card names ONLY — no counts, categories, or prefixes. Do not suggest cards already in the list.
-- trim: 2-4 SPECIFIC card names from the list to cut to make room (Commander decks stay at 100) — the weakest / most redundant cards. Each is one exact card name, prefixed with a minus sign. If the list is an oversized pool (more than 100 cards), judge roles and identity as the pool's direction, and pick the 4 clearest cuts.
-- confidence: 0-1 estimate for how confident you are in each role count, lower for modal or synergy-dependent cards.
-- roleNotes: terse explanation for each role count. Each value under 55 chars; name 1-3 example cards at most.
-- identityTags: 2-8 concise deck-identity labels chosen ONLY from this catalog: ${DECK_IDENTITY_TAGS.join(" | ")}. Describe the actual engine, plan, or payoff. Do not use Aristocrats merely because a deck sacrifices or recurs creatures; reserve it for recurring creature-death / sacrifice payoffs such as drain, damage, or dedicated death-value engines. Do not include generic format/status labels (Budget, Primer, Help Wanted, Rule Zero, Unmaintained, Webcam Friendly) unless they are clearly evidenced in the supplied deck information.`;
+You'll get the commander (with its rules text), the deck's color identity, its estimated bracket (1 Exhibition … 5 cEDH), the owner's own game plan when they wrote one, heuristic win-condition signals, and the card list (name, type, mana value, rules text). Treat the owner's game plan as the intended strategy. Judge cards by what they do, not by keywords. When more than 100 cards are listed, it's a pool being trimmed to 100: describe the direction the pool points and name the clearest cuts.
 
+Fill the response schema:
+- identityTags: 2–8 labels from the allowed list that describe the deck's actual engine, plan, or payoff. Do not use Aristocrats merely because a deck sacrifices or recurs creatures; reserve it for recurring creature-death payoffs (drain, damage, death-value engines). Skip status labels (Budget, Primer, Help Wanted, Rule Zero, Unmaintained, Webcam Friendly) unless the input clearly shows them.
+- verdict: one sentence under 140 characters on where the deck stands and its most meaningful improvement. Missing board wipes are rarely the headline — tokens, aristocrats and graveyard decks often run few on purpose.
+- roleNotes: for each role where this deck's cards are notably strong, thin, or unusual for its plan, a note under 55 characters naming 1–3 example cards, with your confidence (0–1) that the note is right. Skip roles with nothing worth saying.
+- add: 3–6 real, exactly spelled cards legal in the stated color identity, suited to the plan and the bracket, not already in the list.
+- trim: 2–4 exact card names from the list — the weakest or most redundant for this plan.`;
+
+function deckReviewSchema() {
+  return {
+    type: "object",
+    properties: {
+      identityTags: { type: "array", items: { type: "string", enum: DECK_IDENTITY_TAGS } },
+      verdict: { type: "string" },
+      roleNotes: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            role: { type: "string", enum: REVIEW_ROLES },
+            note: { type: "string" },
+            confidence: { type: "number" },
+          },
+          required: ["role", "note", "confidence"],
+          additionalProperties: false,
+        },
+      },
+      add: { type: "array", items: { type: "string" } },
+      trim: { type: "array", items: { type: "string" } },
+    },
+    required: ["identityTags", "verdict", "roleNotes", "add", "trim"],
+    additionalProperties: false,
+  };
+}
+
+// Maps the schema's roleNotes array back to the { role: note } / { role: confidence }
+// objects the client reads, and keeps the older object form working for OpenAI replies.
 function normalizeDeckReview(parsed = {}) {
   const roleNotes = {};
-  if (parsed.roleNotes && typeof parsed.roleNotes === "object") {
-    for (const [k, v] of Object.entries(parsed.roleNotes)) roleNotes[k] = String(v).replace(/\s+/g, " ").trim().slice(0, 90);
+  const confidence = {};
+  const clean = (v) => String(v).replace(/\s+/g, " ").trim().slice(0, 90);
+  if (Array.isArray(parsed.roleNotes)) {
+    for (const r of parsed.roleNotes) {
+      if (!r || !REVIEW_ROLES.includes(r.role)) continue;
+      roleNotes[r.role] = clean(r.note || "");
+      if (typeof r.confidence === "number") confidence[r.role] = Math.max(0, Math.min(1, r.confidence));
+    }
+  } else if (parsed.roleNotes && typeof parsed.roleNotes === "object") {
+    for (const [k, v] of Object.entries(parsed.roleNotes)) roleNotes[k] = clean(v);
+    if (parsed.confidence && typeof parsed.confidence === "object") Object.assign(confidence, parsed.confidence);
   }
   return {
-    counts: parsed.counts && typeof parsed.counts === "object" ? parsed.counts : {},
-    confidence: parsed.confidence && typeof parsed.confidence === "object" ? parsed.confidence : {},
     roleNotes,
+    confidence,
     identityTags: Array.isArray(parsed.identityTags)
       ? [...new Set(parsed.identityTags.map((tag) => DECK_IDENTITY_LOOKUP.get(String(tag).trim().toLowerCase())).filter(Boolean))].slice(0, 8)
       : [],
     verdict: typeof parsed.verdict === "string" ? parsed.verdict.slice(0, 200) : "",
     add: Array.isArray(parsed.add) ? parsed.add.slice(0, 6).map(String) : [],
-    trim: Array.isArray(parsed.trim) ? parsed.trim.slice(0, 4).map(String) : [],
-    notes: Array.isArray(parsed.notes) ? parsed.notes.slice(0, 4).map(String) : [],
+    trim: Array.isArray(parsed.trim) ? parsed.trim.slice(0, 4).map((n) => String(n).replace(/^-\s*/, "")) : [],
   };
 }
 
-// Runs through the shared AI client: effort-aware, detects cut-off/refused replies, and
-// reports usage so every Analyze lands in the monthly AI spend (even a failed, billed one).
-// 12k max_tokens leaves room for the model's thinking on 150-card pools.
+// Runs through the shared AI client: effort-aware, strict JSON schema (Anthropic),
+// cut-off/refusal detection, and usage recorded in the monthly AI spend (even for a
+// failed, billed call). 12k max_tokens leaves room for the model's thinking on big pools.
 async function reviewDeck({ ai, list }) {
   const client = createAiClient({ provider: ai.provider, apiKey: ai.apiKey, model: ai.model });
+  const openai = ai.provider === "openai";
   try {
     const r = await client.json({
-      system: ai.provider === "openai" ? `${DECK_REVIEW_PROMPT}\n\nReturn only one valid JSON object.` : DECK_REVIEW_PROMPT,
-      user: `Classify this Commander deck and return the JSON.\n\n${list}`,
+      // Anthropic: the whole prompt goes in the cached system block (cache_control on it).
+      system: openai ? `${DECK_REVIEW_PROMPT}\n\nReturn only one valid JSON object with keys identityTags, verdict, roleNotes ([{role, note, confidence}]), add, trim.` : "Commander deck review.",
+      cachedContext: openai ? "" : `${DECK_REVIEW_PROMPT}\n\nAllowed identityTags: ${DECK_IDENTITY_TAGS.join(" | ")}`,
+      user: `Review this Commander deck.\n\n${list}`,
       maxTokens: 12000,
       effort: "medium",
+      schema: openai ? undefined : deckReviewSchema(),
     });
     await usageLog.record({ feature: "deck-review", provider: ai.provider, model: ai.model, ...r.usage, usd: r.usd });
     return normalizeDeckReview(r.data);
@@ -813,6 +848,9 @@ async function reviewDeck({ ai, list }) {
     throw err;
   }
 }
+
+const oneLine = (v, max) => String(v || "").replace(/\s+/g, " ").trim().slice(0, max);
+const BRACKET_LABELS = { 1: "Exhibition", 2: "Core", 3: "Upgraded", 4: "Optimized", 5: "cEDH" };
 
 app.post("/api/deck-review", async (req, res) => {
   const appState = await readAppState();
@@ -827,13 +865,27 @@ app.post("/api/deck-review", async (req, res) => {
   }
   try {
     const list = cards
-      .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${String(c.oracle_text || "").replace(/\s+/g, " ").slice(0, 240)}`)
+      .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${oneLine(c.oracle_text, 240)}`)
       .join("\n");
-    const commander = String(req.body?.commander || "").replace(/\s+/g, " ").trim().slice(0, 120);
-    const winConditions = Array.isArray(req.body?.winConditions)
-      ? req.body.winConditions.slice(0, 12).map(String).map((name) => name.replace(/\s+/g, " ").trim()).filter(Boolean)
+    const b = req.body || {};
+    const commander = oneLine(b.commander, 120);
+    const commanderText = oneLine(b.commanderText, 600);
+    const colors = Array.isArray(b.colorIdentity) ? b.colorIdentity.map(String).filter((c) => /^[WUBRG]$/.test(c)) : [];
+    const bracket = Number.isInteger(b.bracket) && BRACKET_LABELS[b.bracket] ? `${b.bracket} (${BRACKET_LABELS[b.bracket]}), estimated from Game Changers` : "unknown";
+    const gamePlan = oneLine(b.gamePlan, 1500);
+    const winConditions = Array.isArray(b.winConditions)
+      ? b.winConditions.slice(0, 12).map((name) => oneLine(name, 120)).filter(Boolean)
       : [];
-    const reviewContext = `Commander: ${commander || "Unknown"}\nCards listed: ${cards.length}${cards.length > 100 ? " (an oversized pool being trimmed to 100)" : ""}\nHeuristic win-condition signals: ${winConditions.join(", ") || "None detected; infer likely plan from the deck."}\n\n${list}`;
+    const reviewContext = [
+      `Commander: ${commander || "Unknown"}${commanderText ? ` — ${commanderText}` : ""}`,
+      `Color identity: ${colors.length ? colors.join("") : "colorless"}`,
+      `Bracket: ${bracket}`,
+      `Owner's game plan: ${gamePlan || "none written"}`,
+      `Cards listed: ${cards.length}${cards.length > 100 ? " (an oversized pool being trimmed to 100)" : ""}`,
+      `Heuristic win-condition signals: ${winConditions.join(", ") || "none detected; infer the likely plan from the deck"}`,
+      "",
+      list,
+    ].join("\n");
     const review = await reviewDeck({ ai, list: reviewContext });
     res.json({ ...review, provider: ai.provider, model: ai.model });
   } catch (err) {
