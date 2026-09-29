@@ -8,7 +8,7 @@ const BEGIN = "// @testable type-helpers begin";
 const END = "// @testable type-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("type-helpers markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { parseTypeLine, typeFacets, matchesTypeFilter, visibleSubtypes, invertTypeFilter };`)();
+const h = Function(`${block}; return { parseTypeLine, typeFacets, matchesTypeFilter, visibleSubtypes };`)();
 
 const card = (type_line, extra = {}) => ({ type_line, ...extra });
 
@@ -112,12 +112,12 @@ test("visibleSubtypes: collapsed selection already within the top `limit` doesn'
   assert.deepEqual(visible, topTwelve);
 });
 
-test("invertTypeFilter: flips only rows that have a selection", () => {
-  const facets = { types: [facet("Creature", 3), facet("Land", 2), facet("Instant", 1)], subtypes: [facet("Elf", 1)] };
-  const filter = { types: new Set(["Land"]), subtypes: new Set(), expanded: false };
-  h.invertTypeFilter(filter, facets);
-  assert.deepEqual(filter.types, new Set(["Creature", "Instant"]));
-  assert.deepEqual(filter.subtypes, new Set());
+test("matchesTypeFilter: excludeMode hides any card carrying a deselected value", () => {
+  const filter = { types: new Set(["Land"]), subtypes: new Set(), excludeMode: true };
+  assert.equal(h.matchesTypeFilter(card("Land Creature — Forest Dryad"), filter), false);
+  assert.equal(h.matchesTypeFilter(card("Basic Land — Forest"), filter), false);
+  assert.equal(h.matchesTypeFilter(card("Instant"), filter), true);
+  assert.equal(h.matchesTypeFilter(card("Instant"), { types: new Set(), subtypes: new Set(), excludeMode: true }), true);
 });
 
 await run("Type/subtype filter helpers");

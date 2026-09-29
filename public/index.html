@@ -3310,6 +3310,7 @@
       sortBar.style.display = "none";
       searchTypeFilter.types.clear();
       searchTypeFilter.subtypes.clear();
+      searchTypeFilter.excludeMode = false;
       searchTypeFilter.expanded = false;
       typeFilterEl.style.display = "none";
       typeFilterEl.replaceChildren();
@@ -3812,8 +3813,13 @@
     }
 
     // OR within a row (types, subtypes), AND across rows. An empty filter passes everything.
+    // After "Select all" (filter.excludeMode), the sets hold the *deselected* values
+    // instead, and a card is hidden if it carries any of them.
     function matchesTypeFilter(card, filter) {
       const { types, subtypes } = parseTypeLine(card);
+      if (filter.excludeMode) {
+        return ![...filter.types].some((t) => types.has(t)) && ![...filter.subtypes].some((s) => subtypes.has(s));
+      }
       const typeOk = !filter.types.size || [...filter.types].some((t) => types.has(t));
       const subtypeOk = !filter.subtypes.size || [...filter.subtypes].some((s) => subtypes.has(s));
       return typeOk && subtypeOk;
@@ -3831,22 +3837,9 @@
       return extraSelected.length ? [...top, ...extraSelected] : top;
     }
 
-    // Flips the selection within each row that has one: selected values become
-    // unselected and every other present facet becomes selected. Rows with no
-    // selection stay empty (an empty row already means "everything").
-    function invertTypeFilter(filter, facets) {
-      const flip = (selected, present) => {
-        if (!selected.size) return;
-        const next = present.map((f) => f.value).filter((v) => !selected.has(v));
-        selected.clear();
-        next.forEach((v) => selected.add(v));
-      };
-      flip(filter.types, facets.types);
-      flip(filter.subtypes, facets.subtypes);
-    }
     // @testable type-helpers end
 
-    function makeTypeFilterState() { return { types: new Set(), subtypes: new Set(), expanded: false }; }
+    function makeTypeFilterState() { return { types: new Set(), subtypes: new Set(), expanded: false, excludeMode: false }; }
     const searchTypeFilter = makeTypeFilterState();
     const savedTypeFilter = makeTypeFilterState();
     const collectionTypeFilter = makeTypeFilterState();
@@ -3881,17 +3874,22 @@
       if (!showTypesRow && !showSubtypesRow) { container.style.display = "none"; return; }
       container.style.display = "flex";
 
-      const hasSelection = filter.types.size > 0 || filter.subtypes.size > 0;
-      const invertChip = typeChip("Invert", false, () => { invertTypeFilter(filter, facets); onChange(); }, "type-chip-more");
-      invertChip.title = "Select everything else instead";
+      // In excludeMode the sets hold deselected values, so a chip is lit when absent.
+      const isOn = (set, value) => filter.excludeMode ? !set.has(value) : set.has(value);
+      const selectAllChip = typeChip(filter.excludeMode ? "Deselect all" : "Select all", false, () => {
+        filter.excludeMode = !filter.excludeMode;
+        filter.types.clear();
+        filter.subtypes.clear();
+        onChange();
+      }, "type-chip-more");
 
       if (showTypesRow) {
         const row = document.createElement("div");
         row.className = "type-row";
         facets.types.forEach(({ value, count }) => {
-          row.appendChild(typeChip(`${value} ${count}`, filter.types.has(value), () => { toggleSet(filter.types, value); onChange(); }));
+          row.appendChild(typeChip(`${value} ${count}`, isOn(filter.types, value), () => { toggleSet(filter.types, value); onChange(); }));
         });
-        if (hasSelection) row.appendChild(invertChip);
+        row.appendChild(selectAllChip);
         container.appendChild(row);
       }
 
@@ -3900,13 +3898,13 @@
         row.className = "type-row";
         const visible = visibleSubtypes(facets.subtypes, filter.subtypes, filter.expanded, SUBTYPES_SHOWN);
         visible.forEach(({ value, count }) => {
-          row.appendChild(typeChip(`${value} ${count}`, filter.subtypes.has(value), () => { toggleSet(filter.subtypes, value); onChange(); }));
+          row.appendChild(typeChip(`${value} ${count}`, isOn(filter.subtypes, value), () => { toggleSet(filter.subtypes, value); onChange(); }));
         });
         if (facets.subtypes.length > SUBTYPES_SHOWN) {
           const label = filter.expanded ? "Show less" : `+${facets.subtypes.length - SUBTYPES_SHOWN} more`;
           row.appendChild(typeChip(label, false, () => { filter.expanded = !filter.expanded; renderTypeFilterChips(container, cards, filter, onChange); }, "type-chip-more"));
         }
-        if (hasSelection && !showTypesRow) row.appendChild(invertChip);
+        if (!showTypesRow) row.appendChild(selectAllChip);
         container.appendChild(row);
       }
     }
