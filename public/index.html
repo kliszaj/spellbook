@@ -4855,9 +4855,10 @@
         keepableLands: Math.max(0, hypergeomAtLeast(N, lands, 7, 2) - hypergeomAtLeast(N, lands, 7, 6)),
         rampByT2: hypergeomAtLeast(N, ramp, 8, 1), // opening 7 + the turn-2 draw on the play
       };
-      if (commanderMv >= 1) {
-        const seenBy = 7 + (commanderMv - 1);
-        out.commanderOnCurve = hypergeomAtLeast(N, lands + ramp, seenBy, commanderMv);
+      const mv = Math.round(commanderMv); // a fractional mv (average of split costs etc.) doesn't map to a turn
+      if (mv >= 1) {
+        const seenBy = 7 + (mv - 1);
+        out.commanderOnCurve = hypergeomAtLeast(N, lands + ramp, seenBy, mv);
       }
       return out;
     }
@@ -4960,6 +4961,17 @@
     const deckReviewCache = JSON.parse(localStorage.getItem("deck_reviews") || "{}");
     function persistDeckReviews() { try { localStorage.setItem("deck_reviews", JSON.stringify(deckReviewCache)); } catch (e) { /* quota — keep the in-memory copy */ } }
     let daCtx = null; // current panel context — lets AI extras recompute grade/gaps/drawer
+    // folderId currently running a POST /api/deck-review, or null. While it matches the
+    // panel being rendered, renderDeckAnalysis paints the Analyze button disabled with an
+    // in-progress label and a pending note instead of a fresh clickable button — an async
+    // re-render triggered by something else (profiles/EDHREC loading) while a review is in
+    // flight must not resurrect a clickable "Analyze" (a second click would be a second
+    // paid review) or drop the pending note.
+    let daReviewInFlight = null;
+    // Role key whose detail panel is open (see wireDeckAnalysisChips), or null. Remembered
+    // so an incidental re-render (profiles/EDHREC loading, grade recompute) reopens it
+    // instead of silently closing it.
+    let daOpenRole = null;
     function deckSig(cards, folderId, commanderName = "") { return `${DECK_REVIEW_CACHE_VERSION}|${commanderName}|${cards.map((c) => c.id + ":" + cardQty(folderId, c.id)).sort().join("|")}`; }
 
     // ═══ Deck card profiles (AI role source) ══════════════════════════
@@ -4982,14 +4994,18 @@
       const data = await res.json().catch(() => ({}));
       return { ok: res.ok, status: res.status, data };
     }
-    function rerenderDeckAnalysisIfActive(folderId, cards) {
+    // Re-renders the deck analysis panel for `folderId` with the deck's current cards —
+    // never a `cards` array some earlier caller captured before an await, which could be
+    // stale by the time an async re-render (profile prepare, EDHREC load) actually runs.
+    function rerenderDeckAnalysisIfActive(folderId) {
       if (state.activeFolder !== folderId) return; // deck switched while this was in flight
       const activeDeck = state.folders.find((f) => f.id === folderId);
-      if (activeDeck) renderDeckAnalysis(activeDeck, cards);
+      if (!activeDeck) return;
+      renderDeckAnalysis(activeDeck, getFolderCards(folderId).filter((c) => !isMaybe(folderId, c.id)));
     }
     // Current profile line state, scoped to the folder it's for (so switching decks while
     // one is in flight doesn't flash the previous deck's status): null, or
-    // { folderId, phase: "profiling" | "awaiting-confirm" | "error", missing, estimate, error }.
+    // { folderId, phase: "profiling" | "awaiting-confirm" | "skipped" | "error", missing, estimate, skipped, error }.
     let daProfileStatus = null;
     // The oracle-id-set signature ensureDeckProfiles last acted on — re-render for the same
     // deck (no card-set change) is a no-op; a changed set (or Retry, which clears this) redoes it.
@@ -5003,12 +5019,19 @@
         const price = st.estimate?.usd != null ? ` (≈ $${st.estimate.usd.toFixed(2)})` : "";
         return `<div class="da2-vsub" id="da2-profile-line">Profile ${n(st.missing)} for accurate roles${price} <button class="da2-chip muted cta" id="da2-profile-btn" type="button" style="margin-left:6px">Profile</button></div>`;
       }
+      // The AI failed to profile these cards (omitted them twice) — never auto-retried;
+      // only this manual Retry (a confirm prepare) tries them again.
+      if (st.phase === "skipped") return `<div class="da2-vsub" id="da2-profile-line">${n(st.skipped)} couldn't be profiled <button class="da2-chip muted cta" id="da2-profile-skip-retry-btn" type="button" style="margin-left:6px">Retry</button></div>`;
       if (st.phase === "error") return `<div class="da2-vsub" id="da2-profile-line">${esc(st.error)} <button class="da2-chip muted cta" id="da2-profile-retry-btn" type="button" style="margin-left:6px">Retry</button></div>`;
       return "";
     }
     function wireDeckProfileLine(deck, cards, folderId) {
       $("#da2-profile-btn")?.addEventListener("click", () => {
         const missingCount = (daProfileStatus?.folderId === folderId && daProfileStatus.missing) || nonBasicCards(cards).length;
+        runDeckProfilePrepare(folderId, cards, deckProfilesSig(folderId, cards), nonBasicCards(cards), { confirm: true, missingCount });
+      });
+      $("#da2-profile-skip-retry-btn")?.addEventListener("click", () => {
+        const missingCount = (daProfileStatus?.folderId === folderId && daProfileStatus.skipped) || nonBasicCards(cards).length;
         runDeckProfilePrepare(folderId, cards, deckProfilesSig(folderId, cards), nonBasicCards(cards), { confirm: true, missingCount });
       });
       $("#da2-profile-retry-btn")?.addEventListener("click", () => {
@@ -5018,25 +5041,28 @@
     }
     async function runDeckProfilePrepare(folderId, cards, sig, nonBasic, { confirm, missingCount }) {
       daProfileStatus = { folderId, phase: "profiling", missing: missingCount };
-      rerenderDeckAnalysisIfActive(folderId, cards);
+      rerenderDeckAnalysisIfActive(folderId);
       const res = await postJson("/api/deck-profiles/prepare", { cards: nonBasic, confirm }).catch((err) => ({ ok: false, data: { error: err.message } }));
       if (daProfileSig !== sig) return; // deck changed again while this was in flight
       if (res.ok) {
         cacheProfiles(res.data.profiles);
-        daProfileStatus = null;
+        daProfileStatus = res.data.skipped ? { folderId, phase: "skipped", skipped: res.data.skipped } : null;
       } else if (res.data?.needsConfirmation) {
         daProfileStatus = { folderId, phase: "awaiting-confirm", missing: res.data.missing, estimate: res.data.estimate };
       } else {
         daProfileStatus = { folderId, phase: "error", error: res.data?.error || "Profiling failed" };
       }
-      rerenderDeckAnalysisIfActive(folderId, cards);
+      rerenderDeckAnalysisIfActive(folderId);
     }
     // Looks up profiles for the deck's non-basic main-deck cards, caching them by oracle id
     // (skipped when the same set was already checked — a re-render alone never refetches).
     // Missing ≤ the auto limit and AI available: profiles automatically (the server enforces
-    // the limit, so the client never needs to know its value). Missing over the limit: shows
-    // a "Profile N cards (≈ $X)" line with a manual Profile button. No AI: no line, and
-    // detectRoleDetails/detectWinCons fall back to the rule-based classifier per card.
+    // the limit, so the client never needs to know its value) — cards the AI has already
+    // failed to profile are excluded from that auto-profile, so they never get silently
+    // retried on every deck edit; they surface as the "couldn't be profiled" status instead.
+    // Missing over the limit: shows a "Profile N cards (≈ $X)" line with a manual Profile
+    // button. No AI: no line, and detectRoleDetails/detectWinCons fall back to the
+    // rule-based classifier per card.
     async function ensureDeckProfiles(deck, cards, folderId) {
       const nonBasic = nonBasicCards(cards);
       const sig = deckProfilesSig(folderId, cards);
@@ -5047,7 +5073,7 @@
       if (daProfileSig !== sig) return;
       if (!lookupRes.ok) {
         daProfileStatus = { folderId, phase: "error", error: lookupRes.data?.error || "Couldn't check card profiles" };
-        rerenderDeckAnalysisIfActive(folderId, cards);
+        rerenderDeckAnalysisIfActive(folderId);
         return;
       }
       const { profiles, missing, aiAvailable } = lookupRes.data;
@@ -5055,7 +5081,7 @@
       cacheProfiles(profiles);
       if (!missing.length || !aiAvailable) {
         daProfileStatus = null;
-        if (learnedNew || !missing.length) rerenderDeckAnalysisIfActive(folderId, cards);
+        if (learnedNew || !missing.length) rerenderDeckAnalysisIfActive(folderId);
         return;
       }
       await runDeckProfilePrepare(folderId, cards, sig, nonBasic, { confirm: false, missingCount: missing.length });
@@ -5126,8 +5152,9 @@
       const { attention, onTarget } = chipGroups(items);
       const chipHtml = (c) => {
         const cls = `da2-chip ${c.pass ? "ok" : "bad"}`;
-        if (ROLE_KEYS.includes(c.key)) return `<button class="${cls}" type="button" data-role-key="${c.key}" aria-expanded="false" aria-controls="da2-role-detail">${esc(c.text)}</button>`;
-        return `<span class="${cls}">${esc(c.text)}</span>`;
+        const title = c.note ? ` title="${esc(c.note)}"` : ""; // carries the AI role note (applyAiGradeContext), when there is one
+        if (ROLE_KEYS.includes(c.key)) return `<button class="${cls}" type="button" data-role-key="${c.key}" aria-expanded="false" aria-controls="da2-role-detail"${title}>${esc(c.text)}</button>`;
+        return `<span class="${cls}"${title}>${esc(c.text)}</span>`;
       };
       return `
         <div class="da2-chip-row">
@@ -5157,20 +5184,27 @@
     }
     // Wires the chip-row role buttons to the shared detail panel: click toggles it open
     // for that role (closing it if it's already showing that role), and card chips inside
-    // the panel open the card focus, same as the Add/Trim chips.
+    // the panel open the card focus, same as the Add/Trim chips. Also re-opens the panel
+    // (see daOpenRole) if an incidental re-render (profiles/EDHREC loading, grade
+    // recompute) just replaced a panel that had it open.
     function wireDeckAnalysisChips() {
       const card = $("#da2-chips-card");
       const detail = $("#da2-role-detail");
+      const openRole = (key, btn) => {
+        if (!detail) return;
+        daOpenRole = key;
+        detail.innerHTML = roleDetailHtml(key);
+        detail.hidden = false;
+        detail.dataset.roleKey = key;
+        if (btn) btn.setAttribute("aria-expanded", "true");
+      };
       card?.querySelectorAll(".da2-chip[data-role-key]").forEach((btn) => btn.addEventListener("click", () => {
         const key = btn.dataset.roleKey;
         const wasOpen = Boolean(detail && !detail.hidden && detail.dataset.roleKey === key);
         card.querySelectorAll(".da2-chip[data-role-key]").forEach((b) => b.setAttribute("aria-expanded", "false"));
         if (!detail) return;
-        if (wasOpen) { detail.hidden = true; detail.innerHTML = ""; delete detail.dataset.roleKey; return; }
-        detail.innerHTML = roleDetailHtml(key);
-        detail.hidden = false;
-        detail.dataset.roleKey = key;
-        btn.setAttribute("aria-expanded", "true");
+        if (wasOpen) { detail.hidden = true; detail.innerHTML = ""; delete detail.dataset.roleKey; daOpenRole = null; return; }
+        openRole(key, btn);
       }));
       detail?.addEventListener("click", (e) => {
         const chip = e.target.closest(".da2-card-chip");
@@ -5181,6 +5215,11 @@
         const chip = e.target.closest(".da2-card-chip");
         if (chip) { e.preventDefault(); openCardByName(chip.dataset.card); }
       });
+      if (daOpenRole) {
+        const btn = card?.querySelector(`.da2-chip[data-role-key="${daOpenRole}"]`);
+        if (btn) openRole(daOpenRole, btn);
+        else daOpenRole = null; // that role no longer has a chip — nothing to reopen
+      }
     }
     // Per deck color: "W 1/5", shortfalls in the existing warning color.
     function colorsLineHtml(sources) {
@@ -5289,23 +5328,23 @@
     // decks/renders share a commander; picks recompute from this cache on every render
     // (deck/collection changes never trigger a refetch).
     // slug -> { status: "loading" | "ready" | "error", data, error, waiters }. `waiters` (only
-    // populated while loading) maps folderId -> cards for every deck currently rendering this
+    // populated while loading) holds the folderId of every deck currently rendering this
     // commander, so every one of them repaints once the shared fetch resolves — not just
     // whichever deck happened to start it.
     const edhrecCache = new Map();
     let edhrecShowAll = false; // reset alongside handState when the deck signature changes
 
-    function ensureEdhrecLoaded(commanderName, folderId, cards) {
+    function ensureEdhrecLoaded(commanderName, folderId) {
       const slug = commanderSlug(commanderName);
       const existing = edhrecCache.get(slug);
       if (existing) {
         // Another deck sharing this commander may be rendering while the first deck's
         // fetch is still in flight — register it so it also repaints on resolve, instead
         // of only the deck that happened to trigger the fetch.
-        if (existing.status === "loading") existing.waiters.set(folderId, cards);
+        if (existing.status === "loading") existing.waiters.add(folderId);
         return existing;
       }
-      const entry = { status: "loading", waiters: new Map([[folderId, cards]]) };
+      const entry = { status: "loading", waiters: new Set([folderId]) };
       edhrecCache.set(slug, entry);
       fetch(`/api/edhrec/commander?name=${encodeURIComponent(commanderName)}`)
         .then(async (r) => {
@@ -5320,8 +5359,8 @@
         })
         .then(() => {
           const waiters = entry.waiters;
-          entry.waiters = new Map();
-          waiters.forEach((waitCards, waitFolderId) => rerenderDeckAnalysisIfActive(waitFolderId, waitCards));
+          entry.waiters = new Set();
+          waiters.forEach((waitFolderId) => rerenderDeckAnalysisIfActive(waitFolderId));
         });
       return entry;
     }
@@ -5358,11 +5397,11 @@
         <div class="da2-edhrec-foot">Data from <a href="https://edhrec.com/commanders/${esc(slug)}" target="_blank" rel="noopener">EDHREC</a></div>`;
     }
 
-    function renderEdhrecSection(deck, commander, folderId, cards) {
+    function renderEdhrecSection(deck, commander, folderId) {
       const section = $("#da2-edhrec");
       if (!section) return;
       if (!deck || !commander || !hasCollection()) { section.hidden = true; section.innerHTML = ""; return; }
-      const entry = ensureEdhrecLoaded(commander.name, folderId, cards);
+      const entry = ensureEdhrecLoaded(commander.name, folderId);
       section.hidden = false;
       if (entry.status === "loading") {
         section.innerHTML = `<div class="da-h">From your collection</div><div class="da2-vsub">Loading EDHREC picks…</div>`;
@@ -5372,7 +5411,7 @@
         section.innerHTML = `<div class="da-h">From your collection</div><div class="da2-vsub">${esc(entry.error)} <button class="da2-chip muted cta" id="da2-edhrec-retry" type="button" style="margin-left:6px">Retry</button></div>`;
         $("#da2-edhrec-retry").addEventListener("click", () => {
           edhrecCache.delete(commanderSlug(commander.name));
-          renderEdhrecSection(deck, commander, folderId, cards);
+          renderEdhrecSection(deck, commander, folderId);
         });
         return;
       }
@@ -5395,7 +5434,7 @@
       });
       $("#da2-edhrec-more")?.addEventListener("click", () => {
         edhrecShowAll = !edhrecShowAll;
-        renderEdhrecSection(deck, commander, folderId, cards);
+        renderEdhrecSection(deck, commander, folderId);
       });
     }
 
@@ -5413,7 +5452,7 @@
       if (s.total < ANALYSIS_MIN_CARDS) {
         dA.innerHTML = `
           <div class="da2-strip da2-strip-min">
-            <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
+            <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
           </div>
           <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role ledger, bracket and mana checks will appear here.</div>`;
         dA.style.display = "block";
@@ -5425,7 +5464,7 @@
       const sig = deckSig(cards, folderId, commander?.name);
       // The sample hand survives incidental re-renders (AI profile loads, grade recompute)
       // but resets once the deck itself changes — same signature the review cache keys on.
-      if (handStateSig !== sig) { handState = null; handStateSig = sig; edhrecShowAll = false; }
+      if (handStateSig !== sig) { handState = null; handStateSig = sig; edhrecShowAll = false; daOpenRole = null; }
       const reviewEntry = deckReviewCache[folderId];
       const validEntry = reviewEntry && typeof reviewEntry.sig === "string" && reviewEntry.sig.startsWith(`${DECK_REVIEW_CACHE_VERSION}|`) ? reviewEntry : null;
       const cached = validEntry ? validEntry.data : null;
@@ -5450,13 +5489,17 @@
         : `<div class="da2-badge in-progress" title="${s.total} of 100 cards · a full grade appears at 90"><b>${100 - s.total}</b><small>to go</small></div>`;
 
       daCtx = { folderId, sources, stats: s, profile, roleDetails, flow, counts }; // let AI review refine the grade while retaining card-level evidence
+      // A review for this exact deck is still running (see reviewDeckWithAI) — the button
+      // and fix-wrap must keep showing that, even though this render was triggered by
+      // something else entirely (profiles/EDHREC loading), not the review itself.
+      const reviewing = daReviewInFlight === folderId;
 
       dA.innerHTML = `
         <div class="da2-strip">
-          <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${colorComboName(colors)} · ${s.total} cards · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
+          <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
           <div class="da2-bracket-wrap">
             <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
-            <button class="da-review-btn" id="da-review-btn">${ICON_SPARKLE}<span class="da-review-label">${cached ? "Re-analyze" : "Analyze"}</span></button>
+            <button class="da-review-btn" id="da-review-btn" ${reviewing ? "disabled" : ""}>${ICON_SPARKLE}<span class="da-review-label">${reviewing ? "Analyzing…" : (cached ? "Re-analyze" : "Analyze")}</span></button>
             <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
           </div>
         </div>
@@ -5468,7 +5511,7 @@
             <div class="da2-vsub" id="da2-subnote" ${subnoteText ? "" : "hidden"}>${subnoteText}</div>
             ${daProfileLineHtml(folderId)}
             ${deckIdentityHtml(identityTags, Boolean(cached))}
-            <div class="da2-fix-wrap" id="da2-fix-wrap">${cached ? fixRowsHtml(cached) : ""}</div>
+            <div class="da2-fix-wrap" id="da2-fix-wrap">${reviewing ? `<div class="da2-fix"><span class="da2-chip muted">Analyzing ${cards.length} cards…</span></div>` : (cached ? fixRowsHtml(cached) : "")}</div>
           </div>
         </div>
         <div class="da2-layout">
@@ -5517,7 +5560,7 @@
           btn.setAttribute("aria-label", btn.title);
         }
       });
-      if (cached) renderAiExtras(cached);
+      if (cached && !reviewing) renderAiExtras(cached); // reviewing already painted its own pending fix-wrap above
       wireDeckAnalysisChips();
       wireDeckProfileLine(deck, cards, folderId);
       enhanceBracket(cards, folderId);
@@ -5529,18 +5572,23 @@
         const ramp = rampCountForLibrary(roleDetails, cards, commander);
         const odds = openingHandOdds({ N: library.length, lands: s.lands, ramp, commanderMv: commander ? (commander.cmc || 0) : undefined });
         renderOpeningHandSection(library, odds, commander);
-        renderEdhrecSection(deck, commander, folderId, cards);
+        renderEdhrecSection(deck, commander, folderId);
       }
     }
 
+    // `daReviewInFlight` guards this against a second paid request while one is already
+    // running for this deck: a click is ignored (the button is also rendered disabled —
+    // see renderDeckAnalysis — but this is the authoritative guard, since that render may
+    // be stale). Elements are re-queried once the request settles rather than using `btn`/
+    // `fixWrap` captured before the await, since an async re-render triggered by something
+    // else (profiles/EDHREC loading) may have replaced the panel — and with it those
+    // elements — while this was in flight.
     async function reviewDeckWithAI(cards, folderId, commander, winConditions) {
       if (!state.hasApiKey) return showSettings();
-      const btn = $("#da-review-btn");
-      const setLabel = (t) => { const l = btn && btn.querySelector(".da-review-label"); if (l) l.textContent = t; };
-      const fixWrap = $("#da2-fix-wrap");
-      if (btn) btn.disabled = true;
-      setLabel("Analyzing…");
-      if (fixWrap) fixWrap.innerHTML = `<div class="da2-fix"><span class="da2-chip muted">Analyzing ${cards.length} cards…</span></div>`;
+      if (daReviewInFlight) return; // a review is already running — ignore the click
+      daReviewInFlight = folderId;
+      rerenderDeckAnalysisIfActive(folderId); // paint the disabled "Analyzing…" button + pending note now
+      let err = null;
       try {
         const payload = cards.slice(0, 120).map((c) => ({ name: c.name, type_line: c.type_line || "", oracle_text: getOracleText(c), cmc: c.cmc || 0 }));
         const res = await fetch("/api/deck-review", {
@@ -5551,16 +5599,25 @@
         const data = await res.json();
         deckReviewCache[folderId] = { sig: deckSig(cards, folderId, commander?.name), data }; // cache per deck version — no re-spend on re-open
         persistDeckReviews();
-        if (state.activeFolder === folderId) {
-          const activeDeck = state.folders.find((folder) => folder.id === folderId);
-          if (activeDeck) renderDeckAnalysis(activeDeck, cards);
-        }
-        setLabel("Re-analyze");
-      } catch (err) {
-        if (fixWrap) fixWrap.innerHTML = `<div class="da2-fix"><span class="da2-chip trim">${esc(err.message || "Analysis failed")}</span></div>`;
-        setLabel("Analyze");
+      } catch (e) {
+        err = e;
       } finally {
-        if (btn) btn.disabled = false;
+        daReviewInFlight = null;
+      }
+      if (state.activeFolder !== folderId) return; // deck switched while this was in flight
+      if (err) {
+        // No cached data to build a full re-render from — patch the current DOM directly,
+        // re-queried now so this never lands in an element replaced while awaiting above.
+        const btn = $("#da-review-btn");
+        const fixWrap = $("#da2-fix-wrap");
+        if (btn) {
+          btn.disabled = false;
+          const l = btn.querySelector(".da-review-label");
+          if (l) l.textContent = deckReviewCache[folderId] ? "Re-analyze" : "Analyze";
+        }
+        if (fixWrap) fixWrap.innerHTML = `<div class="da2-fix"><span class="da2-chip trim">${esc(err.message || "Analysis failed")}</span></div>`;
+      } else {
+        rerenderDeckAnalysisIfActive(folderId); // full repaint: new grade/chips/verdict/fix rows/identity tags
       }
     }
 

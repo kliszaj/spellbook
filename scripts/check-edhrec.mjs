@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readFileSync } from "node:fs";
@@ -170,6 +170,53 @@ test("createEdhrecClient: a 404 becomes the no-page message", async () => {
     assert.equal(err.message, "EDHREC has no page for this commander.");
     return true;
   });
+});
+
+test("createEdhrecClient: an unwritable disk cache doesn't fail a successful fetch", async () => {
+  const parent = await tempDir();
+  // A plain file sitting where the cache directory needs to be forces the atomic
+  // write's mkdir to fail — simulating an unwritable disk cache without needing to
+  // inject the fs module.
+  const dataDir = join(parent, "blocked");
+  await writeFile(dataDir, "not a directory", "utf8");
+  const { fetchImpl, calls } = fakeFetch(FIXTURE);
+  const client = createEdhrecClient({ dataDir, fetchImpl });
+  const data = await client.getCommander("Hei Bai, Forest Guardian");
+  assert.equal(data.numDecks, 7174);
+  assert.equal(calls.length, 1);
+});
+
+test("createEdhrecClient: a refetch failure after the TTL expires serves the stale entry instead of throwing", async () => {
+  const dataDir = await tempDir();
+  let now = 0;
+  let fail = false;
+  const fetchImpl = async () => {
+    if (fail) throw new Error("network down");
+    return { ok: true, status: 200, json: async () => FIXTURE };
+  };
+  const client = createEdhrecClient({ dataDir, fetchImpl, now: () => now, ttlMs: 1000 });
+  const first = await client.getCommander("Hei Bai, Forest Guardian");
+  now += 2000; // expire the cache
+  fail = true;
+  const second = await client.getCommander("Hei Bai, Forest Guardian");
+  assert.deepEqual(second, first); // served stale instead of throwing
+});
+
+test("createEdhrecClient: a refetch failure falls back to a stale disk entry, even with empty in-memory cache", async () => {
+  const dataDir = await tempDir();
+  let now = 0;
+  let fail = false;
+  const fetchImpl = async () => {
+    if (fail) throw new Error("network down");
+    return { ok: true, status: 200, json: async () => FIXTURE };
+  };
+  const clientA = createEdhrecClient({ dataDir, fetchImpl, now: () => now, ttlMs: 1000 });
+  await clientA.getCommander("Hei Bai, Forest Guardian");
+  now += 2000;
+  fail = true;
+  const clientB = createEdhrecClient({ dataDir, fetchImpl, now: () => now, ttlMs: 1000 }); // fresh memory
+  const data = await clientB.getCommander("Hei Bai, Forest Guardian");
+  assert.equal(data.numDecks, 7174);
 });
 
 await run("EDHREC client");

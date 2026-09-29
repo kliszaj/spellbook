@@ -170,6 +170,13 @@ test("openingHandOdds: commanderOnCurve is absent without a commander mana value
   assert.ok(withCommander.commanderOnCurve > 0 && withCommander.commanderOnCurve <= 1);
 });
 
+test("openingHandOdds: commanderMv is rounded before use", () => {
+  const N = 99, lands = 36, ramp = 8;
+  const fractional = h.openingHandOdds({ N, lands, ramp, commanderMv: 2.6 });
+  const rounded = h.openingHandOdds({ N, lands, ramp, commanderMv: 3 });
+  assert.equal(fractional.commanderOnCurve, rounded.commanderOnCurve);
+});
+
 test("drawRandom: returns n distinct cards from the input with a seeded rng", () => {
   const cards = Array.from({ length: 20 }, (_, i) => ({ id: `c${i}` }));
   let seed = 42;
