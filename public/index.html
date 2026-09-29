@@ -1416,7 +1416,7 @@
     .curve-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
     .curve-track { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; }
     /* Dashed step line for the typical curve; extends half the column gap each side so steps meet. */
-    .curve-ideal { position: absolute; left: -3px; right: -3px; height: 0; border-top: 1.5px dashed #B9892A; pointer-events: none; }
+    .curve-ideal { position: absolute; left: 50%; width: min(100%, 64px); transform: translateX(-50%); height: 0; border-top: 2px dashed #B9892A; pointer-events: none; }
     .curve-legend { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-size: 10.5px; color: #9E9B92; }
     .curve-legend-line { width: 16px; height: 0; border-top: 1.5px dashed #B9892A; flex: none; }
     .curve-count { font-size: 10px; color: #9E9B92; font-variant-numeric: tabular-nums; }
@@ -1619,11 +1619,12 @@
     /* ── Colour balance + land swaps ── */
     .cb-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 10.5px; color: #9E9B92; margin-bottom: 8px; }
     .cb-legend i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+    .cb { max-width: 640px; }
     .cb-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 82px; align-items: center; gap: 10px; margin: 6px 0; }
     .cb-row .da2-srcpip { width: 20px; height: 20px; } .cb-row .da2-srcpip svg { width: 11px; height: 11px; }
     .cb-bars { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .cb-bar { height: 7px; border-radius: 999px; background: #F0EDE5; overflow: hidden; }
-    .cb-bar i, .cb-legend i { display: block; height: 100%; border-radius: 999px; }
+    .cb-bar i { display: block; height: 100%; border-radius: 999px; }
     i.need { background: #8C8579; }
     i.have.ok { background: #8FB08A; } i.have.short { background: #D9876A; } i.have.over { background: #D8C38E; }
     .cb-nums { font: 650 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #57524A; text-align: right; font-variant-numeric: tabular-nums; }
@@ -6279,10 +6280,18 @@
 
     // ═══ Colour balance + land swaps (Mana tab) ═══════════════════════
     const BASIC_OF = { W: "Plains", U: "Island", B: "Swamp", R: "Mountain", G: "Forest" };
+    // A card you can play as your land drop. Transforming cards (Growing Rites of Itlimoc)
+    // only flip into a land later, so they count only when the front face is a land;
+    // modal double-faced cards (Emeria's Call) can be played as their land side.
+    function playableAsLand(c) {
+      if (!isLandCard(c)) return false;
+      if (c.layout !== "transform") return true;
+      return /\bLand\b/.test(String(c.card_faces?.[0]?.type_line || c.type_line || "").split(" // ")[0]);
+    }
     // The deck's lands with the colours they make and whether they enter tapped early.
     // Fetch lands count as every deck colour; basics are expanded to their quantity.
     function deckLandInfo(cards, folderId, colors) {
-      return cards.filter(isLandCard).flatMap((c) => {
+      return cards.filter(playableAsLand).flatMap((c) => {
         const oracle = getOracleText(c);
         const fetches = /search your library for (a|an).*land|search your library for.*basic land/i.test(oracle);
         const produces = fetches ? colors.slice() : [...new Set(cardProduces(c).filter((m) => WUBRG.includes(m)))];
@@ -6502,7 +6511,7 @@
       const rampNames = new Set((roleDetails.ramp?.cards || []).map((c) => c.name));
       const landMeta = new Map();
       const lib = library.map((c) => {
-        const land = isLandCard(c);
+        const land = playableAsLand(c);
         if (land && !landMeta.has(c.id)) {
           const oracle = getOracleText(c);
           const fetches = /search your library for (a|an).*land|search your library for.*basic land/i.test(oracle);
@@ -6510,7 +6519,7 @@
         }
         return { land, ramp: rampNames.has(c.name), cmc: Number(c.cmc || 0), ...(land ? landMeta.get(c.id) : {}) };
       });
-      const spells = [...new Map(library.filter((c) => !isLandCard(c)).map((c) => [c.id, c])).values()]
+      const spells = [...new Map(library.filter((c) => !playableAsLand(c)).map((c) => [c.id, c])).values()]
         .filter((c) => (c.cmc || 0) >= 1 && (c.cmc || 0) <= 3)
         .map((c) => {
           const req = {};
