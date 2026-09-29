@@ -1558,6 +1558,56 @@
     .da2-chip-row:first-child { margin-top: 0; }
     .da2-chip-row-label { flex: none; width: 92px; padding-top: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #A39E93; }
     .da2-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    /* ── Sticky deck bar ── */
+    .deck-progress { position: sticky; top: 72px; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: -4px 0 14px; padding: 10px 14px; background: rgba(251,250,246,0.97); border: 1px solid rgba(31,29,25,0.12); border-radius: 12px; box-shadow: 0 8px 20px -16px rgba(28,24,18,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .deck-progress .dp-id { display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; font-size: 13px; font-weight: 700; color: #57524A; min-width: 0; }
+    .deck-progress .dp-id small { font-size: 11.5px; font-weight: 500; color: #9E9B92; margin-left: 2px; }
+    .dp-bar { flex: 1; min-width: 120px; max-width: 420px; height: 8px; border-radius: 999px; background: #ECE8DE; overflow: hidden; display: flex; margin-left: auto; }
+    .dp-bar i { display: block; height: 100%; }
+    .dp-bar .in { background: #8FB08A; }
+    .dp-bar .over { background: #D9876A; }
+    .dp-pill { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; color: #57524A; background: #EFEBE2; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .dp-pill.cut { color: #9A3A22; background: #F8E4DC; }
+    .dp-pill.ok { color: #2F6A2C; background: #E8F3E4; }
+    .dp-grade { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: #F1F4EF; border: 1px solid #DCE4D8; color: #4d6b48; flex: none; }
+    /* ── Analysis actions row + tabs ── */
+    .da2-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .da2-actions-btns { display: flex; gap: 8px; margin-left: auto; }
+    .da2-staples-btn { font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 12px; border-radius: 9px; border: 1px solid #C8A55A; background: #F6EDD6; color: #2A2721; cursor: pointer; transition: background 0.12s, border-color 0.12s; }
+    .da2-staples-btn:hover:not(:disabled) { background: #F1E3BE; border-color: #B9892A; }
+    .da2-staples-btn:disabled { opacity: 0.6; cursor: default; }
+    .da2-tabs { display: flex; gap: 2px; border-bottom: 1px solid rgba(31,29,25,0.10); margin-bottom: 14px; overflow-x: auto; }
+    .da2-tab { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: #9E9B92; padding: 9px 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: color 0.12s; }
+    .da2-tab:hover { color: #57524A; }
+    .da2-tab.on { color: #181715; border-bottom-color: #181715; }
+    .da2-tab:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; border-radius: 4px; }
+    .da2-tab-badge { font: 700 10px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 3px 5px; border-radius: 5px; background: #F8E4DC; color: #9A3A22; }
+    .da2-pane { display: flex; flex-direction: column; gap: 12px; }
+    .da2-pane[hidden] { display: none; }
+    /* ── Overview headline numbers ── */
+    .da2-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .da2-kpi { background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .da2-kpi b { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: #181715; font-variant-numeric: tabular-nums; }
+    .da2-kpi b.bad { color: #A45636; } .da2-kpi b.good { color: #4d6b48; }
+    .da2-kpi span { font-size: 11.5px; color: #9E9B92; }
+    .da2-kpi-grade .da2-badge { width: 40px; height: 40px; border-radius: 10px; align-self: flex-start; }
+    .da2-kpi-grade .da2-badge b { font-size: 20px; }
+    .da2-ontarget { margin-top: 10px; }
+    .da2-ontarget > summary { cursor: pointer; font-size: 12px; color: #9E9B92; font-weight: 600; }
+    .da2-ontarget > summary:hover { color: #57524A; }
+    .da2-ontarget .da2-chips { margin-top: 8px; }
+    /* ── Simulator ── */
+    .sim-chart { display: flex; align-items: flex-end; gap: 10px; height: 110px; margin-top: 4px; }
+    .sim-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+    .sim-col i { display: block; width: 100%; max-width: 44px; min-height: 2px; background: #BEB7A9; border-radius: 4px 4px 0 0; }
+    .sim-val { font-size: 11px; font-weight: 700; color: #57524A; font-variant-numeric: tabular-nums; }
+    .sim-x { font-size: 10.5px; color: #78726A; }
+    .sim-cap { font-size: 10.5px; color: #9E9B92; margin: 6px 0 12px; }
+    .sim-note { font-size: 10.5px; color: #B0A99E; margin-top: 6px; line-height: 1.4; }
+    /* ── Toast ── */
+    .app-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 400; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); background: #181715; color: #FFFEFA; padding: 11px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55); }
+    .app-toast button { border: 0; background: none; color: #E7CE8C; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
+    @media (max-width: 600px) { .da2-kpis { gap: 6px; } .da2-kpi { padding: 10px; } .da2-kpi b { font-size: 21px; } .deck-progress { top: 64px; } }
     .da2-trim-total { color: #A45636; }
     .da2-trim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; margin-top: 12px; }
     .da2-trim-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; background: none; font: inherit; font-size: 12px; color: #57524A; text-align: left; cursor: pointer; transition: background 0.12s, border-color 0.12s; }
@@ -2212,6 +2262,7 @@
 
         <div class="saved-section" id="saved-section">
           <div class="saved-main">
+          <div class="deck-progress" id="deck-progress" hidden></div>
           <div class="search-section">
             <div class="color-identity">
               <div class="color-toggles" id="deck-colors" aria-label="Filter deck by color"></div>
@@ -4344,7 +4395,7 @@
       }
 
       // "All" and "Unsorted" are library buckets, not decks — analysis only for real decks.
-      if (!isRealDeck) { dA.style.display = "none"; dA.innerHTML = ""; }
+      if (!isRealDeck) { dA.style.display = "none"; dA.innerHTML = ""; hideDeckProgress(); }
       else {
         const wholeDeck = getFolderCards(state.activeFolder).filter((c) => !isMaybe(state.activeFolder, c.id));
         // The mana curve follows the on-screen selection; everything else measures the whole deck.
@@ -5149,6 +5200,108 @@
     function projectTo99(count, N) {
       return N > 99 ? Math.round((count * 99) / N) : count;
     }
+    // ── Turns 1–5 simulator (Monte Carlo) ─────────────────────────────
+    // Plays the first `turns` turns of `trials` random games on the play: one land per turn
+    // when the hand has one, then casts ramp greedily (cheapest first); every ramp piece
+    // (rock, dork, land-fetch spell) adds one mana from the next turn.
+    // `library` items: { land: bool, ramp: bool, cmc: number }.
+    function simulateTurns({ library, commanderMv = 0, trials = 4000, turns = 5, rng = Math.random }) {
+      const out = { trials, avgMana: Array(turns).fill(0), commanderOnCurve: null, commanderByNext: null, missedDrop: 0, avgLandsT5: 0 };
+      if (!library.length) return out;
+      const mv = Math.round(commanderMv);
+      let onCurve = 0, byNext = 0;
+      const deck = library.slice();
+      for (let t = 0; t < trials; t++) {
+        // Partial Fisher–Yates: only the cards we can see this game need to be shuffled in.
+        // (A >99-card pool needs no down-sampling: the first cards of a shuffled pool are
+        // distributed like the first cards of a random 99-card deck drawn from it.)
+        const need = Math.min(deck.length, 7 + turns);
+        for (let i = 0; i < need; i++) {
+          const j = i + Math.floor(rng() * (deck.length - i));
+          [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        const hand = deck.slice(0, 7);
+        let next = 7, lands = 0, ramp = 0, pendingRamp = 0, missed = false, castTurn = null;
+        for (let turn = 1; turn <= turns; turn++) {
+          if (turn > 1 && next < deck.length) hand.push(deck[next++]);
+          ramp += pendingRamp; pendingRamp = 0;
+          const li = hand.findIndex((c) => c.land);
+          if (li >= 0) { hand.splice(li, 1); lands++; } else if (turn <= 4) missed = true;
+          const available = lands + ramp;
+          out.avgMana[turn - 1] += available;
+          if (castTurn == null && mv > 0 && available >= mv) castTurn = turn;
+          let spend = available;
+          hand.filter((c) => c.ramp && !c.land).sort((a, b) => a.cmc - b.cmc).forEach((c) => {
+            if (c.cmc <= spend) { spend -= c.cmc; pendingRamp++; hand.splice(hand.indexOf(c), 1); }
+          });
+        }
+        if (castTurn != null && castTurn <= mv) onCurve++;
+        if (castTurn != null && castTurn <= mv + 1) byNext++;
+        if (missed) out.missedDrop++;
+        out.avgLandsT5 += lands;
+      }
+      out.avgMana = out.avgMana.map((m) => m / trials);
+      out.missedDrop /= trials;
+      out.avgLandsT5 /= trials;
+      if (mv > 0 && mv <= turns) out.commanderOnCurve = onCurve / trials;
+      if (mv > 0 && mv + 1 <= turns) out.commanderByNext = byNext / trials;
+      return out;
+    }
+
+    // ── One-click staples ─────────────────────────────────────────────
+    const STAPLE_UNIVERSAL = ["Sol Ring", "Arcane Signet", "Swiftfoot Boots", "Lightning Greaves"];
+    const STAPLE_MULTICOLOR = ["Command Tower", "Exotic Orchard", "Fellwar Stone"];
+    // Signet + Talisman per color pair (keys in WUBRG order).
+    const STAPLE_PAIR_ROCKS = {
+      WU: ["Azorius Signet", "Talisman of Progress"], WB: ["Orzhov Signet", "Talisman of Hierarchy"],
+      WR: ["Boros Signet", "Talisman of Conviction"], WG: ["Selesnya Signet", "Talisman of Unity"],
+      UB: ["Dimir Signet", "Talisman of Dominance"], UR: ["Izzet Signet", "Talisman of Creativity"],
+      UG: ["Simic Signet", "Talisman of Curiosity"], BR: ["Rakdos Signet", "Talisman of Indulgence"],
+      BG: ["Golgari Signet", "Talisman of Resilience"], RG: ["Gruul Signet", "Talisman of Impulse"],
+    };
+    // Land cycles in priority order (Scryfall `is:` names). Triomes only matter at 3+ colors.
+    const STAPLE_LAND_CYCLES = ["tricycleland", "shockland", "pathway", "checkland", "bondland", "painland", "fastland", "slowland"];
+    // Picks the staples a deck is missing, in priority order. `landsByCycle` maps a cycle to
+    // the names Scryfall returned for this color identity; `edhrec` is the commander's card
+    // list; `pipWeight` orders color pairs by how much the deck uses them. Game Changers are
+    // skipped once `gcAllowance` runs out (0 for bracket 1–2 decks).
+    function pickStaples({ colors = [], inDeck = new Set(), edhrec = [], landsByCycle = {}, gameChangers = new Set(), gcAllowance = 0, pipWeight = {}, maxRocks = 4, maxLands = 10, maxEdhrec = 6 }) {
+      const picked = [];
+      const seen = new Set(inDeck);
+      let gcLeft = gcAllowance;
+      const take = (name) => {
+        const key = name.toLowerCase();
+        if (seen.has(key)) return false;
+        if (gameChangers.has(key)) { if (gcLeft <= 0) return false; gcLeft--; }
+        seen.add(key);
+        picked.push(name);
+        return true;
+      };
+      STAPLE_UNIVERSAL.forEach(take);
+      if (colors.length >= 2) STAPLE_MULTICOLOR.forEach(take);
+      const order = "WUBRG";
+      const pairs = [];
+      for (let i = 0; i < colors.length; i++) for (let j = i + 1; j < colors.length; j++) {
+        const [a, b] = [colors[i], colors[j]].sort((x, y) => order.indexOf(x) - order.indexOf(y));
+        pairs.push({ key: a + b, w: (pipWeight[a] || 0) + (pipWeight[b] || 0) });
+      }
+      pairs.sort((x, y) => y.w - x.w);
+      let rocks = 0;
+      for (const p of pairs) {
+        for (const name of STAPLE_PAIR_ROCKS[p.key] || []) { if (rocks < maxRocks && take(name)) rocks++; }
+      }
+      let lands = 0;
+      for (const cycle of STAPLE_LAND_CYCLES) {
+        if (cycle === "tricycleland" && colors.length < 3) continue;
+        for (const name of landsByCycle[cycle] || []) { if (lands < maxLands && take(name)) lands++; }
+      }
+      edhrec
+        .filter((c) => c.inclusion >= 0.35 && !/land/i.test(c.category || ""))
+        .sort((a, b) => b.inclusion - a.inclusion)
+        .slice(0, maxEdhrec * 3)
+        .reduce((n, c) => (n < maxEdhrec && take(c.name) ? n + 1 : n), 0);
+      return picked;
+    }
     // [good, borderline] floors per opening-hand stat, calibrated on a 99-card library:
     // 36 lands → 3+ lands 50%, keepable 79%; 10 ramp → ramp by T2 59%; 36 lands + 10 ramp
     // → a 3-drop commander on curve 88%. Below the borderline floor reads as bad.
@@ -5257,6 +5410,8 @@
         g.className = `da2-badge ${gradeTone(grade.letter)}`;
         g.title = `${grade.score}% weighted health score · ${grade.passed}/${grade.total} checks on target`;
       }
+      const pg = $("#deck-progress-grade");
+      if (pg) { pg.textContent = grade.letter; pg.className = `dp-grade ${gradeTone(grade.letter)}`; }
     }
 
     // Game Changers list (for the bracket) — fetched once, cached.
@@ -5515,10 +5670,7 @@
           <span class="da2-chip-row-label">Needs attention</span>
           <div class="da2-chips">${attention.length ? attention.map(chipHtml).join("") : `<span class="da2-chip muted">Nothing flagged</span>`}</div>
         </div>
-        <div class="da2-chip-row">
-          <span class="da2-chip-row-label">On target</span>
-          <div class="da2-chips">${onTarget.length ? onTarget.map(chipHtml).join("") : `<span class="da2-chip muted">Nothing yet</span>`}</div>
-        </div>`;
+        ${onTarget.length ? `<details class="da2-ontarget"><summary>${onTarget.length} other check${onTarget.length === 1 ? "" : "s"} on target</summary><div class="da2-chips">${onTarget.map(chipHtml).join("")}</div></details>` : ""}`;
     }
     // Content of the shared role-detail panel opened by a role chip: its evidence cards
     // (heuristic or AI-refined — daCtx.roleDetails always carries the heuristic evidence),
@@ -5911,8 +6063,150 @@
       });
     }
 
+    // ═══ Deck analysis tabs, sticky progress bar, staples, simulator ═════
+    const DA_TABS = [["overview", "Overview"], ["build", "Build"], ["mana", "Mana"], ["playtest", "Playtest"], ["ideas", "Ideas"]];
+    let daTab = (() => { try { return localStorage.getItem("deck_analysis_tab") || "overview"; } catch { return "overview"; } })();
+    // Tabs only show/hide panes that are all rendered, so every existing wiring (AI
+    // review, EDHREC, trim planner, opening hand) keeps working regardless of the tab.
+    function wireDeckTabs() {
+      dA.querySelectorAll("[data-da-tab]").forEach((btn) => btn.addEventListener("click", () => {
+        daTab = btn.dataset.daTab;
+        try { localStorage.setItem("deck_analysis_tab", daTab); } catch {}
+        dA.querySelectorAll("[data-da-tab]").forEach((b) => { const on = b === btn; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
+        dA.querySelectorAll(".da2-pane").forEach((p) => { p.hidden = p.dataset.pane !== daTab; });
+      }));
+    }
+
+    // Sticky bar above the deck: name, colors, stats, progress toward 100, grade.
+    function renderDeckProgress({ name, colors, s, grade }) {
+      const el = $("#deck-progress");
+      if (!el) return;
+      const over = Math.max(0, s.total - 100);
+      const within = Math.min(s.total, 100);
+      const scale = Math.max(100, s.total);
+      const pill = s.total > 100 ? `<span class="dp-pill cut">${over} to cut</span>`
+        : s.total < 100 ? `<span class="dp-pill">${100 - s.total} to go</span>` : `<span class="dp-pill ok">100 ✓</span>`;
+      el.innerHTML = `
+        <div class="dp-id">${esc(name)}${colors.length ? manaPipsHtml(colors) : ""}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
+        <div class="dp-bar" title="${s.total} of 100${over ? `, ${over} over` : ""}"><i class="in" style="width:${(within / scale) * 100}%"></i><i class="over" style="width:${(over / scale) * 100}%"></i></div>
+        ${pill}
+        ${grade ? `<span class="dp-grade ${gradeTone(grade)}" id="deck-progress-grade">${grade}</span>` : ""}`;
+      el.hidden = false;
+    }
+    function hideDeckProgress() { const el = $("#deck-progress"); if (el) { el.hidden = true; el.innerHTML = ""; } }
+
+    // Small bottom toast with an optional action (e.g. Undo).
+    let toastTimer = null;
+    function showToast(message, { actionLabel, onAction, ms = 7000 } = {}) {
+      document.querySelector(".app-toast")?.remove();
+      clearTimeout(toastTimer);
+      const t = document.createElement("div");
+      t.className = "app-toast";
+      t.setAttribute("role", "status");
+      t.innerHTML = `<span>${esc(message)}</span>${actionLabel ? `<button type="button">${esc(actionLabel)}</button>` : ""}`;
+      t.querySelector("button")?.addEventListener("click", () => { t.remove(); onAction?.(); });
+      document.body.appendChild(t);
+      toastTimer = setTimeout(() => t.remove(), ms);
+    }
+
+    // Scryfall land-cycle lookups per color identity, cached for the session.
+    const stapleLandCache = new Map();
+    async function stapleLandsFor(colors) {
+      const ci = colors.join("").toLowerCase() || "c";
+      if (stapleLandCache.has(ci)) return stapleLandCache.get(ci);
+      const out = {};
+      for (const cycle of STAPLE_LAND_CYCLES) {
+        if (cycle === "tricycleland" && colors.length < 3) continue;
+        try {
+          const q = `is:${cycle} id<=${ci} f:commander game:paper`;
+          const r = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}&order=name`);
+          out[cycle] = r.ok ? ((await r.json()).data || []).map((c) => c.name) : [];
+        } catch { out[cycle] = []; }
+        await new Promise((res) => setTimeout(res, 110)); // Scryfall asks for ≤10 requests/s
+      }
+      stapleLandCache.set(ci, out);
+      return out;
+    }
+
+    // One click: work out the missing staples and add them straight to the main deck.
+    // Bracket 1–2 decks get no Game Changers; a bracket 3 deck may fill up to 3 in total.
+    async function addStaplesToDeck(deck, commander) {
+      const btn = $("#da2-staples-btn");
+      const folderId = deck.id;
+      if (btn) { btn.disabled = true; btn.textContent = "Finding staples…"; }
+      try {
+        const deckCards = getFolderCards(folderId);
+        const main = deckCards.filter((c) => !isMaybe(folderId, c.id));
+        const colors = deckColors(main, commander);
+        const inDeck = new Set(deckCards.map((c) => frontFaceName(c.name).toLowerCase()));
+        const [gc, landsByCycle, edhrec] = await Promise.all([
+          loadGameChangers(),
+          stapleLandsFor(colors),
+          commander ? fetch(`/api/edhrec/commander?name=${encodeURIComponent(commander.name)}`).then((r) => (r.ok ? r.json() : { cards: [] })).catch(() => ({ cards: [] })) : { cards: [] },
+        ]);
+        const gcInDeck = main.filter((c) => gc.has(frontFaceName(c.name).toLowerCase())).length;
+        const gcAllowance = (deckBracket[folderId] || 2) >= 3 ? Math.max(0, 3 - gcInDeck) : 0;
+        const pipWeight = {};
+        colorSourceStats(main, folderId, colors).forEach((src) => { pipWeight[src.c] = src.pips; });
+        const names = pickStaples({ colors, inDeck, edhrec: edhrec.cards || [], landsByCycle, gameChangers: gc, gcAllowance, pipWeight });
+        if (!names.length) { showToast("No staples missing — this deck already has them."); return; }
+        const found = [];
+        for (let i = 0; i < names.length; i += 75) {
+          const res = await fetch("https://api.scryfall.com/cards/collection", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifiers: names.slice(i, i + 75).map((n) => ({ name: n })) }),
+          });
+          if (res.ok) found.push(...((await res.json()).data || []));
+        }
+        const added = found.filter((card) => !cardFolders(card.id).includes(folderId));
+        added.forEach((card) => setCardFolder(card, folderId, true));
+        renderFolderRail();
+        renderSavedCards();
+        const owned = added.filter((c) => ownedQty(collectionIndex, c) > 0).length;
+        const buy = added.filter((c) => ownedQty(collectionIndex, c) === 0).reduce((sum, c) => sum + (priceNum(c) || 0), 0);
+        showToast(`Added ${added.length} staples${hasCollection() ? ` (${owned} owned · €${buy.toFixed(2)} to buy)` : ""}`, {
+          actionLabel: "Undo",
+          onAction: () => { added.forEach((card) => setCardFolder(card, folderId, false)); renderFolderRail(); renderSavedCards(); },
+        });
+      } catch (err) {
+        showToast(`Couldn't add staples: ${err.message || "network error"}`);
+      } finally {
+        const b = $("#da2-staples-btn");
+        if (b) { b.disabled = false; b.textContent = "✦ Add staples"; }
+      }
+    }
+
+    // Playtest tab: turns 1–5 simulator (runs in the browser, free).
+    function renderSimSection(library, roleDetails, commander) {
+      const el = $("#da2-sim");
+      if (!el) return;
+      const rampNames = new Set((roleDetails.ramp?.cards || []).map((c) => c.name));
+      const lib = library.map((c) => ({ land: isLandCard(c), ramp: rampNames.has(c.name), cmc: Number(c.cmc || 0) }));
+      const mv = commander ? Math.round(commander.cmc || 0) : 0;
+      const r = simulateTurns({ library: lib, commanderMv: mv, trials: 4000 });
+      const pct = (p) => `${Math.round(p * 100)}%`;
+      const maxMana = Math.max(1, ...r.avgMana);
+      const bars = r.avgMana.map((m, i) => `<div class="sim-col"><span class="sim-val">${m.toFixed(1)}</span><i style="height:${(m / maxMana) * 100}%"></i><span class="sim-x">T${i + 1}</span></div>`).join("");
+      const stat = (label, value, tone, title) => `<div class="da2-hand-line"${title ? ` title="${escAttr(title)}"` : ""}><span>${label}</span><b class="da2-odds da2-odds-${tone}">${value}</b></div>`;
+      const cmdLines = commander && r.commanderOnCurve != null
+        ? stat(`${esc(frontFaceName(commander.name))} on turn ${mv}`, pct(r.commanderOnCurve), oddsTone("commanderOnCurve", r.commanderOnCurve))
+          + (r.commanderByNext != null ? stat(`…or by turn ${mv + 1}`, pct(r.commanderByNext), oddsTone("commanderOnCurve", r.commanderByNext)) : "")
+        : "";
+      el.innerHTML = `
+        <div class="da-h">Turns 1–5 · ${r.trials.toLocaleString()} simulated games on the play</div>
+        <div class="sim-chart" aria-label="Average mana available per turn">${bars}</div>
+        <div class="sim-cap">Average mana available each turn (lands + ramp)</div>
+        <div class="da2-hand-odds">
+          ${cmdLines}
+          ${/* Bands calibrated on a 37-land / 10-ramp 99: misses a drop by T4 in ~44% of games, ~3.9 lands on T5. */ ""}
+          ${stat("Missed a land drop by turn 4", pct(r.missedDrop), r.missedDrop <= 0.47 ? "good" : r.missedDrop <= 0.6 ? "ok" : "bad", "Lower is better. A typical 37-land deck misses one in about 44% of games.")}
+          ${stat("Lands in play on turn 5", r.avgLandsT5.toFixed(1), r.avgLandsT5 >= 3.8 ? "good" : r.avgLandsT5 >= 3.4 ? "ok" : "bad", "A typical 37-land deck averages about 3.9.")}
+        </div>
+        <div class="sim-note">Plays a land each turn when it can and casts ramp cheapest-first; each ramp piece adds one mana from the next turn. No mulligans.</div>`;
+    }
+
     function renderDeckAnalysis(deck, cards) {
-      if (!cards.length) { dA.style.display = "none"; dA.innerHTML = ""; return; }
+      if (!cards.length) { dA.style.display = "none"; dA.innerHTML = ""; hideDeckProgress(); return; }
       const collapsed = localStorage.getItem("deck_analysis_collapsed") === "true";
       const folderId = deck ? deck.id : state.activeFolder;
       const s = computeDeckStats(cards, folderId);
@@ -5923,10 +6217,8 @@
       // Below a near-complete count, targets calibrated for a 100-card deck would flag
       // everything as "short" — noise. Show only the deck's identity + a build prompt.
       if (s.total < ANALYSIS_MIN_CARDS) {
+        renderDeckProgress({ name: deckName, colors, s, grade: null });
         dA.innerHTML = `
-          <div class="da2-strip da2-strip-min">
-            <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
-          </div>
           <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role ledger, bracket and mana checks will appear here.</div>`;
         dA.style.display = "block";
         dA.classList.remove("collapsed");
@@ -5968,52 +6260,71 @@
       // something else entirely (profiles/EDHREC loading), not the review itself.
       const reviewing = daReviewInFlight.has(folderId);
 
+      const toCutKpi = s.total > 100
+        ? { n: s.total - 100, label: "to cut", tone: "bad" }
+        : s.total < 100 ? { n: 100 - s.total, label: "to go", tone: "" } : { n: 100, label: "cards · complete", tone: "good" };
+      renderDeckProgress({ name: deckName, colors, s, grade: s.total >= 90 ? grade.letter : null });
+      const tab = DA_TABS.some(([k]) => k === daTab) ? daTab : "overview";
+      const tabBtn = ([k, label]) => {
+        const badge = k === "build" && s.total > 100 ? ` <span class="da2-tab-badge">${s.total - 100}</span>` : "";
+        return `<button type="button" class="da2-tab${k === tab ? " on" : ""}" role="tab" data-da-tab="${k}" aria-selected="${k === tab}" aria-controls="da2-pane-${k}">${label}${badge}</button>`;
+      };
+      const pane = (k, html) => `<div class="da2-pane" id="da2-pane-${k}" role="tabpanel" data-pane="${k}" ${k === tab ? "" : "hidden"}>${html}</div>`;
+
       dA.innerHTML = `
-        <div class="da2-strip">
-          <div class="da2-id">${esc(deckName)}${colors.length ? manaPipsHtml(colors) : " "}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
-          <div class="da2-bracket-wrap">
-            <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
+        <div class="da2-actions">
+          <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
+          <div class="da2-actions-btns">
+            <button class="da2-staples-btn" id="da2-staples-btn" type="button" title="Adds the staples this deck is missing for its colors — rocks, dual lands, and the commander's most-played cards — straight to the main deck">✦ Add staples</button>
             <button class="da-review-btn" id="da-review-btn" ${reviewing ? "disabled" : ""}>${ICON_SPARKLE}<span class="da-review-label">${reviewing ? "Analyzing…" : (cached ? "Re-analyze" : "Analyze")}</span></button>
-            <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
           </div>
+          <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
         </div>
         <div class="da2-body">
-        <div class="da2-score">
-          <div class="da2-gradebox">${gradeBadgeHtml}</div>
-          <div>
-            <div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div>
-            <div class="da2-vsub" id="da2-subnote" ${subnoteText ? "" : "hidden"}>${subnoteText}</div>
-            ${daProfileLineHtml(folderId)}
-            ${deckIdentityHtml(identityTags, Boolean(cached))}
-            <div class="da2-fix-wrap" id="da2-fix-wrap">${reviewing ? `<div class="da2-fix"><span class="da2-chip muted">Analyzing ${cards.length} cards…</span></div>` : (cached ? fixRowsHtml(cached) : "")}</div>
+        <div class="da2-tabs" role="tablist" aria-label="Deck analysis">${DA_TABS.map(tabBtn).join("")}</div>
+        ${pane("overview", `
+          <div class="da2-kpis">
+            <div class="da2-kpi da2-kpi-grade">${gradeBadgeHtml}<span>${s.total >= 90 ? "grade" : "cards to a full grade"}</span></div>
+            <div class="da2-kpi"><b class="${toCutKpi.tone}">${toCutKpi.n}</b><span>${toCutKpi.label}</span></div>
+            <div class="da2-kpi"><b>${s.avgMv.toFixed(1)}</b><span>avg mana value</span></div>
           </div>
-        </div>
-        ${s.total > 100 ? `<section class="da2-card" id="da2-trim"></section>` : ""}
-        <div class="da2-layout">
+          <div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div>
+          <div class="da2-vsub" id="da2-subnote" ${subnoteText ? "" : "hidden"}>${subnoteText}</div>
+          ${daProfileLineHtml(folderId)}
+          ${deckIdentityHtml(identityTags, Boolean(cached))}
           <div class="da2-card da2-overview-card">
             <div class="da2-chips-card" id="da2-chips-card">${chipsCardHtml(grade.items)}</div>
             <div class="da2-role-detail" id="da2-role-detail" hidden></div>
-            ${typeGuideHtml(s.typeCounts, typeTargetsFor(identityLensKeys(identityTags)))}
             <div class="da2-wc">
               <div class="da2-wc-line" id="da2-wc-line">${winConditionsLineHtml(wincons)}</div>
               <div class="da2-wc-sub" id="da2-combos" style="display:none"></div>
             </div>
-          </div>
-          <div class="da2-side">
+          </div>`)}
+        ${pane("build", `
+          ${s.total > 100 ? `<section class="da2-card" id="da2-trim"></section>` : `<div class="da2-card da2-vsub">The trim planner appears when the deck is over 100 cards. It's at ${s.total} now.</div>`}
+          <div class="da2-card">${typeGuideHtml(s.typeCounts, typeTargetsFor(identityLensKeys(identityTags)))}</div>`)}
+        ${pane("mana", `
           <div class="da2-card da2-mana-card">
             <div id="da2-curve-wrap">${deckCurveBlockHtml(daCurveCtx)}</div>
             <div class="da2-section-rule"></div>
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
             ${basicsSuggestionHtml(cards, folderId, sources, profile.landTarget[0], s.lands)}
+          </div>`)}
+        ${pane("playtest", `
+          <section class="da2-card" id="da2-opening-hand" hidden></section>
+          <section class="da2-card" id="da2-sim"></section>`)}
+        ${pane("ideas", `
+          <div class="da2-card">
+            <div class="da-h">AI suggestions</div>
+            <div class="da2-fix-wrap" id="da2-fix-wrap">${reviewing ? `<div class="da2-fix"><span class="da2-chip muted">Analyzing ${cards.length} cards…</span></div>` : (cached ? fixRowsHtml(cached) : `<div class="da2-vsub">Click Analyze for swaps with reasons and a full read of the deck.</div>`)}</div>
           </div>
-          </div>
-        </div>
-        <section class="da2-card" id="da2-opening-hand" hidden></section>
-        <section class="da2-card" id="da2-edhrec" hidden></section>
+          <section class="da2-card" id="da2-edhrec" hidden></section>`)}
         </div>`;
       dA.style.display = "block";
       dA.classList.toggle("collapsed", collapsed);
+      wireDeckTabs();
+      $("#da2-staples-btn")?.addEventListener("click", () => { if (deck) addStaplesToDeck(deck, commander); });
       const fixWrapEl = $("#da2-fix-wrap");
       fixWrapEl?.addEventListener("click", (e) => {
         const chip = e.target.closest(".da2-card-chip");
@@ -6052,6 +6363,7 @@
         const N = library.length;
         const odds = openingHandOdds({ N: Math.min(N, 99), lands: projectTo99(s.lands, N), ramp: projectTo99(ramp, N), commanderMv: commander ? (commander.cmc || 0) : undefined });
         renderOpeningHandSection(library, odds, commander, { projected: N > 99 });
+        renderSimSection(library, roleDetails, commander);
         if (s.total > 100) {
           const ed = commander ? edhrecCache.get(commanderSlug(commander.name)) : null;
           const edhrecByName = ed && ed.status === "ready" ? new Map((ed.data.cards || []).map((c) => [edhrecNameKey(c.name), c])) : null;

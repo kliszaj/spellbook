@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99 };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99, simulateTurns, pickStaples };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -353,6 +353,78 @@ test("projectTo99: scales counts from a big pool, leaves decks at or under 99 al
   assert.equal(h.projectTo99(35, 146), 24);
   assert.equal(h.projectTo99(36, 99), 36);
   assert.equal(h.projectTo99(10, 60), 10);
+});
+
+
+// Deterministic RNG for the simulator tests.
+const seeded = (seed) => () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
+const libOf = (lands, ramp, other) => [
+  ...Array(lands).fill({ land: true, ramp: false, cmc: 0 }),
+  ...Array(ramp).fill({ land: false, ramp: true, cmc: 2 }),
+  ...Array(other).fill({ land: false, ramp: false, cmc: 3 }),
+];
+
+test("simulateTurns: an all-land library plays a land every turn", () => {
+  const r = h.simulateTurns({ library: libOf(99, 0, 0), commanderMv: 3, trials: 200, rng: seeded(1) });
+  assert.deepEqual(r.avgMana, [1, 2, 3, 4, 5]);
+  assert.equal(r.missedDrop, 0);
+  assert.equal(r.commanderOnCurve, 1);
+});
+
+test("simulateTurns: no lands means no mana and every game misses a drop", () => {
+  const r = h.simulateTurns({ library: libOf(0, 0, 99), commanderMv: 3, trials: 50, rng: seeded(2) });
+  assert.deepEqual(r.avgMana, [0, 0, 0, 0, 0]);
+  assert.equal(r.missedDrop, 1);
+  assert.equal(r.commanderOnCurve, 0);
+});
+
+test("simulateTurns: ramp raises mana on later turns; a typical deck lands in a sane range", () => {
+  const noRamp = h.simulateTurns({ library: libOf(37, 0, 62), commanderMv: 4, trials: 3000, rng: seeded(3) });
+  const ramp = h.simulateTurns({ library: libOf(37, 10, 52), commanderMv: 4, trials: 3000, rng: seeded(3) });
+  assert.ok(ramp.avgMana[4] > noRamp.avgMana[4]);
+  assert.ok(ramp.commanderOnCurve > noRamp.commanderOnCurve);
+  assert.ok(noRamp.avgLandsT5 > 3.5 && noRamp.avgLandsT5 < 5, `lands T5 ${noRamp.avgLandsT5}`);
+  assert.ok(noRamp.missedDrop > 0.05 && noRamp.missedDrop < 0.5, `missed ${noRamp.missedDrop}`);
+});
+
+test("pickStaples: universal + pair rocks + lands by cycle, skipping what the deck has", () => {
+  const picks = h.pickStaples({
+    colors: ["U", "R"], inDeck: new Set(["sol ring"]),
+    landsByCycle: { shockland: ["Steam Vents"], checkland: ["Sulfur Falls"], tricycleland: ["Raugrin Triome"] },
+  });
+  assert.ok(!picks.includes("Sol Ring"));
+  assert.ok(picks.includes("Arcane Signet") && picks.includes("Command Tower"));
+  assert.ok(picks.includes("Izzet Signet") && picks.includes("Talisman of Creativity"));
+  assert.ok(picks.includes("Steam Vents") && picks.includes("Sulfur Falls"));
+  assert.ok(!picks.includes("Raugrin Triome"), "triomes only at 3+ colors");
+});
+
+test("pickStaples: mono-color skips multicolor staples; rocks and lands are capped", () => {
+  const mono = h.pickStaples({ colors: ["G"] });
+  assert.ok(!mono.includes("Command Tower"));
+  const five = h.pickStaples({
+    colors: ["W", "U", "B", "R", "G"], maxRocks: 4, maxLands: 3,
+    landsByCycle: { tricycleland: ["A Triome", "B Triome"], shockland: ["X Shock", "Y Shock"] },
+  });
+  const rocks = five.filter((n) => /Signet|Talisman/.test(n) && n !== "Arcane Signet");
+  assert.equal(rocks.length, 4);
+  assert.deepEqual(five.filter((n) => /Triome|Shock/.test(n)), ["A Triome", "B Triome", "X Shock"]);
+});
+
+test("pickStaples: Game Changers only within the allowance; EDHREC staples by inclusion, no lands", () => {
+  const edhrec = [
+    { name: "Rhystic Study", inclusion: 0.6, category: "Card Draw" },
+    { name: "Cyclonic Rift", inclusion: 0.55, category: "Instants" },
+    { name: "Reliquary Tower", inclusion: 0.7, category: "Utility Lands" },
+    { name: "Ponder", inclusion: 0.5, category: "Sorceries" },
+    { name: "Niche Card", inclusion: 0.1, category: "Creatures" },
+  ];
+  const gc = new Set(["rhystic study", "cyclonic rift"]);
+  const b2 = h.pickStaples({ colors: ["U"], edhrec, gameChangers: gc, gcAllowance: 0 });
+  assert.ok(b2.includes("Ponder") && !b2.includes("Rhystic Study") && !b2.includes("Cyclonic Rift"));
+  assert.ok(!b2.includes("Reliquary Tower") && !b2.includes("Niche Card"));
+  const b3 = h.pickStaples({ colors: ["U"], edhrec, gameChangers: gc, gcAllowance: 1 });
+  assert.ok(b3.includes("Rhystic Study") && !b3.includes("Cyclonic Rift"));
 });
 
 await run("Deck analysis UI helpers");
