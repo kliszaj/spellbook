@@ -91,7 +91,7 @@
 
     /* ── Main ── */
     main {
-      width: min(100% - 32px, 2040px);
+      width: calc(100% - 32px);
       margin: 0 auto;
       padding: 20px 0 32px;
     }
@@ -667,7 +667,7 @@
     .results-grid {
       display: grid;
       /* Magic cards are 2.5in wide; at CSS's 96px/in baseline, 240px reads as real-life scale.
-         On ultra-wide screens the wider shell lets this center area fit four fixed-scale columns. */
+         The shell spans the full viewport, so ultra-wide screens get as many columns as fit. */
       grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
       justify-content: center;
       gap: 14px;
