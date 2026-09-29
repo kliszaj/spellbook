@@ -770,7 +770,7 @@ Respond with ONLY minified JSON, no prose or code fences:
 {"counts":{"ramp":N,"draw":N,"removal":N,"wipes":N,"tutors":N,"interaction":N,"graveyardHate":N,"protection":N},"confidence":{"ramp":0.8,"draw":0.8,"removal":0.8,"wipes":0.8,"tutors":0.8,"interaction":0.8,"graveyardHate":0.8,"protection":0.8},"roleNotes":{"ramp":"...","draw":"...","removal":"...","wipes":"...","tutors":"...","interaction":"...","graveyardHate":"...","protection":"..."},"identityTags":["Tokens","Sacrifice"],"verdict":"...","add":["Card Name","..."],"trim":["-Card Name","..."]}
 - verdict: ONE sentence (under 140 chars) — the deck's overall standing and its most meaningful improvement. Do not call missing board wipes the biggest weakness by default; frame them as a consideration when the rest of the deck is healthy, especially for tokens, aristocrats, graveyard, or reanimator strategies.
 - add: 3-6 SPECIFIC real Magic card names to add that fill the deck's biggest gaps. Each must be a real, exactly-spelled card legal in this deck's color identity and on-strategy for it. Card names ONLY — no counts, categories, or prefixes. Do not suggest cards already in the list.
-- trim: 2-4 SPECIFIC card names from the list to cut to make room (Commander decks stay at 100) — the weakest / most redundant cards. Each is one exact card name, prefixed with a minus sign.
+- trim: 2-4 SPECIFIC card names from the list to cut to make room (Commander decks stay at 100) — the weakest / most redundant cards. Each is one exact card name, prefixed with a minus sign. If the list is an oversized pool (more than 100 cards), judge roles and identity as the pool's direction, and pick the 4 clearest cuts.
 - confidence: 0-1 estimate for how confident you are in each role count, lower for modal or synergy-dependent cards.
 - roleNotes: terse explanation for each role count. Each value under 55 chars; name 1-3 example cards at most.
 - identityTags: 2-8 concise deck-identity labels chosen ONLY from this catalog: ${DECK_IDENTITY_TAGS.join(" | ")}. Describe the actual engine, plan, or payoff. Do not use Aristocrats merely because a deck sacrifices or recurs creatures; reserve it for recurring creature-death / sacrifice payoffs such as drain, damage, or dedicated death-value engines. Do not include generic format/status labels (Budget, Primer, Help Wanted, Rule Zero, Unmaintained, Webcam Friendly) unless they are clearly evidenced in the supplied deck information.`;
@@ -794,35 +794,30 @@ function normalizeDeckReview(parsed = {}) {
   };
 }
 
-async function reviewDeckWithAnthropic({ apiKey, model, list }) {
-  const client = new Anthropic({ apiKey });
-  const message = await client.messages.create({
-    model,
-    max_tokens: 2048,
-    system: DECK_REVIEW_PROMPT,
-    messages: [{ role: "user", content: `Classify this Commander deck and return the JSON.\n\n${list}` }],
-  });
-  const text = message.content.find((b) => b.type === "text")?.text || "";
-  return normalizeDeckReview(parseJsonObject(text));
-}
-
-async function reviewDeckWithOpenAI({ apiKey, model, list }) {
-  const parsed = await callOpenAIJson({
-    apiKey,
-    model,
-    maxTokens: 2048,
-    system: `${DECK_REVIEW_PROMPT}
-
-Return only one valid JSON object.`,
-    user: `Classify this Commander deck and return the JSON.\n\n${list}`,
-  });
-  return normalizeDeckReview(parsed);
+// Runs through the shared AI client: effort-aware, detects cut-off/refused replies, and
+// reports usage so every Analyze lands in the monthly AI spend (even a failed, billed one).
+// 12k max_tokens leaves room for the model's thinking on 150-card pools.
+async function reviewDeck({ ai, list }) {
+  const client = createAiClient({ provider: ai.provider, apiKey: ai.apiKey, model: ai.model });
+  try {
+    const r = await client.json({
+      system: ai.provider === "openai" ? `${DECK_REVIEW_PROMPT}\n\nReturn only one valid JSON object.` : DECK_REVIEW_PROMPT,
+      user: `Classify this Commander deck and return the JSON.\n\n${list}`,
+      maxTokens: 12000,
+      effort: "medium",
+    });
+    await usageLog.record({ feature: "deck-review", provider: ai.provider, model: ai.model, ...r.usage, usd: r.usd });
+    return normalizeDeckReview(r.data);
+  } catch (err) {
+    if (err.usage) await usageLog.record({ feature: "deck-review", provider: ai.provider, model: ai.model, ...err.usage, usd: err.usd }).catch(() => {});
+    throw err;
+  }
 }
 
 app.post("/api/deck-review", async (req, res) => {
   const appState = await readAppState();
   const ai = activeAiConfig(appState);
-  const cards = Array.isArray(req.body?.cards) ? req.body.cards.slice(0, 130) : [];
+  const cards = Array.isArray(req.body?.cards) ? req.body.cards.slice(0, 250) : [];
   if (!cards.length || !ai.apiKey) {
     return res.status(400).json({
       error: !cards.length
@@ -838,10 +833,8 @@ app.post("/api/deck-review", async (req, res) => {
     const winConditions = Array.isArray(req.body?.winConditions)
       ? req.body.winConditions.slice(0, 12).map(String).map((name) => name.replace(/\s+/g, " ").trim()).filter(Boolean)
       : [];
-    const reviewContext = `Commander: ${commander || "Unknown"}\nHeuristic win-condition signals: ${winConditions.join(", ") || "None detected; infer likely plan from the deck."}\n\n${list}`;
-    const review = ai.provider === "openai"
-      ? await reviewDeckWithOpenAI({ apiKey: ai.apiKey, model: ai.model, list: reviewContext })
-      : await reviewDeckWithAnthropic({ apiKey: ai.apiKey, model: ai.model, list: reviewContext });
+    const reviewContext = `Commander: ${commander || "Unknown"}\nCards listed: ${cards.length}${cards.length > 100 ? " (an oversized pool being trimmed to 100)" : ""}\nHeuristic win-condition signals: ${winConditions.join(", ") || "None detected; infer likely plan from the deck."}\n\n${list}`;
+    const review = await reviewDeck({ ai, list: reviewContext });
     res.json({ ...review, provider: ai.provider, model: ai.model });
   } catch (err) {
     const status = err.status || 500;

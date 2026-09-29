@@ -5998,7 +5998,7 @@
       rerenderDeckAnalysisIfActive(folderId); // paint the disabled "Analyzing…" button + pending note now
       let err = null;
       try {
-        const payload = cards.slice(0, 120).map((c) => ({ name: c.name, type_line: c.type_line || "", oracle_text: getOracleText(c), cmc: c.cmc || 0 }));
+        const payload = cards.slice(0, 250).map((c) => ({ name: c.name, type_line: c.type_line || "", oracle_text: getOracleText(c), cmc: c.cmc || 0 }));
         const res = await fetch("/api/deck-review", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ cards: payload, commander: commander?.name || "", winConditions: winConditions || [] }),
