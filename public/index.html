@@ -1408,6 +1408,7 @@
     .curve-legend { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-size: 10.5px; color: #9E9B92; }
     .curve-legend-line { width: 16px; height: 0; border-top: 1.5px dashed #B9892A; flex: none; }
     .curve-count { font-size: 10px; color: #9E9B92; font-variant-numeric: tabular-nums; }
+    .curve-count.over { color: #A45636; font-weight: 700; }
     .curve-bar { width: 100%; max-width: 26px; min-height: 2px; background: #BEB7A9; border-radius: 4px 4px 0 0; transition: height 0.35s cubic-bezier(0.2,0.7,0.2,1); }
     .curve-bar.peak { background: #6E675A; }
     .curve-x { font-size: 10.5px; color: #78726A; font-variant-numeric: tabular-nums; }
@@ -4270,8 +4271,8 @@
       renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, renderSavedCards);
       renderMvChips(cards);
       const mvActive = state.savedSortField === "cmc" && savedMvFilter.size > 0;
-      const visible = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter))
-        .filter((c) => !mvActive || (!isLandCard(c) && savedMvFilter.has(mvBucket(c))));
+      const preMv = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter));
+      const visible = preMv.filter((c) => !mvActive || (!isLandCard(c) && savedMvFilter.has(mvBucket(c))));
 
       // Maybeboard cards stay in the deck but are excluded from the main section and
       // everything that measures the deck (analysis, size, export) — see below.
@@ -4303,7 +4304,10 @@
       else {
         const wholeDeck = getFolderCards(state.activeFolder).filter((c) => !isMaybe(state.activeFolder, c.id));
         // The mana curve follows the on-screen selection; everything else measures the whole deck.
-        deckCurveView = { folderId: state.activeFolder, cards: mainVisible.slice(), filtered: mainVisible.length !== wholeDeck.length };
+        // targetCards: the same selection before the MV chips, so picking "MV 3" narrows the
+        // bars without shrinking the target the dashed line is drawn from.
+        const targetCards = isRealDeck ? preMv.filter((c) => !isMaybe(state.activeFolder, c.id)) : preMv;
+        deckCurveView = { folderId: state.activeFolder, cards: mainVisible.slice(), targetCards, filtered: mainVisible.length !== wholeDeck.length };
         renderDeckAnalysis(deck, wholeDeck); // whole deck minus Maybeboard, not the filtered view
       }
 
@@ -4520,25 +4524,55 @@
       return `<div class="da-tile ${stt}"><span class="da-num">${num}</span><span class="da-cap">${cap}</span>${hasT ? `<span class="da-tgt"><span class="dot ${stt}"></span>${tgt}</span>` : ""}</div>`;
     }
 
-    function curveHtml(curve, { scoped = false } = {}) {
+    // What the dashed line targets: the finished 100-card deck's spells, or — when the view
+    // is filtered to a single card type — that type's typical count in a 100-card deck.
+    // Other filters (colors, text) get the selection's share of the deck's spells.
+    function curveTarget(viewCards, deckCards, spellsTarget, typeTargets) {
+      const spells = (list) => list.filter((c) => !isLandCard(c));
+      const view = spells(viewCards);
+      if (!view.length) return { n: 0, label: "" };
+      const mid = (r) => Math.round((r[0] + r[1]) / 2);
+      const has = (c, t) => cardTypes(c).has(t);
+      const onlyType = [
+        ["creature", "creatures", (c) => has(c, "creature")],
+        ["spells", "instants + sorceries", (c) => has(c, "instant") || has(c, "sorcery")],
+        ["artifact", "artifacts", (c) => has(c, "artifact")],
+        ["enchantment", "enchantments", (c) => has(c, "enchantment")],
+        ["planeswalker", "planeswalkers", (c) => has(c, "planeswalker")],
+      ].find(([, , test]) => view.every(test));
+      if (view.length === spells(deckCards).length) return { n: spellsTarget, label: `Target for a 100-card deck (~${spellsTarget} spells)` };
+      if (onlyType) {
+        const n = mid(typeTargets[onlyType[0]]);
+        return { n, label: `Target for ~${n} ${onlyType[1]} in a 100-card deck` };
+      }
+      const n = Math.max(1, Math.round((spellsTarget * view.length) / Math.max(1, spells(deckCards).length)));
+      return { n, label: `Target for this share of a 100-card deck (~${n} spells)` };
+    }
+
+    function curveHtml(curve, target) {
       const n = curve.reduce((a, b) => a + b, 0);
-      const ideal = typicalCurve(n);
+      const ideal = typicalCurve(target.n);
       const max = Math.max(1, ...curve, ...ideal);
       const peak = Math.max(...curve);
       const labels = ["0", "1", "2", "3", "4", "5", "6", "7+"];
       // Heights are a share of the track minus the count label (≈18px) above each bar.
       const h = (v) => `calc((100% - 18px) * ${(v / max).toFixed(4)})`;
-      const cols = curve.map((c, i) => `
-        <div class="curve-col" title="MV ${labels[i]}: ${c} card${c === 1 ? "" : "s"}${n ? ` · typical ≈ ${ideal[i].toFixed(1)}` : ""}">
+      const cols = curve.map((c, i) => {
+        const tgt = Math.round(ideal[i]);
+        const over = target.n ? c - tgt : 0;
+        const tip = `MV ${labels[i]}: ${c} card${c === 1 ? "" : "s"}${target.n ? ` · target ≈ ${tgt}${over >= 2 ? ` · cut ~${over}` : over <= -2 ? ` · room for ~${-over}` : ""}` : ""}`;
+        return `
+        <div class="curve-col" title="${tip}">
           <span class="curve-track">
-            <span class="curve-count">${c}</span>
+            <span class="curve-count${over >= 2 ? " over" : ""}">${c}</span>
             <span class="curve-bar ${c === peak && c > 0 ? "peak" : ""}" style="height:${h(c)}"></span>
-            ${n ? `<span class="curve-ideal" style="bottom:${h(ideal[i])}"></span>` : ""}
+            ${target.n ? `<span class="curve-ideal" style="bottom:${h(ideal[i])}"></span>` : ""}
           </span>
           <span class="curve-x">${labels[i]}</span>
-        </div>`).join("");
+        </div>`;
+      }).join("");
       const legend = n
-        ? `<span class="curve-legend-line"></span>Typical Commander curve${scoped ? `, scaled to these ${n} cards` : ""}`
+        ? `<span class="curve-legend-line"></span>${esc(target.label)} · hover a column for cuts`
         : "No nonland cards in this selection";
       return `<div class="curve">${cols}</div><div class="curve-legend">${legend}</div>`;
     }
@@ -5877,7 +5911,8 @@
           <div class="da2-side">
           <div class="da2-card da2-mana-card">
             <div class="da-h">Mana curve${curveScoped ? ` <span class="da2-approx">· current selection</span>` : ""}</div>
-            ${curveHtml(curveScoped ? computeDeckStats(deckCurveView.cards, folderId).curve : s.curve, { scoped: curveScoped })}
+            ${curveHtml(curveScoped ? computeDeckStats(deckCurveView.cards, folderId).curve : s.curve,
+              curveTarget(curveScoped ? deckCurveView.targetCards : cards, cards, 100 - Math.round((profile.landTarget[0] + profile.landTarget[1]) / 2), typeTargetsFor(identityLensKeys(identityTags))))}
             <div class="da2-section-rule"></div>
             <div class="da-h" style="margin:0 0 2px">Colors</div>
             ${colorsLineHtml(sources)}
