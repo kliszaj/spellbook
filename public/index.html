@@ -3939,7 +3939,7 @@
       return Boolean(card.card_faces?.length >= 2 && card.card_faces[0].image_uris?.normal && card.card_faces[1].image_uris?.normal);
     }
     function faceImage(card, face) {
-      return card.card_faces?.[face]?.image_uris?.normal || getCardImage(card);
+      return cachedImg(card.card_faces?.[face]?.image_uris?.normal) || getCardImage(card);
     }
     // Highest-resolution image Scryfall serves for a face, for printing proxies:
     // png is 745×1040 (~300 DPI at the real 63×88mm card size); large/normal are
@@ -7449,9 +7449,17 @@
     }
 
     // Helpers
+    // Scryfall card images go through the server's disk cache (/img/…, see lib/image-cache.js)
+    // so every device gets them from the Unraid box after the first load. Mirrors
+    // toCachedUrl on the server: only Scryfall CDN paths are rewritten.
+    const SCRYFALL_IMG_RE = /^https:\/\/cards\.scryfall\.io\/((small|normal|large|art_crop|border_crop)\/(front|back)\/[0-9a-f]\/[0-9a-f]\/[0-9a-f-]{36}\.(jpg|png))(\?.*)?$/;
+    function cachedImg(url) {
+      const m = SCRYFALL_IMG_RE.exec(String(url || ""));
+      return m ? `/img/${m[1]}` : (url || "");
+    }
     function getCardImage(card) {
-      if (card.image_uris?.normal) return card.image_uris.normal;
-      if (card.card_faces?.[0]?.image_uris?.normal) return card.card_faces[0].image_uris.normal;
+      if (card.image_uris?.normal) return cachedImg(card.image_uris.normal);
+      if (card.card_faces?.[0]?.image_uris?.normal) return cachedImg(card.card_faces[0].image_uris.normal);
       return "";
     }
 

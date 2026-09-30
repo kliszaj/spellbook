@@ -16,6 +16,7 @@ import { createRankingCache } from "./lib/swaps.js";
 import { capSwapsRequest, createSwapsService } from "./lib/swaps-service.js";
 import { createDeckProfiles } from "./lib/deck-profiles.js";
 import { createEdhrecClient, EdhrecError } from "./lib/edhrec.js";
+import { createImageCache } from "./lib/image-cache.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -991,6 +992,22 @@ app.post("/api/deck-review", async (req, res) => {
 // the list changes only when WotC revises it.
 let gameChangersCache = null; // { ts, names }
 const GC_TTL = 1000 * 60 * 60 * 24;
+
+// Card images, cached on disk (data/image-cache) after the first fetch from Scryfall.
+const imageCache = createImageCache({ dataDir: DATA_DIR });
+app.get(/^\/img\/(.+)$/, async (req, res) => {
+  try {
+    const { buf, hit } = await imageCache.get(req.params[0]);
+    res.set({
+      "Content-Type": req.params[0].endsWith(".png") ? "image/png" : "image/jpeg",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Image-Cache": hit ? "hit" : "miss",
+    });
+    res.send(buf);
+  } catch (err) {
+    res.status(err.status || 502).end();
+  }
+});
 
 app.get("/api/game-changers", async (req, res) => {
   if (gameChangersCache && Date.now() - gameChangersCache.ts < GC_TTL) {
