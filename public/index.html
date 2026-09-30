@@ -1090,6 +1090,16 @@
     }
 
     .detail-panel img { display: none; }
+    .detail-zoom { display: block; width: min(170px, 60%); margin: 0 auto 14px; padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 4.75% / 3.5%; transition: transform 0.15s ease; }
+    .detail-zoom:hover { transform: translateY(-2px); }
+    .detail-zoom:focus-visible { outline: 2px solid #B9892A; outline-offset: 3px; }
+    .detail-panel .detail-zoom img { display: block; width: 100%; aspect-ratio: 488 / 680; object-fit: cover; border-radius: 4.75% / 3.5%; box-shadow: 0 10px 24px -14px rgba(0,0,0,0.55); background: #efeae1; }
+    .detail-panel .detail-zoom img[src=""] { visibility: hidden; }
+    .card-lightbox { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: 24px; background: rgba(20,19,16,0.82); cursor: zoom-out; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .card-lightbox[hidden] { display: none; }
+    .card-lightbox img { max-width: min(92vw, 520px); max-height: 88vh; width: auto; height: auto; border-radius: 4.75% / 3.5%; box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8); }
+    .card-lightbox-close { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.4); color: #fff; font-size: 22px; line-height: 1; cursor: pointer; }
+    .card-lightbox-close:focus-visible { outline: 2px solid #E7CE8C; outline-offset: 2px; }
 
     .detail-info { padding: 14px 2px 0; }
     .detail-info h3 { margin-bottom: 10px; font-size: 22px; line-height: 1; font-weight: 850; letter-spacing: -0.035em; }
@@ -2413,7 +2423,7 @@
           </div>
         </div>
         <div class="detail-content">
-          <img id="detail-img" src="" alt="">
+          <button type="button" class="detail-zoom" id="detail-zoom" title="Click to enlarge" aria-label="Enlarge card image"><img id="detail-img" src="" alt=""></button>
           <div class="detail-info">
             <h3 id="detail-name"></h3>
             <div class="detail-reason" id="detail-reason" style="display:none"></div>
@@ -2547,6 +2557,12 @@
       <input type="text" id="pop-add-input" placeholder="Deck name" maxlength="40" autocomplete="off">
       <button type="submit">Add</button>
     </form>
+  </div>
+
+  <!-- Enlarged card image (opened from the focus panel) -->
+  <div class="card-lightbox" id="card-lightbox" hidden role="dialog" aria-modal="true" aria-label="Enlarged card">
+    <img id="card-lightbox-img" src="" alt="">
+    <button type="button" class="card-lightbox-close" id="card-lightbox-close" aria-label="Close">×</button>
   </div>
 
   <!-- Card right-click context menu -->
@@ -6895,6 +6911,31 @@
     });
 
     let detailFace = 0; // which face of a double-faced card the focus panel is showing
+    // Largest JPEG Scryfall serves for a face (672×936), via the server image cache.
+    function largeImage(card, face = 0) {
+      const uris = card.card_faces?.[face]?.image_uris || card.image_uris || card.card_faces?.[0]?.image_uris;
+      return cachedImg(uris?.large || uris?.normal || "");
+    }
+    const lightbox = $("#card-lightbox");
+    let lightboxReturnFocus = null;
+    function openLightbox() {
+      const card = state.detailCard;
+      if (!card) return;
+      const img = $("#card-lightbox-img");
+      img.src = largeImage(card, isDoubleFaced(card) ? detailFace : 0);
+      img.alt = card.name;
+      lightboxReturnFocus = document.activeElement;
+      lightbox.hidden = false;
+      $("#card-lightbox-close").focus();
+    }
+    function closeLightbox() {
+      if (lightbox.hidden) return;
+      lightbox.hidden = true;
+      lightboxReturnFocus?.focus?.();
+    }
+    $("#detail-zoom").addEventListener("click", (e) => { e.stopPropagation(); openLightbox(); });
+    lightbox.addEventListener("click", closeLightbox); // anywhere, including the image, closes it
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLightbox(); });
     $("#detail-flip-btn").addEventListener("click", (e) => {
       e.stopPropagation();
       if (!state.detailCard) return;
