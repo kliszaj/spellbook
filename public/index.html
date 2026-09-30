@@ -4394,8 +4394,8 @@
     // Lands have no real mana value, so any MV selection hides them.
     const savedMvFilter = new Set();
     const mvBucket = (c) => Math.min(7, Math.max(0, Math.round(Number(c.cmc || 0))));
-    // Shared by the Decks and Collection sort rows: chips 0..7+ with nonland counts, shown
-    // only while sorting by Mana value (on === false hides them). Toggles `selected`.
+    // Shared by the Decks and Collection sort rows: chips 0..7+ with nonland counts, always
+    // shown on both tabs (on === false hides them). Toggles `selected`.
     function renderMvChips(el, cards, { on, selected, onChange }) {
       if (!el) return;
       el.hidden = !on;
@@ -4463,7 +4463,7 @@
       const spellsTarget = 100 - Math.round((profile.landTarget[0] + profile.landTarget[1]) / 2);
       const target = curveTarget(scoped ? deckCurveView.targetCards : cards, cards, spellsTarget, typeTargetsFor(identityLensKeys(identityTags)));
       const curve = scoped ? computeDeckStats(deckCurveView.cards, folderId).curve : stats.curve;
-      const mvOnly = scoped && state.savedSortField === "cmc" && savedMvFilter.size ? savedMvFilter : null;
+      const mvOnly = scoped && savedMvFilter.size ? savedMvFilter : null;
       return `<div class="da-h">Mana curve${scoped ? ` <span class="da2-approx">· current selection</span>` : ""}</div>${curveHtml(curve, target, mvOnly)}`;
     }
     function refreshDeckCurve() {
@@ -4487,8 +4487,8 @@
 
       // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
       renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, () => renderSavedCards({ filtersOnly: true }));
-      renderMvChips($("#saved-mv-chips"), cards, { on: state.savedSortField === "cmc", selected: savedMvFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
-      const mvActive = state.savedSortField === "cmc" && savedMvFilter.size > 0;
+      renderMvChips($("#saved-mv-chips"), cards, { on: true, selected: savedMvFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
+      const mvActive = savedMvFilter.size > 0;
       const landsOn = typeFilterIsLands(savedTypeFilter);
       if (!landsOn) savedLandFilter.length = 0;
       renderLandChips($("#saved-land-chips"), cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)), { on: landsOn, selected: savedLandFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
@@ -7846,7 +7846,7 @@
         const typeOnly = filtered.filter((it) => matchesTypeFilter(it.card, collectionTypeFilter));
         renderLandChips($("#collection-land-chips"), typeOnly.map((it) => it.card), { on: landsOn, selected: collectionLandFilter, onChange: () => renderCollection(true) });
         const typeFiltered = typeOnly.filter((it) => landColorMatches(it.card, collectionLandFilter));
-        const mvOn = collectionUi.sortField === "cmc";
+        const mvOn = true; // always shown, like the Decks tab
         renderMvChips($("#collection-mv-chips"), typeFiltered.map((it) => it.card), { on: mvOn, selected: collectionMvFilter, onChange: () => renderCollection(true) });
         const mvFiltered = mvOn && collectionMvFilter.size ? typeFiltered.filter((it) => mvMatches(it.card, collectionMvFilter)) : typeFiltered;
         items = sortCardsByField(mvFiltered.map((it) => it.card), collectionUi.sortField, collectionUi.sortDir).map((c) => byId.get(c.id));
