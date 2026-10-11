@@ -96,7 +96,7 @@ Both providers are supported; pick a preferred one in Settings.
 | Provider  | Default model        | Key            |
 |-----------|----------------------|----------------|
 | Anthropic | `claude-sonnet-5-5`  | `ANTHROPIC_API_KEY` |
-| OpenAI    | `gpt-4.1`            | `OPENAI_API_KEY`    |
+| OpenAI    | `gpt-6.1-sol`        | `OPENAI_API_KEY`    |
 
 Environment variables override stored settings: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
 `ANTHROPIC_MODEL`, `OPENAI_MODEL`. Keys stored via Settings are kept server-side in

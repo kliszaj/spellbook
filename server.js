@@ -30,7 +30,7 @@ const DATA_DIR = process.env.DATA_DIR || join(__dirname, "data");
 const STATE_FILE = join(DATA_DIR, "state.json");
 const AI_PROVIDERS = new Set(["anthropic", "openai"]);
 const DEFAULT_ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
-const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1";
+const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-6.1-sol";
 const DEFAULT_APP_STATE = {
   savedCards: [],
   folders: [],
@@ -709,7 +709,9 @@ async function translateWithAnthropic({ apiKey, model, userMessage, colorIdentit
     message = await client.messages.create({
       model,
       max_tokens: 8192,
-      thinking: { type: "adaptive" },
+      // Adaptive thinking exists on 4.6+ models (the same set that takes effort); Haiku 4.5
+      // would reject it with a 400.
+      ...(supportsEffort(model) ? { thinking: { type: "adaptive" } } : {}),
       // Low effort is plenty to write a Scryfall query; recommendations get a bit more.
       ...(supportsEffort(model) ? { output_config: { effort: forceAiSearch ? "medium" : "low" } } : {}),
       // Tools render before system, so caching the system block caches both (~2.5k tokens).

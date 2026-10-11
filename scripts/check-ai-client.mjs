@@ -14,10 +14,12 @@ test("priceUsd prices input, output and cache tokens", () => {
   assert.ok(close(priceUsd("claude-sonnet-5", { cacheReadTokens: 1_000_000 }), 0.2));
   assert.equal(priceUsd("claude-sonnet-5-5", { inputTokens: 1_000_000, outputTokens: 100_000 }), 3);
   assert.equal(priceUsd("gpt-4.1", { inputTokens: 5 }), null);
+  assert.equal(priceUsd("gpt-6.1-sol", { inputTokens: 1_000_000, outputTokens: 100_000 }), 3);
+  assert.equal(priceUsd("claude-opus-5-5", { inputTokens: 1_000_000 }), 4);
 });
 
 test("supportsEffort matches models that accept output_config.effort", () => {
-  for (const m of ["claude-sonnet-5-5", "claude-sonnet-5", "claude-opus-5", "claude-sonnet-4-6", "claude-opus-4-8", "claude-fable-5"]) assert.ok(supportsEffort(m), m);
+  for (const m of ["claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1", "claude-sonnet-5", "claude-opus-5", "claude-sonnet-4-6", "claude-opus-4-8", "claude-fable-5"]) assert.ok(supportsEffort(m), m);
   for (const m of ["claude-haiku-4-5", "gpt-4.1", ""]) assert.ok(!supportsEffort(m), m);
 });
 
