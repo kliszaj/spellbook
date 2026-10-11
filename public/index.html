@@ -1581,7 +1581,13 @@
     .da2-chip-row-label { flex: none; width: 92px; padding-top: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #A39E93; }
     .da2-chips { display: flex; flex-wrap: wrap; gap: 6px; }
     /* ── Sticky deck bar ── */
-    .deck-progress { position: sticky; top: 72px; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: -4px 0 14px; padding: 10px 14px; background: rgba(251,250,246,0.97); border: 1px solid rgba(31,29,25,0.12); border-radius: 12px; box-shadow: 0 8px 20px -16px rgba(28,24,18,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .deck-progress-sentinel { height: 1px; margin-top: -1px; }
+    .deck-progress { position: sticky; top: 72px; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; padding: 10px 14px; background: rgba(251,250,246,0.97); border: 1px solid rgba(31,29,25,0.12); border-radius: 12px; box-shadow: 0 8px 20px -16px rgba(28,24,18,0); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: padding 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease; }
+    /* Stuck under the header: a touch tighter, lifted with a soft shadow. */
+    .deck-progress.stuck { padding: 7px 14px; background: rgba(255,254,250,0.98); border-color: rgba(31,29,25,0.16); box-shadow: 0 12px 28px -14px rgba(28,24,18,0.45); }
+    .deck-progress.dp-enter { animation: dp-enter 0.28s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    @keyframes dp-enter { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .deck-progress { transition: none; } .deck-progress.dp-enter { animation: none; } }
     .deck-progress .dp-id { display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; font-size: 13px; font-weight: 700; color: #57524A; min-width: 0; }
     .deck-progress .dp-id small { font-size: 11.5px; font-weight: 500; color: #9E9B92; margin-left: 2px; }
     .dp-bar { flex: 1; min-width: 120px; max-width: 420px; height: 8px; border-radius: 999px; background: #ECE8DE; overflow: hidden; display: flex; margin-left: auto; }
@@ -2355,7 +2361,6 @@
 
         <div class="saved-section" id="saved-section">
           <div class="saved-main">
-          <div class="deck-progress" id="deck-progress" hidden></div>
           <div class="search-section">
             <div class="color-identity">
               <div class="color-toggles" id="deck-colors" aria-label="Filter deck by color"></div>
@@ -2364,6 +2369,8 @@
               <input type="text" id="saved-filter" placeholder="Filter saved cards...">
             </div>
           </div>
+          <div class="deck-progress-sentinel" id="deck-progress-sentinel" aria-hidden="true"></div>
+          <div class="deck-progress" id="deck-progress" hidden></div>
           <div id="deck-analysis" class="deck-analysis" style="display:none"></div>
           <div class="deck-tools" id="deck-tools" style="display:none">
             <span class="deck-owned" id="deck-owned"></span>
@@ -6841,7 +6848,17 @@
         <div class="dp-bar" title="${s.total} of 100${over ? `, ${over} over` : ""}"><i class="in" style="width:${(within / scale) * 100}%"></i><i class="over" style="width:${(over / scale) * 100}%"></i></div>
         ${pill}
         ${grade ? `<span class="dp-grade ${gradeTone(grade)}" id="deck-progress-grade">${grade}</span>` : ""}`;
+      const switched = el.dataset.deck !== name;
+      el.dataset.deck = name;
       el.hidden = false;
+      if (switched) { el.classList.remove("dp-enter"); void el.offsetWidth; el.classList.add("dp-enter"); } // replay the entrance
+    }
+    // The bar sits below the filters and sticks under the header once you scroll past it;
+    // a sentinel just above it tells us when it's stuck, so it can tighten up and lift.
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([entry]) => {
+        $("#deck-progress")?.classList.toggle("stuck", !entry.isIntersecting && entry.boundingClientRect.top < 80);
+      }, { rootMargin: "-73px 0px 0px 0px", threshold: 0 }).observe($("#deck-progress-sentinel"));
     }
     function hideDeckProgress() { const el = $("#deck-progress"); if (el) { el.hidden = true; el.innerHTML = ""; } }
 
