@@ -2289,6 +2289,7 @@
     /* ── Collection tab ─────────────────────────────── */
     .collection-section { display: none; }
     .collection-section.visible { display: block; }
+    .side-menu:not(.collection-mode) .binders-section { display: none; }
     .side-menu.collection-mode .workspace-section,
     .side-menu.collection-mode .folders-section,
     .side-menu.collection-mode .history-section,
@@ -2376,6 +2377,10 @@
 
         <div class="rail-section folders-section">
           <div class="folder-rail" id="folder-rail"></div>
+        </div>
+
+        <div class="rail-section binders-section">
+          <div class="folder-rail" id="binder-rail"></div>
         </div>
 
         <div class="rail-section history-section">
@@ -2829,7 +2834,7 @@
     const ICON_FOLDER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
     const ICON_CHEVRON_LEFT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>`;
     // The rail header icon reflects the active tab: recents (clock) for Search, folder for Saved.
-    function railModeIcon() { return state.activeTab === "saved" ? ICON_FOLDER : ICON_RECENTS; }
+    function railModeIcon() { return state.activeTab === "saved" || state.activeTab === "collection" ? ICON_FOLDER : ICON_RECENTS; }
     function navPanelLabel() { return state.activeTab === "saved" ? "decks" : "recents"; }
     function updateNavCollapseButton() {
       const collapsed = appShell.classList.contains("nav-collapsed");
@@ -8601,7 +8606,7 @@
       sel.replaceChildren(new Option("All binders", ""), ...binders.map((b) => new Option(b, b)));
       sel.value = binders.includes(current) ? current : "";
       collectionUi.binder = sel.value;
-      sel.style.display = binders.length ? "" : "none";
+      sel.style.display = "none"; // binders live in the side panel now
     }
 
     function collectionTile(it) {
@@ -8637,6 +8642,7 @@
       const collectionTypeFilterEl = $("#collection-type-filter");
       renderCollectionHeader();
       renderBinderOptions();
+      renderBinderRail();
       $("#collection-empty").style.display = hasCollection() ? "none" : "block";
       let items = [];
       if (hasCollection()) {
@@ -8777,11 +8783,44 @@
       });
     }
 
-    $("#collection-upload-btn").addEventListener("click", () => $("#collection-file").click());
+    let pendingUploadBinder = null; // binder-name override for the next CSV upload
+    $("#collection-upload-btn").addEventListener("click", () => { pendingUploadBinder = null; $("#collection-file").click(); });
+
+    // Binders panel (side menu, Collection tab): filter by binder, upload a CSV, or upload a
+    // CSV into a new named binder. Replaces the binder dropdown on the sort row.
+    function binderCounts() {
+      const counts = new Map();
+      (collectionIndex?.list || []).forEach((it) => it.binders.forEach((b) => counts.set(b, (counts.get(b) || 0) + 1)));
+      return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    }
+    function renderBinderRail() {
+      const el = $("#binder-rail");
+      if (!el) return;
+      const all = collectionIndex?.list.length || 0;
+      const row = (id, name, n) => `<button class="folder-btn ${collectionUi.binder === id ? "active" : ""}" data-binder="${esc(id)}" type="button"><span class="folder-name">${esc(name)}</span><span class="folder-count">${n.toLocaleString()}</span></button>`;
+      el.innerHTML = `<div class="rail-label">Binders</div>
+        ${hasCollection() ? row("", "All cards", all) + binderCounts().map(([b, n]) => row(b, b, n)).join("") : `<div class="rail-empty">No collection yet</div>`}
+        <div class="rail-divider"></div>
+        <button class="folder-add" type="button" id="binder-upload-btn">Upload CSV</button>
+        <button class="folder-add" type="button" id="binder-new-btn">+ New binder from CSV</button>`;
+    }
+    $("#binder-rail").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-binder]");
+      if (b) { collectionUi.binder = b.dataset.binder; renderCollection(true); return; }
+      if (e.target.closest("#binder-upload-btn")) { pendingUploadBinder = null; $("#collection-file").click(); return; }
+      if (e.target.closest("#binder-new-btn")) {
+        const name = prompt("Name for the new binder (every card in the CSV goes into it):");
+        if (!name || !name.trim()) return;
+        pendingUploadBinder = name.trim();
+        $("#collection-file").click();
+      }
+    });
     $("#collection-file").addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       e.target.value = "";
       if (!file) return;
+      const binder = pendingUploadBinder;
+      pendingUploadBinder = null;
       uploadPreview = null;
       ["#upload-summary", "#upload-warning", "#upload-details"].forEach((s) => { $(s).textContent = ""; });
       $("#upload-status").textContent = "Reading file…";
@@ -8791,13 +8830,17 @@
         const res = await fetch("/api/collection/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ csv: await file.text() }),
+          body: JSON.stringify({ csv: await file.text(), ...(binder ? { binder } : {}) }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Couldn't read that file");
         uploadPreview = data;
+        // A binder upload can only add (a sync from one binder's file would wipe the others).
+        const syncRadio = document.querySelector('input[name="upload-mode"][value="sync"]');
+        if (syncRadio) { syncRadio.disabled = Boolean(data.binder); syncRadio.closest("label")?.classList.toggle("disabled", Boolean(data.binder)); }
+        $("#upload-status").dataset.binder = data.binder || "";
         document.querySelector(`input[name="upload-mode"][value="${data.defaultMode}"]`).checked = true;
-        $("#upload-status").textContent = "";
+        $("#upload-status").textContent = data.binder ? `Every card in this file goes into the binder "${data.binder}".` : "";
         renderUploadPreview();
         $("#upload-confirm").disabled = false;
       } catch (err) {

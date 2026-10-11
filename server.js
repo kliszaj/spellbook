@@ -7,7 +7,7 @@ import { constants as fsConstants } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { mergeDeckNotes, normalizeDeckNotes } from "./lib/deck-notes.js";
-import { createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "./lib/collection-store.js";
+import { BinderModeError, createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "./lib/collection-store.js";
 import { CollectionFormatError } from "./lib/collection.js";
 import { createUsageLog } from "./lib/ai-usage.js";
 import { createProfileStore, oracleIdOf } from "./lib/profiles.js";
@@ -1137,7 +1137,7 @@ app.get("/api/collection", async (req, res) => {
 
 app.post("/api/collection/preview", async (req, res) => {
   try {
-    res.json(await collectionStore.preview(String(req.body?.csv || "")));
+    res.json(await collectionStore.preview(String(req.body?.csv || ""), { binder: typeof req.body?.binder === "string" ? req.body.binder : null }));
   } catch (err) {
     res.status(err instanceof CollectionFormatError ? 400 : 500).json({ error: err.message || "Couldn't read that file" });
   }
@@ -1151,7 +1151,8 @@ app.post("/api/collection/apply", async (req, res) => {
     swapsService.afterSync().catch(() => {});
     res.json(result);
   } catch (err) {
-    const status = err instanceof PreviewStaleError ? 409
+    const status = err instanceof BinderModeError ? 400
+      : err instanceof PreviewStaleError ? 409
       : err instanceof PreviewExpiredError ? 410
       : err instanceof ScryfallError ? 502 : 500;
     res.status(status).json({ error: err.message || "Sync failed" });

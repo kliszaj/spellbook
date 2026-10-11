@@ -3,7 +3,7 @@ import { access, mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test, run } from "./lib/tiny-test.mjs";
-import { createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "../lib/collection-store.js";
+import { BinderModeError, createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "../lib/collection-store.js";
 import { CollectionFormatError, MANUAL_BINDER } from "../lib/collection.js";
 import { resetScryfallBlock } from "../lib/scryfall.js";
 
@@ -230,6 +230,21 @@ test("a later Full-collection apply that lacks the manual card keeps it", async 
   assert.ok(result.entries[`z|normal|${MANUAL_BINDER}`]);
   assert.ok(result.entries["a|normal|Main"]);
   assert.ok(result.cards.z);
+});
+
+test("a binder upload puts every row in that binder, adds only, and refuses sync", async () => {
+  const dataDir = await tempDir();
+  const store = createCollectionStore({ dataDir, fetchImpl: fakeScryfall().fetchImpl, sleep: noSleep });
+  const first = await store.preview(csv(row("a", 2, "Main")));
+  await store.apply(first.previewId, "sync");
+  const p = await store.preview(csv(row("b", 1, "Whatever"), row("c", 3, "Other")), { binder: "Talia" });
+  assert.equal(p.binder, "Talia");
+  assert.equal(p.defaultMode, "add");
+  await assert.rejects(store.apply(p.previewId, "sync"), BinderModeError);
+  const again = await store.preview(csv(row("b", 1, "Whatever"), row("c", 3, "Other")), { binder: "Talia" });
+  const result = await store.apply(again.previewId, "add");
+  const binders = Object.values(result.entries).map((e) => e.binder).sort();
+  assert.deepEqual(binders, ["Main", "Talia", "Talia"]);
 });
 
 await run("Collection store");
