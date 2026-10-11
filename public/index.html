@@ -2056,18 +2056,22 @@
       gap: 8px;
       width: 100%;
       padding: 8px 10px;
-      border: 1px dashed #d8d8d4;
+      border: 0;
       background: transparent;
       border-radius: 9px;
-      color: #888;
+      color: #1F6FEB;
       font: 13px/1.2 inherit;
-      font-weight: 500;
+      font-weight: 650;
+      text-align: left;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      transition: background 0.15s, color 0.15s;
     }
+    .folder-add .add-ico { width: 20px; height: 20px; flex: none; border-radius: 6px; display: grid; place-items: center; background: #E5EFFF; }
+    .folder-add .add-ico svg { width: 13px; height: 13px; display: block; }
 
     .rail-empty, .pop-empty { padding: 6px 10px; font-size: 12.5px; color: #9E9B92; }
-    .folder-add:hover { border-color: #b8b8b4; color: #555; }
+    .folder-add:hover { background: #E5EFFF; color: #1A5FD0; }
+    .folder-add:focus-visible { outline: 2px solid #FF9F1C; outline-offset: 2px; }
 
     .saved-main { min-width: 0; }
 
@@ -2831,6 +2835,9 @@
     const navCollapseBtn = $("#nav-collapse-btn");
     const detailCollapseBtn = $("#detail-collapse-btn");
     const ICON_RECENTS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>`;
+    const ICON_ADD_PLUS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+    const ICON_ADD_UPLOAD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>`;
+    const ICON_ADD_BINDER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6M9 13h6"/></svg>`;
     const ICON_FOLDER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
     const ICON_CHEVRON_LEFT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>`;
     // The rail header icon reflects the active tab: recents (clock) for Search, folder for Saved.
@@ -7977,7 +7984,7 @@
             <span class="folder-edit-group">${custom ? `<span class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename">&#9998;</span><span class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete">&#10005;</span>` : ""}</span>
           </button>`;
       });
-      html += `<div class="rail-divider"></div><button class="folder-add" id="folder-add-btn">+ New deck</button>`;
+      html += `<div class="rail-divider"></div><button class="folder-add" id="folder-add-btn" type="button"><span class="add-ico">${ICON_ADD_PLUS}</span>New deck</button>`;
       folderRail.innerHTML = html;
     }
 
@@ -8801,8 +8808,8 @@
       el.innerHTML = `<div class="rail-label">Binders</div>
         ${hasCollection() ? row("", "All cards", all) + binderCounts().map(([b, n]) => row(b, b, n)).join("") : `<div class="rail-empty">No collection yet</div>`}
         <div class="rail-divider"></div>
-        <button class="folder-add" type="button" id="binder-upload-btn">Upload CSV</button>
-        <button class="folder-add" type="button" id="binder-new-btn">+ New binder from CSV</button>`;
+        <button class="folder-add" type="button" id="binder-upload-btn"><span class="add-ico">${ICON_ADD_UPLOAD}</span>Upload CSV</button>
+        <button class="folder-add" type="button" id="binder-new-btn"><span class="add-ico">${ICON_ADD_BINDER}</span>New binder from CSV</button>`;
     }
     $("#binder-rail").addEventListener("click", (e) => {
       const b = e.target.closest("[data-binder]");
