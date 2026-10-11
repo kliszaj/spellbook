@@ -1724,6 +1724,42 @@
     .btn-plain { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 12px; border-radius: 9px; border: 1px solid rgba(31,29,25,0.14); background: #FFFEFA; cursor: pointer; }
     .af-primary { font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 9px; border: 1px solid #1F6FEB; background: #1F6FEB; color: #fff; cursor: pointer; }
     .af-primary:disabled { opacity: 0.5; cursor: default; }
+    /* ── New deck dialog + empty-deck start screen ── */
+    .nd-dialog { width: min(860px, 100%); }
+    .nd-search { display: flex; align-items: center; gap: 8px; border: 1.5px solid #E2E2EA; border-radius: 12px; padding: 9px 14px; background: #fff; }
+    .nd-search:focus-within { border-color: #1F6FEB; }
+    .nd-search input { border: 0; outline: 0; flex: 1; background: none; font: inherit; font-size: 14.5px; }
+    .nd-filters { display: flex; justify-content: flex-end; margin: 10px 0 2px; }
+    .nd-seg { display: inline-flex; background: #F0F0F5; border-radius: 9px; padding: 3px; }
+    .nd-seg button { border: 0; background: none; padding: 5px 10px; border-radius: 7px; font: inherit; font-size: 12px; font-weight: 600; color: #57524A; cursor: pointer; }
+    .nd-seg button.on { background: #fff; color: #181715; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .nd-h { margin: 14px 0 8px; }
+    .nd-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+    .nd-cmd { display: flex; flex-direction: column; gap: 4px; border: 2px solid transparent; border-radius: 12px; padding: 2px; background: none; cursor: pointer; text-align: left; font: inherit; min-width: 0; }
+    .nd-cmd:hover .nd-art img { transform: translateY(-2px); }
+    .nd-cmd.sel { border-color: #1F6FEB; }
+    .nd-art { position: relative; display: block; }
+    .nd-art img { display: block; width: 100%; aspect-ratio: 488 / 680; object-fit: cover; border-radius: 4.75% / 3.5%; background: #efeae1; box-shadow: 0 6px 16px -10px rgba(0,0,0,0.5); transition: transform 0.15s ease; }
+    .nd-own { position: absolute; top: 6px; left: 6px; }
+    .nd-meta { font-size: 11px; color: #9E9B92; padding: 0 2px; min-width: 0; }
+    .nd-meta b { display: block; color: #181715; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nd-picked { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: start; margin-top: 14px; padding: 14px; border-radius: 14px; background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); }
+    .nd-picked h3 { margin: 0 0 4px; font-size: 17px; }
+    .nd-themes { display: flex; flex-wrap: wrap; gap: 6px; }
+    .nd-themes span { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: #E5EFFF; color: #1F6FEB; }
+    .nd-themes em { font-style: normal; opacity: 0.7; font-weight: 500; }
+    .nd-name { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; font-size: 12px; color: #78726A; }
+    .nd-name input { border: 1.5px solid #E2E2EA; border-radius: 10px; padding: 8px 10px; font: inherit; font-weight: 700; }
+    .nd-name input:focus { outline: none; border-color: #1F6FEB; }
+    .deck-start { max-width: 560px; margin: 36px auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .deck-start[hidden] { display: none; }
+    .deck-start h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .deck-start p { margin: 0; color: #57524A; max-width: 46ch; line-height: 1.5; }
+    .deck-start small { color: #9E9B92; font-size: 12px; }
+    .deck-start-crown { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; background: #E5EFFF; color: #1F6FEB; font-size: 28px; }
+    .deck-start-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+    .deck-start-btns button[hidden] { display: none; }
+    @media (max-width: 600px) { .nd-picked { grid-template-columns: 100px minmax(0, 1fr); } }
     /* ── Toast ── */
     .app-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 400; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); background: #181715; color: #FFFEFA; padding: 11px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55); }
     .app-toast button { border: 0; background: none; color: #FFC46B; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
@@ -2429,6 +2465,16 @@
             </div>
           </div>
           <div class="type-filter" id="saved-type-filter" style="display:none" aria-label="Filter by card type"></div>
+          <div class="deck-start" id="deck-start" hidden>
+            <div class="deck-start-crown" aria-hidden="true">♛</div>
+            <h2 id="deck-start-title">Start with a commander</h2>
+            <p id="deck-start-text">Every deck is built around its commander. Pick one and Spellbook can fill the rest from EDHREC, your collection and your budget.</p>
+            <div class="deck-start-btns">
+              <button class="af-primary" type="button" id="deck-start-pick">Choose a commander</button>
+              <button class="btn-plain" type="button" id="deck-start-import">Import a list</button>
+            </div>
+            <small>Or bookmark cards into this deck from Search or Collection.</small>
+          </div>
           <div id="saved-empty" class="empty-state">
             <p>No saved cards yet</p>
             <small>Search for cards and save them to build your list</small>
@@ -2641,6 +2687,14 @@
   <div class="card-lightbox" id="card-lightbox" hidden role="dialog" aria-modal="true" aria-label="Enlarged card">
     <img id="card-lightbox-img" src="" alt="">
     <button type="button" class="card-lightbox-close" id="card-lightbox-close" aria-label="Close">×</button>
+  </div>
+
+  <!-- New deck dialog -->
+  <div class="af-scrim" id="nd-dialog" hidden>
+    <div class="af-dialog nd-dialog" role="dialog" aria-modal="true" aria-labelledby="nd-title">
+      <div class="af-head"><h2 id="nd-title">New deck · choose a commander</h2><button class="af-x" type="button" data-nd-close aria-label="Close">×</button></div>
+      <div id="nd-body"></div>
+    </div>
   </div>
 
   <!-- Autofill dialog -->
@@ -3970,6 +4024,11 @@
     function showImport() { importInput.value = ""; importStatus.textContent = ""; importModal.classList.add("visible"); setTimeout(() => importInput.focus(), 0); }
     function hideImport() { importModal.classList.remove("visible"); }
     $("#saved-import-btn").addEventListener("click", showImport);
+    $("#deck-start-import").addEventListener("click", showImport);
+    $("#deck-start-pick").addEventListener("click", () => {
+      const deck = state.folders.find((f) => f.id === state.activeFolder) || null;
+      openNewDeck({ deck });
+    });
     $("#import-cancel").addEventListener("click", hideImport);
     importModal.addEventListener("click", (e) => { if (e.target === importModal) hideImport(); });
 
@@ -4641,6 +4700,19 @@
       } else {
         savedEmpty.style.display = "none";
       }
+      // Empty deck (or no decks yet): one clear next step instead of an empty grid.
+      const noDecks = !state.folders.length;
+      const deckEmpty = isRealDeck && getFolderCards(state.activeFolder).length === 0;
+      const showStart = noDecks || deckEmpty;
+      $("#deck-start").hidden = !showStart;
+      if (showStart) {
+        savedEmpty.style.display = "none";
+        $("#deck-tools").style.display = "none";
+        $("#deck-start-title").textContent = noDecks ? "Create your first deck" : "Start with a commander";
+        $("#deck-start-pick").textContent = noDecks ? "New deck" : "Choose a commander";
+        $("#deck-start-import").hidden = noDecks;
+      }
+      $("#saved-sort-bar").style.display = showStart ? "none" : "";
       state.savedVisible = mainVisible; // exact on-screen main-deck set, used by the export button
       if (savedExportBtn) savedExportBtn.disabled = mainVisible.length === 0;
 
@@ -6592,6 +6664,149 @@
       });
     }
 
+    // ═══ New deck dialog: choose a commander ════════════════════════════
+    // Opened by "+ New deck" (creates a deck) or the empty-deck screen (sets the commander of
+    // that deck). Commanders you own come first; the search covers every legal commander on
+    // Scryfall, most popular first.
+    let ndCtx = null; // { deck, query, ownedOnly, results, picked, themes, numDecks, name, seq }
+    const isCommanderCard = (c) => c && c.legalities?.commander === "legal"
+      && (/Legendary/.test(c.type_line || "") && /Creature/.test((c.type_line || "").split(" // ")[0]) || /can be your commander/i.test(getOracleText(c)));
+    function ownedCommanders(query) {
+      if (!collectionIndex) return [];
+      const q = query.trim().toLowerCase();
+      return collectionIndex.list.map((it) => it.card)
+        .filter((c) => isCommanderCard(c) && (!q || c.name.toLowerCase().includes(q)))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, 12);
+    }
+    async function searchCommanders(query) {
+      const q = `is:commander f:commander game:paper${query.trim() ? ` ${query.trim()}` : ""}`;
+      const r = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}&order=edhrec&unique=cards`);
+      if (r.status === 404) return [];
+      if (!r.ok) throw new Error("Couldn't reach Scryfall.");
+      return ((await r.json()).data || []).slice(0, 24);
+    }
+    function ndTile(c) {
+      const owned = ownedQty(collectionIndex, c) > 0;
+      const sel = ndCtx.picked && ndCtx.picked.id === c.id;
+      return `<button type="button" class="nd-cmd${sel ? " sel" : ""}" data-nd-pick="${esc(c.id)}">
+        <span class="nd-art"><img src="${getCardImage(c)}" alt="" loading="lazy">${owned ? `<span class="owned-inline nd-own">Owned</span>` : ""}</span>
+        <span class="nd-meta"><b>${esc(frontFaceName(c.name))}</b>${(c.color_identity || []).join("") || "C"}</span>
+      </button>`;
+    }
+    function renderNewDeck() {
+      const body = $("#nd-body");
+      if (!body || !ndCtx) return;
+      $("#nd-title").textContent = ndCtx.deck ? `Choose a commander for ${ndCtx.deck.name}` : "New deck · choose a commander";
+      const owned = ownedCommanders(ndCtx.query);
+      const results = ndCtx.ownedOnly ? [] : ndCtx.results;
+      const p = ndCtx.picked;
+      body.innerHTML = `
+        <div class="nd-search"><span aria-hidden="true">⌕</span><input id="nd-q" type="search" placeholder="Search commanders… e.g. Codie, Atraxa, t:dragon" value="${esc(ndCtx.query)}" autocomplete="off"></div>
+        <div class="nd-filters"><div class="nd-seg" role="group" aria-label="Which commanders">
+          <button type="button" data-nd-owned="0" class="${ndCtx.ownedOnly ? "" : "on"}">All commanders</button>
+          <button type="button" data-nd-owned="1" class="${ndCtx.ownedOnly ? "on" : ""}">I own</button></div></div>
+        ${owned.length ? `<div class="da-h nd-h">From your collection</div><div class="nd-results">${owned.map(ndTile).join("")}</div>` : (ndCtx.ownedOnly ? `<div class="da2-vsub">No owned commanders match.${hasCollection() ? "" : " Upload your collection on the Collection tab."}</div>` : "")}
+        ${ndCtx.ownedOnly ? "" : `<div class="da-h nd-h">${ndCtx.searching ? "Searching…" : "Most popular first"}</div>
+          ${ndCtx.error ? `<div class="da2-vsub">${esc(ndCtx.error)}</div>` : `<div class="nd-results">${results.map(ndTile).join("") || `<span class="da2-vsub">No commanders match.</span>`}</div>`}`}
+        ${p ? `<div class="nd-picked">
+          <span class="nd-art"><img src="${getCardImage(p)}" alt="${esc(p.name)}"></span>
+          <div>
+            <h3>${esc(p.name)}</h3>
+            <div class="da2-vsub">${(p.color_identity || []).join("") || "Colourless"}${ndCtx.numDecks ? ` · ${ndCtx.numDecks.toLocaleString()} decks on EDHREC` : ""}${ownedQty(collectionIndex, p) > 0 ? " · you own it" : ""}</div>
+            ${ndCtx.themes.length ? `<div class="da-h nd-h">Popular themes</div><div class="nd-themes">${ndCtx.themes.slice(0, 6).map((t) => `<span>${esc(t.name)} <em>${t.count}</em></span>`).join("")}</div>` : ""}
+            ${ndCtx.deck ? "" : `<label class="nd-name">Deck name<input id="nd-name" value="${esc(ndCtx.name)}" maxlength="80"></label>`}
+          </div></div>` : ""}
+        <div class="af-foot">
+          <span class="da2-vsub" style="margin-right:auto;align-self:center">You can change the commander later with the crown.</span>
+          <button class="btn-plain" type="button" data-nd-close>Cancel</button>
+          <button class="btn-plain" type="button" data-nd-create="plain" ${p ? "" : "disabled"}>${ndCtx.deck ? "Set commander" : "Create deck"}</button>
+          <button class="af-primary" type="button" data-nd-create="fill" ${p ? "" : "disabled"}>${ndCtx.deck ? "Set & Autofill" : "Create & Autofill"}</button>
+        </div>`;
+    }
+    let ndSearchTimer = null;
+    function ndRunSearch() {
+      const seq = ++ndCtx.seq;
+      ndCtx.searching = true; ndCtx.error = "";
+      renderNewDeck();
+      refocusNdSearch();
+      searchCommanders(ndCtx.query)
+        .then((list) => { if (ndCtx && seq === ndCtx.seq) { ndCtx.results = list; ndCtx.searching = false; renderNewDeck(); refocusNdSearch(); } })
+        .catch((err) => { if (ndCtx && seq === ndCtx.seq) { ndCtx.error = err.message; ndCtx.searching = false; renderNewDeck(); refocusNdSearch(); } });
+    }
+    function refocusNdSearch() {
+      const input = $("#nd-q");
+      if (input && ndCtx?.typing) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    }
+    function openNewDeck({ deck = null } = {}) {
+      ndCtx = { deck, query: "", ownedOnly: false, results: [], picked: null, themes: [], numDecks: 0, name: "", seq: 0, searching: false, error: "", typing: false };
+      $("#nd-dialog").hidden = false;
+      ndRunSearch();
+      setTimeout(() => $("#nd-q")?.focus(), 0);
+    }
+    function closeNewDeck() { $("#nd-dialog").hidden = true; ndCtx = null; }
+    async function pickCommander(card) {
+      ndCtx.picked = card;
+      ndCtx.name = frontFaceName(card.name).split(",")[0];
+      ndCtx.themes = []; ndCtx.numDecks = 0; ndCtx.typing = false;
+      renderNewDeck();
+      try {
+        const d = await edhrecPage(card.name);
+        if (ndCtx && ndCtx.picked?.id === card.id) {
+          ndCtx.themes = (d.themes || []).filter((t) => !/companion/i.test(t.slug));
+          ndCtx.numDecks = d.numDecks || 0;
+          renderNewDeck();
+        }
+      } catch { /* themes are a nice-to-have */ }
+    }
+    function createFromNewDeck(mode) {
+      const card = ndCtx.picked;
+      if (!card) return;
+      let deck = ndCtx.deck;
+      if (!deck) {
+        deck = createFolder(($("#nd-name")?.value || ndCtx.name || frontFaceName(card.name)).trim());
+        if (!deck) return;
+      }
+      setCardFolder(card, deck.id, true);
+      if (deck.commanderId !== card.id) setDeckCommander(deck.id, card.id);
+      state.activeFolder = deck.id;
+      closeNewDeck();
+      if (state.activeTab !== "saved") setActiveTab("saved");
+      renderFolderRail();
+      renderSavedCards();
+      if (mode === "fill") openAutofill(deck, card);
+    }
+    document.addEventListener("click", (e) => {
+      const dlg = $("#nd-dialog");
+      if (!dlg || dlg.hidden || !ndCtx) return;
+      const t = e.target;
+      if (t === dlg || t.closest("[data-nd-close]")) { closeNewDeck(); return; }
+      const own = t.closest("[data-nd-owned]");
+      if (own) { ndCtx.ownedOnly = own.dataset.ndOwned === "1"; renderNewDeck(); return; }
+      const pick = t.closest("[data-nd-pick]");
+      if (pick) {
+        const id = pick.dataset.ndPick;
+        const card = [...ndCtx.results, ...ownedCommanders(ndCtx.query)].find((c) => c.id === id);
+        if (card) pickCommander(card);
+        return;
+      }
+      const create = t.closest("[data-nd-create]");
+      if (create && !create.disabled) createFromNewDeck(create.dataset.ndCreate);
+    });
+    document.addEventListener("input", (e) => {
+      if (!ndCtx) return;
+      if (e.target.id === "nd-name") { ndCtx.name = e.target.value; return; }
+      if (e.target.id !== "nd-q") return;
+      ndCtx.query = e.target.value;
+      ndCtx.typing = true;
+      clearTimeout(ndSearchTimer);
+      ndSearchTimer = setTimeout(ndRunSearch, 350);
+    });
+    document.addEventListener("keydown", (e) => {
+      const dlg = $("#nd-dialog");
+      if (dlg && !dlg.hidden && e.key === "Escape") closeNewDeck();
+    });
+
     // ═══ Autofill (dialog: setup → preview → add) ═══════════════════════
     // Candidates come from EDHREC (the commander page, chosen theme pages, and the budget
     // page), checked against Scryfall for colour identity, legality, price, Game Changer
@@ -7733,11 +7948,7 @@
         }
         return;
       }
-      if (e.target.closest("#folder-add-btn")) {
-        const name = prompt("New deck name:");
-        if (name && name.trim()) { const f = createFolder(name); if (f) { state.activeFolder = f.id; renderSavedCards(); } }
-        return;
-      }
+      if (e.target.closest("#folder-add-btn")) { openNewDeck(); return; }
       const btn = e.target.closest(".folder-btn");
       if (btn) { state.activeFolder = btn.dataset.folder; renderSavedCards(); }
     });
