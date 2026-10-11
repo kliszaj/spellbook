@@ -187,7 +187,12 @@
     .detail-panel.panel-fading-in .detail-header-title, .detail-panel.panel-fading-in .detail-empty, .detail-panel.panel-fading-in .detail-content {
       animation: panel-blur-in 0.36s cubic-bezier(0.2, 0.7, 0.2, 1) both;
     }
-    @keyframes panel-blur-in { from { opacity: 0; filter: blur(8px); } to { opacity: 1; filter: blur(0); } }
+    @keyframes panel-blur-in { from { opacity: 0; filter: blur(5px); } to { opacity: 1; filter: blur(0); } }
+    /* While the column widens: contents invisible and skipped by layout, so nothing re-wraps per frame. */
+    .side-menu.panel-opening .rail-section, .side-menu.panel-opening .rail-icon-label,
+    .detail-panel.panel-opening .detail-header-title, .detail-panel.panel-opening .detail-empty, .detail-panel.panel-opening .detail-content {
+      opacity: 0; content-visibility: hidden; transition: none;
+    }
     @media (prefers-reduced-motion: reduce) {
       .side-menu .rail-section, .side-menu .rail-icon-label,
       .detail-panel .detail-header-title, .detail-panel .detail-empty, .detail-panel .detail-content { transition: none; animation: none !important; }
@@ -3063,6 +3068,7 @@
     // Side panels blur + fade their contents: closing fades out first, then collapses (the
     // contents become display:none, which can't animate); opening expands, then blurs in.
     const PANEL_FADE_MS = 170;
+    const PANEL_WIDEN_MS = 230; // matches the .app-shell grid-template-columns transition (0.22s)
     const reduceMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     function togglePanel(panel, cls, onDone) {
       if (panel._panelAnim) return; // ignore clicks mid-animation
@@ -3078,12 +3084,19 @@
           onDone();
         }, PANEL_FADE_MS);
       } else {
-        appShell.classList.remove(cls);
+        // Widen first with the contents hidden and skipped by layout (no text re-wrapping
+        // every frame), then blur them in once the column has reached its full width.
+        panel._panelAnim = true;
         panel.classList.remove("panel-fading-in");
-        void panel.offsetWidth; // restart the entrance animation
-        panel.classList.add("panel-fading-in");
-        setTimeout(() => panel.classList.remove("panel-fading-in"), 420);
+        panel.classList.add("panel-opening");
+        appShell.classList.remove(cls);
         onDone();
+        setTimeout(() => {
+          panel.classList.remove("panel-opening");
+          panel.classList.add("panel-fading-in");
+          panel._panelAnim = false;
+          setTimeout(() => panel.classList.remove("panel-fading-in"), 380);
+        }, PANEL_WIDEN_MS);
       }
     }
 
