@@ -9,7 +9,7 @@ const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99, simulateTurns, pickStaples, landEntersTapped, colorBalance, suggestLandCuts, pairLandSwaps };`)();
+const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99, simulateTurns, pickStaples, landEntersTapped, colorBalance, suggestLandCuts, pairLandSwaps, planAutofill, autofillNeeds };`)();
 
 // Mirrors the shape of a computeGrade(...) item, trimmed to the fields gapSummary and
 // chipGroups actually read.
@@ -476,6 +476,82 @@ test("suggestLandCuts + pairLandSwaps: cut over-supplied lands, replace within b
   assert.equal(by["Llanowar Wastes"], "Shivan Reef");
   assert.equal(by["Swamp"], "Island"); // free untapped basic beats a tapped dual
   assert.ok(!pairs.some((p) => p.add.name === "Volcanic Island"));
+});
+
+
+const c = (name, score, extra = {}) => ({ name, score, eur: 1, owned: false, gc: false, ...extra });
+
+test("planAutofill: fills each step best-first, never picks a card twice", () => {
+  const r = h.planAutofill({ steps: [
+    { key: "ramp", need: 2, pool: [c("Sol Ring", 90), c("Cultivate", 50), c("Farseek", 70)] },
+    { key: "rest", need: 2, pool: [c("Sol Ring", 99), c("Ponder", 60), c("Opt", 40)] },
+  ] });
+  assert.deepEqual(r.steps[0].picks.map((p) => p.name), ["Sol Ring", "Farseek"]);
+  assert.deepEqual(r.steps[1].picks.map((p) => p.name), ["Ponder", "Opt"]);
+  assert.equal(r.added, 4);
+});
+
+test("planAutofill: owned cards are free and come first; budget and cap use spares", () => {
+  const r = h.planAutofill({
+    budget: 5, cap: 4,
+    steps: [{ key: "draw", need: 3, pool: [
+      c("Rhystic Study", 99, { eur: 30 }), c("Expensive", 80, { eur: 4.5 }), c("Brainstorm", 70, { eur: 2 }),
+      c("Ponder", 60, { eur: 2 }), c("Opt", 10, { eur: 0.5 }), c("Owned Thing", 5, { owned: true, eur: 20 }),
+    ] }],
+  });
+  assert.deepEqual(r.steps[0].picks.map((p) => p.name), ["Owned Thing", "Brainstorm", "Ponder"]);
+  assert.equal(r.spent, 4);
+  assert.equal(r.owned, 1);
+});
+
+test("planAutofill: onlyOwned leaves slots short; Game Changers need allowance", () => {
+  const pool = [c("Rhystic Study", 99, { gc: true, owned: true }), c("Ponder", 60, { owned: true }), c("Opt", 50)];
+  const owned = h.planAutofill({ onlyOwned: true, steps: [{ key: "draw", need: 3, pool }] });
+  assert.deepEqual(owned.steps[0].picks.map((p) => p.name), ["Ponder"]);
+  assert.equal(owned.steps[0].short, 2);
+  const b3 = h.planAutofill({ gcAllowance: 1, steps: [{ key: "draw", need: 3, pool }] });
+  assert.ok(b3.steps[0].picks.some((p) => p.name === "Rhystic Study"));
+});
+
+test("autofillNeeds: an empty deck gets role targets, themes and the rest up to 100 minus lands", () => {
+  const profile = { landTarget: [36, 38], roleTargets: { ramp: [8, 12], draw: [10, null], removal: [6, 10], wipes: [3, 5] } };
+  const n = h.autofillNeeds({ total: 1, lands: 0, counts: {}, profile, themeCount: 2 });
+  assert.equal(n.landTarget, 37);
+  assert.deepEqual([n.ramp, n.draw, n.removal, n.wipes, n.theme], [10, 12, 10, 3, 16]);
+  assert.equal(n.ramp + n.draw + n.removal + n.wipes + n.theme + n.rest, 100 - 37 - 1);
+  assert.equal(n.lands, 37);
+  const full = h.autofillNeeds({ total: 100, lands: 37, counts: { ramp: 12, draw: 12, removal: 10, wipes: 3 }, profile });
+  assert.deepEqual([full.ramp, full.draw, full.removal, full.wipes, full.theme, full.rest, full.lands], [0, 0, 0, 0, 0, 0, 0]);
+});
+
+
+test("planAutofill: an unknown price is never treated as free (only owned copies qualify)", () => {
+  const r = h.planAutofill({ budget: 100, steps: [{ key: "lands", need: 2, pool: [
+    c("Tropical Island", 99, { eur: null }), c("Steam Vents", 90, { eur: null, owned: true }), c("Shivan Reef", 50, { eur: 0.3 }),
+  ] }] });
+  assert.deepEqual(r.steps[0].picks.map((p) => p.name), ["Steam Vents", "Shivan Reef"]);
+});
+
+test("planAutofill: the budget is paced across steps so later steps still get a share", () => {
+  const pricey = Array.from({ length: 10 }, (_, i) => c(`Ramp ${i}`, 100 - i, { eur: 5 }));
+  const lands = Array.from({ length: 10 }, (_, i) => c(`Land ${i}`, 100 - i, { eur: 2 }));
+  const r = h.planAutofill({ budget: 40, steps: [{ key: "ramp", need: 10, pool: pricey }, { key: "lands", need: 10, pool: lands, land: true }] });
+  assert.equal(r.steps[0].picks.length, 4); // half the budget (€20) at €5 each
+  assert.ok(r.steps[1].picks.length >= 10 - 0, `lands got ${r.steps[1].picks.length}`);
+  assert.ok(r.spent <= 40);
+});
+
+test("planAutofill: backfill fills spell slots a short step left, never land slots", () => {
+  const r = h.planAutofill({
+    steps: [
+      { key: "removal", need: 3, pool: [c("Path to Exile", 90)] },
+      { key: "lands", need: 2, pool: [], land: true },
+    ],
+    backfill: { label: "Backfill", pool: [c("Path to Exile", 99), c("Ponder", 60), c("Opt", 50), c("Brainstorm", 40)] },
+  });
+  const back = r.steps.find((s) => s.key === "backfill");
+  assert.deepEqual(back.picks.map((p) => p.name), ["Ponder", "Opt"]); // 2 removal slots short; lands short ignored
+  assert.equal(r.added, 3);
 });
 
 await run("Deck analysis UI helpers");

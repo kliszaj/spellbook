@@ -1648,6 +1648,55 @@
     .sim-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
     .sim-color { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 7px 10px; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; font-size: 12px; color: #57524A; }
     .sim-color .da2-srcpip { width: 20px; height: 20px; } .sim-color .da2-srcpip svg { width: 11px; height: 11px; }
+    /* ── Autofill ── */
+    .da2-autofill-btn { font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 12px; border-radius: 9px; border: 1px solid #223126; background: #223126; color: #fff; cursor: pointer; }
+    .da2-autofill-btn:hover { background: #2E4233; }
+    .af-scrim { position: fixed; inset: 0; z-index: 450; background: rgba(20,19,16,0.45); display: grid; place-items: center; padding: 16px; }
+    .af-scrim[hidden] { display: none; }
+    .af-dialog { width: min(720px, 100%); max-height: calc(100dvh - 32px); overflow: auto; background: #FFFEFA; border-radius: 18px; box-shadow: 0 30px 80px -24px rgba(0,0,0,0.55); padding: 20px; }
+    .af-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .af-head h2 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+    .af-stage { font-size: 12px; color: #9E9B92; } .af-stage b { color: #181715; }
+    .af-x { margin-left: auto; border: 0; background: none; font-size: 22px; color: #9E9B92; cursor: pointer; }
+    .af { display: flex; flex-direction: column; gap: 16px; }
+    .af-sec { display: flex; flex-direction: column; gap: 8px; }
+    .af-themes { display: flex; flex-wrap: wrap; gap: 6px; }
+    .af-theme { display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(31,29,25,0.14); background: #FFFEFA; border-radius: 999px; padding: 6px 11px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; color: #57524A; }
+    .af-theme span { font: 600 10.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #9E9B92; }
+    .af-theme.on { background: #223126; border-color: #223126; color: #fff; } .af-theme.on span { color: rgba(255,255,255,0.7); }
+    .af-row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+    .af-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #78726A; }
+    .af-money { display: flex; align-items: center; border: 1px solid rgba(31,29,25,0.14); border-radius: 9px; background: #fff; padding: 0 10px; }
+    .af-money span { color: #9E9B92; }
+    .af-money input { border: 0; outline: 0; background: none; padding: 8px 6px; width: 100%; font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .af-money:focus-within { border-color: #B9892A; }
+    .af-toggles { display: flex; flex-direction: column; gap: 8px; }
+    .af-tg { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: #57524A; cursor: pointer; }
+    .af-tg small { display: block; color: #9E9B92; font-size: 11.5px; }
+    .af-sw { flex: none; width: 34px; height: 20px; border-radius: 999px; background: #D8D3C8; position: relative; margin-top: 1px; transition: background 0.15s; }
+    .af-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.15s; }
+    .af-tg.on .af-sw { background: #223126; } .af-tg.on .af-sw::after { transform: translateX(14px); }
+    .af-tg:focus-visible, .af-step:focus-visible { outline: 2px solid #B9892A; outline-offset: 2px; border-radius: 8px; }
+    .af-total { display: flex; flex-wrap: wrap; gap: 18px; padding: 12px 14px; border-radius: 12px; background: #F3F0E8; }
+    .af-total span { display: block; font-size: 11px; color: #9E9B92; }
+    .af-total b { font-size: 20px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; } .af-total b.good { color: #2F6A2C; }
+    .af-steps { display: flex; flex-direction: column; gap: 6px; }
+    .af-step { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 12px; border: 1px solid rgba(31,29,25,0.10); border-radius: 10px; background: #FBFAF6; cursor: pointer; }
+    .af-step.static { cursor: default; }
+    .af-step .nm { font-weight: 650; font-size: 13px; min-width: 0; }
+    .af-step .short { font-size: 11px; font-weight: 700; color: #7A5A0C; background: #FBF1D6; padding: 1px 6px; border-radius: 999px; margin-left: 4px; }
+    .af-step .own { font-size: 11px; font-weight: 700; color: #2F6A2C; background: #E8F3E4; padding: 2px 7px; border-radius: 999px; }
+    .af-step .ct { font: 700 12px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #57524A; }
+    .af-step-cards { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px 2px 8px; }
+    .af-step-cards[hidden] { display: none; }
+    .af-cc { font: 650 11px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 5px 8px; border-radius: 7px; border: 1px solid rgba(31,29,25,0.10); background: #fff; color: #57524A; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+    .af-cc em { font-style: normal; color: #9E9B92; font-weight: 500; }
+    .af-cc.owned { border-color: #CFE2C9; } .af-cc.owned em { color: #2F6A2C; font-weight: 700; }
+    .af-warn { padding: 9px 12px; border-radius: 10px; background: #FBF1D6; color: #7A5A0C; font-size: 12.5px; line-height: 1.45; }
+    .af-foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+    .btn-plain { font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 12px; border-radius: 9px; border: 1px solid rgba(31,29,25,0.14); background: #FFFEFA; cursor: pointer; }
+    .af-primary { font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 9px; border: 1px solid #223126; background: #223126; color: #fff; cursor: pointer; }
+    .af-primary:disabled { opacity: 0.5; cursor: default; }
     /* ── Toast ── */
     .app-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 400; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); background: #181715; color: #FFFEFA; padding: 11px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55); }
     .app-toast button { border: 0; background: none; color: #E7CE8C; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
@@ -2563,6 +2612,14 @@
   <div class="card-lightbox" id="card-lightbox" hidden role="dialog" aria-modal="true" aria-label="Enlarged card">
     <img id="card-lightbox-img" src="" alt="">
     <button type="button" class="card-lightbox-close" id="card-lightbox-close" aria-label="Close">×</button>
+  </div>
+
+  <!-- Autofill dialog -->
+  <div class="af-scrim" id="af-dialog" hidden>
+    <div class="af-dialog" role="dialog" aria-modal="true" aria-labelledby="af-title">
+      <div class="af-head"><h2 id="af-title">Autofill</h2><span class="af-stage" id="af-stage"></span><button class="af-x" type="button" data-af-close aria-label="Close">×</button></div>
+      <div id="af-body"></div>
+    </div>
   </div>
 
   <!-- Card right-click context menu -->
@@ -5533,6 +5590,77 @@
         .reduce((n, c) => (n < maxEdhrec && take(c.name) ? n + 1 : n), 0);
       return picked;
     }
+    // ── Autofill planner ───────────────────────────────────────────────
+    // Fills steps in order (ramp → draw → removal → wipes → themes → rest → lands). Each
+    // step has a `need` and a `pool` of candidates { name, eur, owned, score, gc }, best
+    // first. A card is taken once across all steps. Owned cards cost nothing (and, with
+    // ownedFirst, rank first); a card over the per-card cap or the remaining total budget
+    // is skipped and the next one (a "spare") takes its place. Game Changers are allowed
+    // only while `gcAllowance` lasts. A card with no known price (eur null) is only taken
+    // when owned. The budget is paced: each step may spend its share of what's left, in
+    // proportion to how many cards it still needs, so early steps can't starve the lands.
+    // Returns per-step picks plus totals.
+    // backfill: optional { label, pool } — after the steps, the slots non-land steps left
+    // empty are filled from this pool with whatever budget remains (so a short step adds
+    // other good spells instead of leaving the gap to basic lands).
+    function planAutofill({ steps, budget = Infinity, cap = Infinity, onlyOwned = false, ownedFirst = true, gcAllowance = 0, taken = new Set(), backfill = null }) {
+      const used = new Set([...taken].map((n) => n.toLowerCase()));
+      let spent = 0, gcLeft = gcAllowance;
+      let needLeft = steps.reduce((n, s) => n + s.need, 0);
+      const out = steps.map((step) => {
+        const stepBudget = budget === Infinity ? Infinity : (budget - spent) * (step.need / Math.max(1, needLeft));
+        needLeft -= step.need;
+        let stepSpent = 0;
+        const pool = step.pool.slice().sort((a, b) =>
+          (ownedFirst ? Number(b.owned) - Number(a.owned) : 0) || b.score - a.score);
+        const picks = [];
+        for (const c of pool) {
+          if (picks.length >= step.need) break;
+          const key = c.name.toLowerCase();
+          if (used.has(key)) continue;
+          if (onlyOwned && !c.owned) continue;
+          if (!c.owned && c.eur == null) continue; // unknown price: never assume it's free
+          const cost = c.owned ? 0 : c.eur;
+          if (!c.owned && cost > cap) continue;
+          if (stepSpent + cost > stepBudget + 1e-9) continue;
+          if (c.gc) { if (gcLeft <= 0) continue; gcLeft--; }
+          used.add(key);
+          spent += cost;
+          stepSpent += cost;
+          picks.push({ ...c, cost });
+        }
+        return { key: step.key, label: step.label, target: step.target || "", need: step.need, picks, short: Math.max(0, step.need - picks.length) };
+      });
+      const gap = out.reduce((n, s, i) => n + (steps[i].land ? 0 : s.short), 0);
+      if (backfill && gap > 0) {
+        const more = planAutofill({ steps: [{ key: "backfill", label: backfill.label || "Backfill", need: gap, pool: backfill.pool }], budget: budget === Infinity ? Infinity : Math.max(0, budget - spent), cap, onlyOwned, ownedFirst, gcAllowance: gcLeft, taken: used });
+        if (more.added) { out.push(more.steps[0]); spent += more.spent; }
+      }
+      const all = out.flatMap((s) => s.picks);
+      return { steps: out, spent, added: all.length, owned: all.filter((c) => c.owned).length };
+    }
+    // How many cards each autofill step should add, from the deck's current counts and its
+    // targets. Spells fill to 100 minus the land target; themes get ~8 each from what's left.
+    function autofillNeeds({ total, lands, counts, profile, themeCount = 0 }) {
+      const mid = (r) => Math.round((r[0] + (r[1] ?? r[0])) / 2);
+      const landTarget = mid(profile.landTarget);
+      const spellRoom = Math.max(0, 100 - landTarget - (total - lands));
+      const t = profile.roleTargets;
+      const want = {
+        ramp: Math.max(0, mid(t.ramp) - (counts.ramp || 0)),
+        draw: Math.max(0, (t.draw[1] ?? t.draw[0] + 2) - (counts.draw || 0)),
+        removal: Math.max(0, (t.removal[1] ?? t.removal[0]) - (counts.removal || 0)),
+        wipes: Math.max(0, t.wipes[0] - (counts.wipes || 0)),
+      };
+      let room = spellRoom;
+      const take = (n) => { const k = Math.min(n, room); room -= k; return k; };
+      const out = { ramp: take(want.ramp), draw: take(want.draw), removal: take(want.removal), wipes: take(want.wipes) };
+      out.theme = take(themeCount * 8);
+      out.rest = room;
+      out.lands = Math.max(0, landTarget - lands);
+      out.landTarget = landTarget;
+      return out;
+    }
     // [good, borderline] floors per opening-hand stat, calibrated on a 99-card library:
     // 36 lands → 3+ lands 50%, keepable 79%; 10 ramp → ramp by T2 59%; 36 lands + 10 ramp
     // → a 3-drop commander on curve 88%. Below the borderline floor reads as bad.
@@ -6406,6 +6534,285 @@
       });
     }
 
+    // ═══ Autofill (dialog: setup → preview → add) ═══════════════════════
+    // Candidates come from EDHREC (the commander page, chosen theme pages, and the budget
+    // page), checked against Scryfall for colour identity, legality, price, Game Changer
+    // status and role. Free: no AI.
+    const AF_OPTS_KEY = "autofill_opts";
+    const afOpts = (() => {
+      const d = { themes: [], budget: 50, cap: "", ownedFirst: true, onlyOwned: false };
+      try { return { ...d, ...JSON.parse(localStorage.getItem(AF_OPTS_KEY) || "{}"), themes: [] }; } catch { return d; }
+    })();
+    let afCtx = null; // { deck, commander, folderId, themes, plan, basics, stage }
+
+    async function edhrecPage(commanderName, page = null) {
+      const r = await fetch(`/api/edhrec/commander?name=${encodeURIComponent(commanderName)}${page ? `&page=${encodeURIComponent(page)}` : ""}`);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Couldn't reach EDHREC.");
+      return d;
+    }
+    async function scryfallByNames(names) {
+      const byName = new Map();
+      const uniq = [...new Set(names)];
+      for (let i = 0; i < uniq.length; i += 75) {
+        const res = await fetch("https://api.scryfall.com/cards/collection", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifiers: uniq.slice(i, i + 75).map((n) => ({ name: n })) }),
+        });
+        if (res.ok) ((await res.json()).data || []).forEach((c) => {
+          byName.set(c.name.toLowerCase(), c);
+          byName.set(frontFaceName(c.name).toLowerCase(), c);
+        });
+        if (i + 75 < uniq.length) await new Promise((r) => setTimeout(r, 110));
+      }
+      return byName;
+    }
+    function cardRoles(card) {
+      const prof = profileCache.get(cardOracleId(card));
+      return prof ? rolesFromProfile(card, prof) : classifyRoleCard(card);
+    }
+
+    async function buildAutofillPlan() {
+      const { deck, commander, folderId } = afCtx;
+      const all = getFolderCards(folderId);
+      const main = all.filter((c) => !isMaybe(folderId, c.id));
+      const colors = deckColors(main, commander);
+      const s = computeDeckStats(main, folderId);
+      const review = deckReviewCache[folderId]?.data;
+      const profile = effectiveDeckProfile(Array.isArray(review?.identityTags) ? review.identityTags : []);
+      const counts = countsFromRoleDetails(detectRoleDetails(main, folderId, profilesFromCache(main)));
+      const needs = autofillNeeds({ total: s.total, lands: s.lands, counts, profile, themeCount: afOpts.themes.length });
+
+      // EDHREC lists: commander page, chosen themes, and the budget page when money is tight.
+      const pages = [{ page: null }, ...afOpts.themes.map((t) => ({ page: t, theme: t }))];
+      if (Number(afOpts.budget) > 0 && Number(afOpts.budget) <= 150) pages.push({ page: "budget" });
+      const lists = await Promise.all(pages.map((p) => edhrecPage(commander.name, p.page).then((d) => ({ ...p, cards: d.cards || [] })).catch(() => ({ ...p, cards: [] }))));
+      const names = lists.flatMap((l) => l.cards.map((c) => c.name));
+      const byName = await scryfallByNames(names);
+      const gcSet = await loadGameChangers();
+      const inDeck = new Set(all.map((c) => frontFaceName(c.name).toLowerCase()));
+
+      // One candidate per (list, card); `fit` drops off-colour, illegal and in-deck cards.
+      // Price: EUR (or foil), else USD converted; null = unknown (only taken when owned).
+      const afPrice = (card) => {
+        const eur = priceNum(card);
+        if (eur != null) return eur;
+        const usd = parseFloat(card.prices?.usd ?? card.prices?.usd_foil);
+        return Number.isFinite(usd) ? usd * 0.92 : null;
+      };
+      const cand = (e, card, themed = false) => ({
+        name: card.name, card, eur: afPrice(card), owned: ownedQty(collectionIndex, card) > 0,
+        // Theme steps rank by synergy (theme-specific), others by how often it's played.
+        score: themed ? (e.synergy || 0) * 100 + (e.inclusion || 0) * 30 : (e.inclusion || 0) * 100 + (e.synergy || 0) * 40,
+        gc: card.game_changer === true || gcSet.has(frontFaceName(card.name).toLowerCase()),
+      });
+      const fit = (card) => card && card.legalities?.commander === "legal"
+        && (card.color_identity || []).every((c) => colors.includes(c))
+        && !inDeck.has(frontFaceName(card.name).toLowerCase()) && card.id !== commander.id;
+      const fromList = (l) => l.cards.map((e) => [e, byName.get(e.name.toLowerCase())]).filter(([, c]) => fit(c));
+      const main_ = lists.filter((l) => !l.theme);
+      const nonland = main_.flatMap(fromList).filter(([, c]) => !playableAsLand(c));
+      const byRole = (role) => nonland.filter(([, c]) => cardRoles(c)[role]).map(([e, c]) => cand(e, c));
+
+      const themeSteps = afOpts.themes.map((t, i) => {
+        const l = lists.find((x) => x.theme === t);
+        const per = Math.floor(needs.theme / afOpts.themes.length) + (i < needs.theme % afOpts.themes.length ? 1 : 0);
+        const name = afCtx.themes.find((x) => x.slug === t)?.name || t;
+        return { key: `theme:${t}`, label: `Theme · ${name}`, target: `${per}`, need: per, pool: l ? fromList(l).filter(([, c]) => !playableAsLand(c)).map(([e, c]) => cand(e, c, true)) : [] };
+      });
+      // Non-basic lands: the more colours, the more duals; basics fill the rest to 100.
+      const nbShare = colors.length >= 3 ? 0.75 : colors.length === 2 ? 0.55 : 0.2;
+      const landPool = lists.flatMap(fromList).filter(([, c]) => playableAsLand(c) && !isBasicLand(c))
+        .map(([e, c]) => {
+          const base = cand(e, c);
+          const makesColour = landColors(c).size > 0; // fetches count as every colour
+          return { ...base, score: base.score - (landEntersTapped(getOracleText(c)) ? 15 : 0) - (makesColour ? 0 : 40) };
+        });
+      const steps = [
+        { key: "ramp", label: "Ramp", target: `+${needs.ramp}`, need: needs.ramp, pool: byRole("ramp") },
+        { key: "draw", label: "Card draw", target: `+${needs.draw}`, need: needs.draw, pool: byRole("draw") },
+        { key: "removal", label: "Removal", target: `+${needs.removal}`, need: needs.removal, pool: byRole("removal") },
+        { key: "wipes", label: "Board wipes", target: `+${needs.wipes}`, need: needs.wipes, pool: byRole("wipes") },
+        ...themeSteps,
+        { key: "rest", label: "Rest · most played for this commander", target: `${needs.rest}`, need: needs.rest, pool: nonland.map(([e, c]) => cand(e, c)) },
+        { key: "lands", label: "Non-basic lands", target: `${Math.round(needs.lands * nbShare)}`, need: Math.round(needs.lands * nbShare), pool: landPool, land: true },
+      ].filter((st) => st.need > 0);
+      const gcInDeck = main.filter((c) => gcSet.has(frontFaceName(c.name).toLowerCase())).length;
+      const allowGc = (deckBracket[folderId] || 2) >= 3;
+      const plan = planAutofill({
+        steps,
+        budget: Number(afOpts.budget) > 0 ? Number(afOpts.budget) : Infinity,
+        cap: Number(afOpts.cap) > 0 ? Number(afOpts.cap) : Infinity,
+        onlyOwned: afOpts.onlyOwned, ownedFirst: afOpts.ownedFirst,
+        gcAllowance: allowGc ? Math.max(0, 3 - gcInDeck) : 0,
+        backfill: { label: "Backfill · other good fits", pool: [...nonland.map(([e, c]) => cand(e, c)), ...lists.filter((l) => l.theme).flatMap(fromList).filter(([, c]) => !playableAsLand(c)).map(([e, c]) => cand(e, c, true))] },
+      });
+
+      // Basics to reach 100, split by the colour symbols of the finished deck.
+      const after = s.total + plan.added;
+      const basicsNeed = colors.length ? Math.max(0, 100 - after) : 0;
+      const pips = {};
+      colors.forEach((c) => { pips[c] = 0; });
+      [...main, ...plan.steps.flatMap((st) => st.picks.map((p) => p.card))].forEach((c) => {
+        if (!playableAsLand(c)) Object.entries(coloredPipCounts(c)).forEach(([col, n]) => { if (col in pips) pips[col] += n; });
+      });
+      const split = suggestBasicSplit(pips, basicsNeed);
+      const basicCards = Object.keys(split).length ? await scryfallByNames(Object.keys(split).map((c) => BASIC_OF[c])) : new Map();
+      const basics = Object.entries(split).filter(([, n]) => n > 0).map(([c, n]) => ({ color: c, qty: n, card: basicCards.get(BASIC_OF[c].toLowerCase()) })).filter((b) => b.card);
+      return { plan, basics, allowGc, colors };
+    }
+
+    function afSetupHtml() {
+      const tg = (key, label, help) => `<div class="af-tg${afOpts[key] ? " on" : ""}" role="switch" tabindex="0" aria-checked="${afOpts[key]}" data-af-tg="${key}"><span class="af-sw"></span><span>${label}<small>${help}</small></span></div>`;
+      const strategy = afCtx.themes.filter((t) => !/companion/i.test(t.slug)).slice(0, 14);
+      const restrict = afCtx.themes.filter((t) => /companion/i.test(t.slug));
+      const allowGc = (deckBracket[afCtx.folderId] || 2) >= 3;
+      return `<div class="af">
+        <div class="af-sec"><div class="da-h">Themes · from EDHREC decks for ${esc(frontFaceName(afCtx.commander.name))}</div>
+          <div class="af-themes">${strategy.length ? strategy.map((t) => `<button type="button" class="af-theme${afOpts.themes.includes(t.slug) ? " on" : ""}" data-af-theme="${esc(t.slug)}">${esc(t.name)}<span>${t.count}</span></button>`).join("") : `<span class="da2-vsub">EDHREC has no themes for this commander yet.</span>`}</div>
+          <div class="da2-vsub">Pick up to 3; each adds about 8 cards.${restrict.length ? ` Companion builds (not themes): ${restrict.map((t) => esc(t.name)).join(", ")}.` : ""}</div></div>
+        <div class="af-sec"><div class="da-h">Budget · for cards you don't own</div>
+          <div class="af-row2">
+            <label class="af-field">Total<span class="af-money"><span>€</span><input id="af-budget" type="number" min="0" step="5" value="${esc(String(afOpts.budget))}" placeholder="no limit"></span></label>
+            <label class="af-field">Max per card (optional)<span class="af-money"><span>€</span><input id="af-cap" type="number" min="0" step="1" value="${esc(String(afOpts.cap))}" placeholder="no cap"></span></label>
+          </div></div>
+        <div class="af-sec"><div class="da-h">Options</div><div class="af-toggles">
+          ${tg("ownedFirst", "Use my collection first", "Cards you own count as free and are picked before others.")}
+          ${tg("onlyOwned", "Only cards I own", "Fill only from your collection; slots it can't fill stay open.")}
+          <div class="da2-vsub">${allowGc ? "Bracket 3 deck: up to 3 Game Changers in total." : "No Game Changers, so the deck stays bracket 2."}</div>
+        </div></div>
+      </div>`;
+    }
+    function afPreviewHtml() {
+      const { plan, basics } = afCtx;
+      const basicCount = basics.reduce((n, b) => n + b.qty, 0);
+      const added = plan.added + basicCount;
+      const rows = plan.steps.map((st, i) => `
+        <div class="af-step" data-af-step="${i}" role="button" tabindex="0" aria-expanded="false">
+          <span class="nm">${esc(st.label)}${st.short ? ` <span class="short">${st.short} short</span>` : ""}</span>
+          <span class="own">${st.picks.filter((p) => p.owned).length} owned</span>
+          <span class="ct">+${st.picks.length}</span>
+        </div>
+        <div class="af-step-cards" hidden>${st.picks.map((p) => `<span class="af-cc${p.owned ? " owned" : ""}" data-card="${esc(p.name)}">${esc(p.name)}<em>${p.owned ? "owned" : `€${p.cost.toFixed(2)}`}</em></span>`).join("") || `<span class="da2-vsub">Nothing fit the budget and filters.</span>`}</div>`).join("");
+      const basicsRow = basicCount ? `<div class="af-step static"><span class="nm">Basic lands · ${basics.map((b) => `${b.qty} ${BASIC_OF[b.color]}`).join(", ")}</span><span class="own">basic</span><span class="ct">+${basicCount}</span></div>` : "";
+      const budgetTxt = Number(afOpts.budget) > 0 ? `€${Number(afOpts.budget).toFixed(0)}` : "no limit";
+      // Spell slots nothing filled (after backfill) end up as extra basic lands — say so.
+      const spellGap = plan.steps.filter((st) => st.key !== "lands" && st.key !== "backfill").reduce((n, st) => n + st.short, 0)
+        - (plan.steps.find((st) => st.key === "backfill")?.picks.length || 0);
+      const shortNote = spellGap > 0
+        ? `<div class="af-warn">${spellGap} spell slot${spellGap === 1 ? "" : "s"} couldn't be filled ${afOpts.onlyOwned ? "from your collection" : `within ${budgetTxt}`}, so they'll be extra basic lands. Raise the budget${afOpts.onlyOwned ? ", turn off Only cards I own," : ""} or add a theme for more options.</div>`
+        : "";
+      return `<div class="af">
+        <div class="af-total"><div><span>Adds</span><b>${added}</b></div><div><span>Owned</span><b class="good">${plan.owned}</b></div><div><span>To buy</span><b>€${plan.spent.toFixed(2)}</b></div><div><span>Budget</span><b>${budgetTxt}</b></div></div>
+        <div class="af-steps">${rows}${basicsRow}</div>
+        ${shortNote}
+        <div class="da2-vsub">Click a step to see its cards. Over-budget picks were replaced by the next-best card.</div>
+      </div>`;
+    }
+    function renderAutofill() {
+      const body = $("#af-body");
+      if (!body || !afCtx) return;
+      $("#af-stage").innerHTML = afCtx.stage === "setup" ? "<b>1 Setup</b> · 2 Preview" : "1 Setup · <b>2 Preview</b>";
+      if (afCtx.stage === "loading") { body.innerHTML = `<div class="da2-vsub">${esc(afCtx.loadingText || "Loading…")}</div>`; return; }
+      if (afCtx.stage === "error") { body.innerHTML = `<div class="da2-vsub">${esc(afCtx.error)}</div><div class="af-foot"><button class="btn-plain" type="button" data-af-close>Close</button></div>`; return; }
+      const preview = afCtx.stage === "preview";
+      const n = preview ? afCtx.plan.added + afCtx.basics.reduce((a, b) => a + b.qty, 0) : 0;
+      body.innerHTML = (preview ? afPreviewHtml() : afSetupHtml()) + (preview
+        ? `<div class="af-foot"><button class="btn-plain" type="button" data-af-go="setup">Back</button><button class="af-primary" type="button" data-af-apply ${n ? "" : "disabled"}>Add ${n} cards</button></div>`
+        : `<div class="af-foot"><button class="btn-plain" type="button" data-af-close>Cancel</button><button class="af-primary" type="button" data-af-go="preview">Preview fill</button></div>`);
+    }
+    async function openAutofill(deck, commander) {
+      const dlg = $("#af-dialog");
+      if (!commander) { showToast("Set a commander first: the crown on a legendary creature in the deck."); return; }
+      afCtx = { deck, commander, folderId: deck.id, themes: [], stage: "loading", loadingText: "Loading themes from EDHREC…" };
+      afOpts.themes = [];
+      dlg.hidden = false;
+      renderAutofill();
+      try {
+        afCtx.themes = (await edhrecPage(commander.name)).themes || [];
+        afCtx.stage = "setup";
+      } catch (err) {
+        afCtx.stage = "error"; afCtx.error = err.message;
+      }
+      renderAutofill();
+      dlg.querySelector("button, [tabindex]")?.focus();
+    }
+    function closeAutofill() { $("#af-dialog").hidden = true; afCtx = null; }
+    async function previewAutofill() {
+      try { localStorage.setItem(AF_OPTS_KEY, JSON.stringify({ ...afOpts, themes: [] })); } catch {}
+      afCtx.stage = "loading"; afCtx.loadingText = "Picking cards… (EDHREC + Scryfall)";
+      renderAutofill();
+      try {
+        Object.assign(afCtx, await buildAutofillPlan());
+        afCtx.stage = "preview";
+      } catch (err) {
+        afCtx.stage = "error"; afCtx.error = `Autofill failed: ${err.message || "network error"}`;
+      }
+      renderAutofill();
+    }
+    function applyAutofill() {
+      const { plan, basics, folderId } = afCtx;
+      const added = plan.steps.flatMap((st) => st.picks.map((p) => p.card)).filter((c) => !cardFolders(c.id).includes(folderId));
+      added.forEach((c) => setCardFolder(c, folderId, true));
+      const basicPrev = [];
+      basics.forEach(({ card, qty }) => {
+        const had = cardFolders(card.id).includes(folderId);
+        const prevQty = had ? cardQty(folderId, card.id) : 0;
+        basicPrev.push({ card, had, prevQty });
+        if (!had) setCardFolder(card, folderId, true);
+        setCardQty(folderId, card.id, prevQty + qty);
+      });
+      const n = added.length + basics.reduce((a, b) => a + b.qty, 0);
+      const spent = plan.spent;
+      closeAutofill();
+      renderFolderRail();
+      renderSavedCards();
+      showToast(`Added ${n} cards (${plan.owned} owned · €${spent.toFixed(2)} to buy)`, {
+        actionLabel: "Undo",
+        ms: 12000,
+        onAction: () => {
+          added.forEach((c) => setCardFolder(c, folderId, false));
+          basicPrev.forEach(({ card, had, prevQty }) => { if (had) setCardQty(folderId, card.id, prevQty); else setCardFolder(card, folderId, false); });
+          renderFolderRail();
+          renderSavedCards();
+        },
+      });
+    }
+    // Delegated dialog wiring (the dialog markup lives at the end of <body>).
+    document.addEventListener("click", (e) => {
+      const dlg = $("#af-dialog");
+      if (!dlg || dlg.hidden || !afCtx) return;
+      const t = e.target;
+      if (t === dlg || t.closest("[data-af-close]")) { closeAutofill(); return; }
+      const theme = t.closest("[data-af-theme]");
+      if (theme) {
+        const slug = theme.dataset.afTheme;
+        if (afOpts.themes.includes(slug)) afOpts.themes = afOpts.themes.filter((x) => x !== slug);
+        else if (afOpts.themes.length < 3) afOpts.themes = [...afOpts.themes, slug];
+        renderAutofill();
+        return;
+      }
+      const tg = t.closest("[data-af-tg]");
+      if (tg) { afOpts[tg.dataset.afTg] = !afOpts[tg.dataset.afTg]; renderAutofill(); return; }
+      const go = t.closest("[data-af-go]");
+      if (go) { if (go.dataset.afGo === "preview") previewAutofill(); else { afCtx.stage = "setup"; renderAutofill(); } return; }
+      const step = t.closest("[data-af-step]");
+      if (step) { const list = step.nextElementSibling; if (list) { list.hidden = !list.hidden; step.setAttribute("aria-expanded", String(!list.hidden)); } return; }
+      const cc = t.closest(".af-cc[data-card]");
+      if (cc) { openCardByName(cc.dataset.card); return; }
+      if (t.closest("[data-af-apply]")) applyAutofill();
+    });
+    document.addEventListener("input", (e) => {
+      if (e.target.id === "af-budget") afOpts.budget = e.target.value;
+      if (e.target.id === "af-cap") afOpts.cap = e.target.value;
+    });
+    document.addEventListener("keydown", (e) => {
+      const dlg = $("#af-dialog");
+      if (!dlg || dlg.hidden) return;
+      if (e.key === "Escape") { closeAutofill(); return; }
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-af-tg],[data-af-step]")) { e.preventDefault(); e.target.click(); }
+    });
+
     // ═══ Deck analysis tabs, sticky progress bar, staples, simulator ═════
     const DA_TABS = [["overview", "Overview"], ["build", "Build"], ["mana", "Mana"], ["playtest", "Playtest"], ["ideas", "Ideas"]];
     let daTab = (() => { try { return localStorage.getItem("deck_analysis_tab") || "overview"; } catch { return "overview"; } })();
@@ -6589,9 +6996,11 @@
       if (s.total < ANALYSIS_MIN_CARDS) {
         renderDeckProgress({ name: deckName, colors, s, grade: null });
         dA.innerHTML = `
+          ${deck ? `<div class="da2-actions"><div class="da2-actions-btns"><button class="da2-autofill-btn" id="da2-autofill-btn" type="button">✦ Autofill</button></div></div>` : ""}
           <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role ledger, bracket and mana checks will appear here.</div>`;
         dA.style.display = "block";
         dA.classList.remove("collapsed");
+        $("#da2-autofill-btn")?.addEventListener("click", () => { if (deck) openAutofill(deck, commander); });
         return;
       }
       // The AI review persists across deck edits (stale reads beat losing the analysis
@@ -6646,6 +7055,7 @@
         <div class="da2-actions">
           <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
           <div class="da2-actions-btns">
+            <button class="da2-autofill-btn" id="da2-autofill-btn" type="button" title="Fill the deck to 100 from EDHREC: ramp, draw, removal, your themes and lands, within a budget">✦ Autofill</button>
             <button class="da2-staples-btn" id="da2-staples-btn" type="button" title="Adds the staples this deck is missing for its colors — rocks, dual lands, and the commander's most-played cards — straight to the main deck">✦ Add staples</button>
             <button class="da-review-btn" id="da-review-btn" ${reviewing ? "disabled" : ""}>${ICON_SPARKLE}<span class="da-review-label">${reviewing ? "Analyzing…" : (cached ? "Re-analyze" : "Analyze")}</span></button>
           </div>
@@ -6697,6 +7107,7 @@
       dA.classList.toggle("collapsed", collapsed);
       wireDeckTabs();
       $("#da2-staples-btn")?.addEventListener("click", () => { if (deck) addStaplesToDeck(deck, commander); });
+      $("#da2-autofill-btn")?.addEventListener("click", () => { if (deck) openAutofill(deck, commander); });
       const fixWrapEl = $("#da2-fix-wrap");
       fixWrapEl?.addEventListener("click", (e) => {
         const chip = e.target.closest(".da2-card-chip");

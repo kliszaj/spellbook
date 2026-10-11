@@ -1087,7 +1087,8 @@ app.get("/api/edhrec/commander", async (req, res) => {
   const name = String(req.query.name || "").trim();
   if (!name) return res.status(400).json({ error: "Missing name" });
   try {
-    res.json(await edhrecClient.getCommander(name));
+    const page = req.query.page ? String(req.query.page) : null; // theme or "budget" sub-page
+    res.json(await edhrecClient.getCommander(name, { page }));
   } catch (err) {
     if (err instanceof EdhrecError) return res.status(502).json({ error: err.message });
     res.status(502).json({ error: "Couldn't reach EDHREC." });

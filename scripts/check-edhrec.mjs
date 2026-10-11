@@ -219,4 +219,33 @@ test("createEdhrecClient: a refetch failure falls back to a stale disk entry, ev
   assert.equal(data.numDecks, 7174);
 });
 
+
+// ── themes + sub-pages (Autofill) ────────────────────────────────────
+test("parseCommanderPage: themes come from panels.taglinks; bad slugs are dropped", () => {
+  const page = { ...FIXTURE, panels: { taglinks: [
+    { count: 163, slug: "spellslinger", value: "Spellslinger" },
+    { count: 18, slug: "storm", value: "Storm" },
+    { count: 3, slug: "../evil", value: "Evil" },
+  ] } };
+  assert.deepEqual(parseCommanderPage(page).themes, [
+    { slug: "spellslinger", name: "Spellslinger", count: 163 },
+    { slug: "storm", name: "Storm", count: 18 },
+  ]);
+  assert.deepEqual(parseCommanderPage(FIXTURE).themes, []);
+});
+
+test("getCommander({ page }): fetches the sub-page URL and caches it separately", async () => {
+  const urls = [];
+  const fetchImpl = async (url) => { urls.push(url); return { ok: true, status: 200, json: async () => FIXTURE }; };
+  const client = createEdhrecClient({ dataDir: await tempDir(), fetchImpl });
+  await client.getCommander("Hei Bai, Forest Guardian", { page: "spellslinger" });
+  await client.getCommander("Hei Bai, Forest Guardian", { page: "spellslinger" });
+  await client.getCommander("Hei Bai, Forest Guardian", { page: "budget" });
+  assert.deepEqual(urls, [
+    "https://json.edhrec.com/pages/commanders/hei-bai-forest-guardian/spellslinger.json",
+    "https://json.edhrec.com/pages/commanders/hei-bai-forest-guardian/budget.json",
+  ]);
+  await assert.rejects(client.getCommander("Hei Bai, Forest Guardian", { page: "../x" }), EdhrecError);
+});
+
 await run("EDHREC client");
