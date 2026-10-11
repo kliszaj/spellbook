@@ -1453,9 +1453,9 @@
     .curve-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
     .curve-track { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; }
     /* Dashed step line for the typical curve; extends half the column gap each side so steps meet. */
-    .curve-ideal { position: absolute; left: 50%; width: min(100%, 64px); transform: translateX(-50%); height: 0; border-top: 2px dashed #FF9F1C; pointer-events: none; }
+    .curve-ideal { position: absolute; left: 50%; width: min(100%, 64px); transform: translateX(-50%); height: 0; border-top: 2px dashed rgba(21,21,31,0.42); pointer-events: none; }
     .curve-legend { display: flex; align-items: center; gap: 7px; margin-top: 8px; font-size: 10.5px; color: #9E9B92; }
-    .curve-legend-line { width: 16px; height: 0; border-top: 1.5px dashed #FF9F1C; flex: none; }
+    .curve-legend-line { width: 16px; height: 0; border-top: 1.5px dashed rgba(21,21,31,0.42); flex: none; }
     .curve-count { font-size: 10px; color: #9E9B92; font-variant-numeric: tabular-nums; }
     .curve-col.dim { opacity: 0.35; }
     .curve-count.over { color: #DC2626; font-weight: 700; }
@@ -1791,6 +1791,42 @@
     .deck-start-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
     .deck-start-btns button[hidden] { display: none; }
 
+    /* ── Overview (to-do) + Mana (two columns) ── */
+    .ov-hero { display: flex; align-items: center; gap: 14px; }
+    .ov-hero .da2-badge { width: 54px; height: 54px; border-radius: 14px; flex: none; }
+    .ov-hero .da2-badge b { font-size: 22px; }
+    .ov-hero-text { min-width: 0; }
+    .ov-hero .da2-vhead { margin-bottom: 2px; }
+    .ov-sub { font-size: 12.5px; color: #78726A; }
+    .ov-sub b { font-weight: 700; color: #181715; } .ov-sub b.warn { color: #B45309; } .ov-sub b.good { color: #15803D; } .ov-sub b.bad { color: #DC2626; }
+    .ov-todo { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; }
+    .ov-col { min-width: 0; }
+    .ov-item, button.da2-chip.ov-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 6px; border: 0; border-top: 1px solid rgba(31,29,25,0.08); border-radius: 0; background: none; font: inherit; font-size: 13px; color: #181715; text-align: left; }
+    .ov-col .da-h + .ov-item, .ov-col .da-h + button.ov-item { border-top: 0; }
+    button.da2-chip.ov-item { cursor: pointer; transition: background 0.12s; }
+    button.da2-chip.ov-item:hover { background: #F2F2F7; border-radius: 8px; }
+    button.da2-chip.ov-item[aria-expanded="true"] { background: #E5EFFF; border-radius: 8px; }
+    .ov-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .ov-dot.bad { background: #F87171; } .ov-dot.warn { background: #F59E0B; }
+    .ov-text { font-weight: 650; min-width: 0; }
+    .ov-ctx { margin-left: auto; font-size: 12px; color: #9E9B92; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .ov-fines { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ov-fine, button.da2-chip.ov-fine { font: inherit; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: #DCFCE7; color: #15803D; border: 0; }
+    button.da2-chip.ov-fine { cursor: pointer; } button.da2-chip.ov-fine:hover { background: #BBF7D0; }
+    .mana-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+    .mana-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+    .mana-swaps:has(> #da2-land-swaps:empty) { display: none; }
+    .mana-swaps #da2-land-swaps > .da-h:first-child { margin-top: 0 !important; }
+    .ct { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .ct th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9E9B92; padding: 0 6px 6px; }
+    .ct td { padding: 7px 6px; border-top: 1px solid rgba(31,29,25,0.08); vertical-align: middle; }
+    .ct .da2-srcpip { width: 20px; height: 20px; } .ct .da2-srcpip svg { width: 11px; height: 11px; }
+    .ct-n { font-weight: 700; font-variant-numeric: tabular-nums; } .ct-need { color: #9E9B92; font-variant-numeric: tabular-nums; }
+    .ct-share { display: flex; flex-direction: column; gap: 3px; min-width: 80px; }
+    .ct-share i { display: block; height: 6px; border-radius: 999px; }
+    .ct-share i.need { background: #64748B; opacity: 0.55; }
+    .ct-share i.have.ok { background: #22C55E; } .ct-share i.have.short { background: #F87171; } .ct-share i.have.over { background: #FFB347; }
+    @media (max-width: 760px) { .ov-todo, .mana-grid { grid-template-columns: 1fr; } }
     /* ── Toast ── */
     .app-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 400; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); background: #181715; color: #FFFEFA; padding: 11px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55); }
     .app-toast button { border: 0; background: none; color: #FFC46B; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
@@ -6224,12 +6260,32 @@
         if (ROLE_KEYS.includes(c.key)) return `<button class="${cls}" type="button" data-role-key="${c.key}" aria-expanded="false" aria-controls="da2-role-detail"${title}>${esc(c.text)}</button>`;
         return `<span class="${cls}"${title}>${esc(c.text)}</span>`;
       };
+      // A plain-language to-do per failing check ("Add 3 board wipes", "Cut ~8 ramp").
+      const todo = (c) => {
+        const num = typeof c.value === "number" && (c.lo != null || c.hi != null);
+        const fmt = (n) => fmtScoreNum(Math.round(n * 10) / 10);
+        const what = String(c.label || "").toLowerCase();
+        const text = !num ? c.text
+          : c.status === "low" ? `Add ${fmt(c.lo - c.value)} ${what}`
+          : c.status === "high" ? (c.key === "avgMv" || /average/i.test(c.label || "") ? `Lower the ${what}` : `Cut ~${fmt(c.value - c.hi)} ${what}`) : c.text;
+        const ctx = num ? `${c.valueLabel} / ${c.target}` : "";
+        const tone = c.severity === "critical" ? "bad" : "warn";
+        const title = c.note ? ` title="${escAttr(c.note)}"` : "";
+        const inner = `<span class="ov-dot ${tone}"></span><span class="ov-text">${esc(text)}</span>${ctx ? `<span class="ov-ctx">${esc(ctx)}</span>` : ""}`;
+        return ROLE_KEYS.includes(c.key)
+          ? `<button class="da2-chip ov-item" type="button" data-role-key="${c.key}" aria-expanded="false" aria-controls="da2-role-detail"${title}>${inner}</button>`
+          : `<div class="ov-item"${title}>${inner}</div>`;
+      };
+      const fine = (c) => ROLE_KEYS.includes(c.key)
+        ? `<button class="da2-chip ov-fine" type="button" data-role-key="${c.key}" aria-expanded="false" aria-controls="da2-role-detail">${esc(c.text)}</button>`
+        : `<span class="ov-fine">${esc(c.text)}</span>`;
       return `
-        <div class="da2-chip-row">
-          <span class="da2-chip-row-label">Needs attention</span>
-          <div class="da2-chips">${attention.length ? attention.map(chipHtml).join("") : `<span class="da2-chip muted">Nothing flagged</span>`}</div>
-        </div>
-        ${onTarget.length ? `<details class="da2-ontarget"><summary>${onTarget.length} other check${onTarget.length === 1 ? "" : "s"} on target</summary><div class="da2-chips">${onTarget.map(chipHtml).join("")}</div></details>` : ""}`;
+        <div class="ov-todo">
+          <div class="ov-col"><div class="da-h">To do</div>
+            ${attention.length ? attention.map(todo).join("") : `<div class="da2-vsub">Nothing to fix. Every check is on target.</div>`}</div>
+          <div class="ov-col"><div class="da-h">Looking good</div>
+            <div class="ov-fines">${onTarget.length ? onTarget.map(fine).join("") : `<span class="da2-vsub">Nothing yet</span>`}</div></div>
+        </div>`;
     }
     // Content of the shared role-detail panel opened by a role chip: its evidence cards
     // (heuristic or AI-refined — daCtx.roleDetails always carries the heuristic evidence),
@@ -6651,6 +6707,26 @@
       const pips = {};
       sources.forEach((s) => { pips[s.c] = s.pips; });
       return { lands, balance: colorBalance({ pips, landSources }) };
+    }
+    function colorsTableHtml(sources, balance) {
+      if (!sources.length) return `<div class="da2-vsub">Colourless: no coloured sources needed.</div>`;
+      const byC = Object.fromEntries(balance.map((b) => [b.c, b]));
+      const rows = sources.map((s) => {
+        const b = byC[s.c];
+        const st = s.status === "ok" ? "good" : s.status === "low" ? "warn" : "bad";
+        const label = st === "good" ? "OK" : st === "warn" ? "Low" : "Short";
+        return `<tr>
+          <td><span class="da2-srcpip da2-sb-${s.c.toLowerCase()}">${MANA_SVG[s.c.toLowerCase()]}</span></td>
+          <td class="ct-n">${fmtScoreNum(s.have)}</td>
+          <td class="ct-need">${s.need}</td>
+          <td>${b ? `<div class="ct-share" title="${Math.round(b.pipShare * 100)}% of your mana symbols · ${Math.round(b.srcShare * 100)}% of your land colour sources"><i class="need" style="width:${(b.pipShare * 100).toFixed(1)}%"></i><i class="have ${b.status}" style="width:${(b.srcShare * 100).toFixed(1)}%"></i></div>` : ""}</td>
+          <td><span class="da2-odds da2-odds-${st === "good" ? "good" : st === "warn" ? "ok" : "bad"}">${label}</span></td>
+        </tr>`;
+      }).join("");
+      const worst = balance.filter((b) => b.status === "short").sort((a, b) => a.delta - b.delta)[0];
+      const name = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
+      const note = worst ? `<div class="cb-msg warn">${name[worst.c]} is ${Math.round(worst.pipShare * 100)}% of your mana symbols but only ${Math.round(worst.srcShare * 100)}% of your land colour sources.</div>` : "";
+      return `<table class="ct"><thead><tr><th></th><th>Sources</th><th>Need</th><th>Symbols / lands</th><th></th></tr></thead><tbody>${rows}</tbody></table>${note}`;
     }
     function colorBalanceHtml(balance) {
       if (balance.length < 2) return "";
@@ -7428,12 +7504,13 @@
         <div class="da2-body">
         <div class="da2-tabs" role="tablist" aria-label="Deck analysis">${DA_TABS.map(tabBtn).join("")}</div>
         ${pane("overview", `
-          <div class="da2-kpis">
-            <div class="da2-kpi da2-kpi-grade">${gradeBadgeHtml}<span>${s.total >= 90 ? "grade" : "cards to a full grade"}</span></div>
-            <div class="da2-kpi"><b class="${toCutKpi.tone}">${toCutKpi.n}</b><span>${toCutKpi.label}</span></div>
-            <div class="da2-kpi"><b>${s.avgMv.toFixed(1)}</b><span>avg mana value</span></div>
+          <div class="ov-hero">
+            ${gradeBadgeHtml}
+            <div class="ov-hero-text">
+              <div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div>
+              <div class="ov-sub">${(() => { const n = chipGroups(grade.items).attention.length; return `${n ? `<b class="warn">${n} to fix</b>` : `<b class="good">All checks on target</b>`} · <b class="${toCutKpi.tone}">${toCutKpi.n}</b> ${toCutKpi.label} · avg MV ${s.avgMv.toFixed(1)}`; })()}</div>
+            </div>
           </div>
-          <div class="da2-vhead" id="da2-verdict">${esc(verdict)}</div>
           <div class="da2-vsub" id="da2-subnote" ${subnoteText ? "" : "hidden"}>${subnoteText}</div>
           ${daProfileLineHtml(folderId)}
           ${deckIdentityHtml(identityTags, Boolean(cached))}
@@ -7449,14 +7526,16 @@
           ${s.total > 100 ? `<section class="da2-card" id="da2-trim"></section>` : `<div class="da2-card da2-vsub">The trim planner appears when the deck is over 100 cards. It's at ${s.total} now.</div>`}
           <div class="da2-card">${typeGuideHtml(s.typeCounts, typeTargetsFor(identityLensKeys(identityTags)))}</div>`)}
         ${pane("mana", `
-          <div class="da2-card da2-mana-card">
-            <div id="da2-curve-wrap">${deckCurveBlockHtml(daCurveCtx)}</div>
-            <div class="da2-section-rule"></div>
-            <div class="da-h" style="margin:0 0 2px">Colors</div>
-            ${colorsLineHtml(sources)}
-            ${basicsSuggestionHtml(cards, folderId, sources, profile.landTarget[0], s.lands)}
-          </div>
-          <div class="da2-card">${colorBalanceHtml(cb.balance)}</div>`)}
+          <div class="mana-grid">
+            <div class="mana-col">
+              <div class="da2-card da2-mana-card"><div id="da2-curve-wrap">${deckCurveBlockHtml(daCurveCtx)}</div></div>
+              ${(() => { const b = basicsSuggestionHtml(cards, folderId, sources, profile.landTarget[0], s.lands); return b ? `<div class="da2-card">${b}</div>` : ""; })()}
+            </div>
+            <div class="mana-col">
+              <div class="da2-card"><div class="da-h">Colours</div>${colorsTableHtml(sources, cb.balance)}</div>
+              <div class="da2-card mana-swaps"><div id="da2-land-swaps"></div></div>
+            </div>
+          </div>`)}
         ${pane("playtest", `
           <section class="da2-card" id="da2-opening-hand" hidden></section>
           <section class="da2-card" id="da2-sim"></section>`)}
