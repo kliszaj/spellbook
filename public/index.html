@@ -2002,6 +2002,7 @@
       transition: border-color 0.15s, color 0.15s;
     }
 
+    .rail-empty, .pop-empty { padding: 6px 10px; font-size: 12.5px; color: #9E9B92; }
     .folder-add:hover { border-color: #b8b8b4; color: #555; }
 
     .saved-main { min-width: 0; }
@@ -3277,6 +3278,7 @@
         localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(data.searchHistory));
       }
       migrateMembership();
+      retireUnsorted();
       updateIdentityDisplay();
       updateAiSearchToggle();
       updateSavedCount();
@@ -3999,7 +4001,8 @@
       if (!parsed.length) { importStatus.textContent = "No card names found."; return; }
       const names = parsed.map((p) => p.name);
       const qtyByName = new Map(parsed.map((p) => [p.name.toLowerCase(), p.qty]));
-      const target = state.activeFolder === "all" ? DEFAULT_FOLDER : state.activeFolder;
+      const target = ensureActiveDeck();
+      if (!target) { importStatus.textContent = "Create a deck first (+ New deck in the deck list)."; return; }
       importRunBtn.disabled = true; importRunBtn.textContent = "Importing…";
       importStatus.textContent = `Looking up ${names.length} cards…`;
       try {
@@ -4610,7 +4613,8 @@
         state.savedSortField,
         state.savedSortDir
       );
-      const isRealDeck = state.activeFolder !== "all" && state.activeFolder !== DEFAULT_FOLDER;
+      ensureActiveDeck();
+      const isRealDeck = state.folders.some((f) => f.id === state.activeFolder);
 
       // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
       renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, () => renderSavedCards({ filtersOnly: true }));
@@ -7517,11 +7521,30 @@
     function migrateMembership() {
       if (!state.membership || typeof state.membership !== "object") {
         state.membership = {};
-        state.savedCards.forEach((c) => { state.membership[c.id] = [DEFAULT_FOLDER]; });
+        // Pre-folders saves go into a real deck (Unsorted no longer exists, and
+        // retireUnsorted would remove cards left only there).
+        if (state.savedCards.length) {
+          const f = createFolder("Imported cards");
+          if (f) state.savedCards.forEach((c) => { state.membership[c.id] = [f.id]; });
+        }
         saveMembership();
       }
     }
 
+    // "All" and "Unsorted" are gone (the Collection tab covers "everything I have"); the
+    // Decks tab always shows a real deck, or an empty state when there are none.
+    function ensureActiveDeck() {
+      if (!state.folders.some((f) => f.id === state.activeFolder)) state.activeFolder = state.folders[0]?.id || null;
+      return state.activeFolder;
+    }
+    // One-time cleanup after server data loads: drop the old Unsorted membership. Cards that
+    // were only in Unsorted are removed from saved cards (the user chose this; the server's
+    // daily state backups can restore them). Cards also in a real deck just lose the tag.
+    function retireUnsorted() {
+      const loose = state.savedCards.filter((c) => cardFolders(c.id).includes(DEFAULT_FOLDER));
+      loose.forEach((c) => setCardFolder(c, DEFAULT_FOLDER, false));
+      return loose.length;
+    }
     function isCardSaved(id) { return state.savedCards.some((s) => s.id === id); }
     function cardFolders(id) { return state.membership[id] || []; }
     function getFolderCards(folderId) {
@@ -7658,12 +7681,9 @@
       if (f && n) { f.name = n; saveFolders(); queueOp({ type: "setFolders", folders: state.folders }); }
     }
     function deleteFolder(id) {
+      // Leaving the deck removes a card that's in no other deck (setCardFolder does that).
+      getFolderCards(id).forEach((c) => setCardFolder(c, id, false));
       state.folders = state.folders.filter((f) => f.id !== id);
-      Object.keys(state.membership).forEach((cid) => {
-        let mem = state.membership[cid].filter((f) => f !== id);
-        if (mem.length === 0) mem = [DEFAULT_FOLDER]; // orphans fall back to Unsorted, never lost
-        state.membership[cid] = mem;
-      });
       if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
       if (state.maybeboard[id]) { delete state.maybeboard[id]; persistMaybeboard(); }
       if (state.pins[id]) { delete state.pins[id]; persistPins(); }
@@ -7673,15 +7693,17 @@
       saveMembership();
       queueOp({ type: "setFolders", folders: state.folders });
       queueOp({ type: "replaceMembership", membership: state.membership });
-      if (state.activeFolder === id) state.activeFolder = "all";
+      if (state.activeFolder === id) state.activeFolder = null;
+      ensureActiveDeck();
     }
 
     // ── Folder sidebar ──
     function renderFolderRail() {
-      const items = [{ id: "all", name: "All" }, { id: DEFAULT_FOLDER, name: DEFAULT_FOLDER_NAME }, ...state.folders];
-      let html = `<div class="rail-label">Decks</div>`;
+      ensureActiveDeck();
+      const items = state.folders;
+      let html = `<div class="rail-label">Decks</div>${items.length ? "" : `<div class="rail-empty">No decks yet</div>`}`;
       items.forEach((f) => {
-        const custom = f.id !== "all" && f.id !== DEFAULT_FOLDER;
+        const custom = true;
         const maybeCount = folderMaybeCount(f.id);
         const countLabel = `${folderCount(f.id)}${maybeCount ? ` <span class="folder-count-maybe">(${maybeCount})</span>` : ""}`;
         html += `<button class="folder-btn ${state.activeFolder === f.id ? "active" : ""}" data-folder="${f.id}">
@@ -7704,7 +7726,8 @@
           const name = prompt("Rename deck:", f ? f.name : "");
           if (name && name.trim()) { renameFolder(fid, name); renderSavedCards(); }
         } else {
-          if (confirm(`Delete deck "${f ? f.name : ""}"? Cards stay saved (moved to ${DEFAULT_FOLDER_NAME}).`)) {
+          const only = getFolderCards(fid).filter((c) => cardFolders(c.id).length === 1).length;
+          if (confirm(`Delete deck "${f ? f.name : ""}"?${only ? ` ${only} card${only === 1 ? "" : "s"} that aren't in another deck will be removed from your saved cards.` : ""}`)) {
             deleteFolder(fid); renderSavedCards();
           }
         }
@@ -7725,7 +7748,6 @@
     function openSavePopover(card, anchorEl) {
       state.popoverCard = card;
       popoverAnchor = anchorEl;
-      if (!isCardSaved(card.id)) setCardFolder(card, DEFAULT_FOLDER, true); // first save → Unsorted
       popAddForm.classList.remove("visible");
       popAddBtn.style.display = "";
       renderPopoverList();
@@ -7738,12 +7760,12 @@
       const card = state.popoverCard;
       if (!card) return;
       const mem = cardFolders(card.id);
-      const collections = [{ id: DEFAULT_FOLDER, name: DEFAULT_FOLDER_NAME }, ...state.folders];
+      const collections = state.folders;
       popList.innerHTML = collections.map((f) => `
         <label class="pop-row">
           <input type="checkbox" data-folder="${f.id}" ${mem.includes(f.id) ? "checked" : ""}>
           <span class="pop-name">${esc(f.name)}</span>
-        </label>`).join("");
+        </label>`).join("") || `<div class="pop-empty">No decks yet. Create one below.</div>`;
     }
 
     function positionPopover(anchorEl) {
