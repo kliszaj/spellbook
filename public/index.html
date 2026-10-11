@@ -174,6 +174,25 @@
     .app-shell.nav-collapsed .side-menu .rail-section,
     .app-shell.nav-collapsed .side-menu .rail-icon-label { display: none; }
 
+    /* Blur + fade of panel contents when a side panel closes/opens (driven by togglePanel). */
+    .side-menu .rail-section, .side-menu .rail-icon-label,
+    .detail-panel .detail-header-title, .detail-panel .detail-empty, .detail-panel .detail-content {
+      transition: opacity 0.17s ease, filter 0.17s ease;
+    }
+    .side-menu.panel-fading-out .rail-section, .side-menu.panel-fading-out .rail-icon-label,
+    .detail-panel.panel-fading-out .detail-header-title, .detail-panel.panel-fading-out .detail-empty, .detail-panel.panel-fading-out .detail-content {
+      opacity: 0; filter: blur(6px);
+    }
+    .side-menu.panel-fading-in .rail-section, .side-menu.panel-fading-in .rail-icon-label,
+    .detail-panel.panel-fading-in .detail-header-title, .detail-panel.panel-fading-in .detail-empty, .detail-panel.panel-fading-in .detail-content {
+      animation: panel-blur-in 0.36s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+    @keyframes panel-blur-in { from { opacity: 0; filter: blur(8px); } to { opacity: 1; filter: blur(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .side-menu .rail-section, .side-menu .rail-icon-label,
+      .detail-panel .detail-header-title, .detail-panel .detail-empty, .detail-panel .detail-content { transition: none; animation: none !important; }
+    }
+
     .app-shell.nav-collapsed .side-menu .rail-header {
       justify-content: center;
       margin-bottom: 0;
@@ -2961,20 +2980,46 @@
       runHistorySearch(btn.dataset.query || "", btn.dataset.ci || "", btn.dataset.forceAi === "true");
     });
 
+    // Side panels blur + fade their contents: closing fades out first, then collapses (the
+    // contents become display:none, which can't animate); opening expands, then blurs in.
+    const PANEL_FADE_MS = 170;
+    const reduceMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    function togglePanel(panel, cls, onDone) {
+      if (panel._panelAnim) return; // ignore clicks mid-animation
+      const closing = !appShell.classList.contains(cls);
+      if (reduceMotion()) { appShell.classList.toggle(cls); onDone(); return; }
+      if (closing) {
+        panel._panelAnim = true;
+        panel.classList.add("panel-fading-out");
+        setTimeout(() => {
+          appShell.classList.add(cls);
+          panel.classList.remove("panel-fading-out");
+          panel._panelAnim = false;
+          onDone();
+        }, PANEL_FADE_MS);
+      } else {
+        appShell.classList.remove(cls);
+        panel.classList.remove("panel-fading-in");
+        void panel.offsetWidth; // restart the entrance animation
+        panel.classList.add("panel-fading-in");
+        setTimeout(() => panel.classList.remove("panel-fading-in"), 420);
+        onDone();
+      }
+    }
+
     navCollapseBtn.addEventListener("click", () => {
-      appShell.classList.toggle("nav-collapsed");
-      updateNavCollapseButton();
+      togglePanel($(".side-menu"), "nav-collapsed", updateNavCollapseButton);
     });
 
-    detailCollapseBtn.addEventListener("click", () => {
-      const collapsed = appShell.classList.toggle("detail-collapsed");
+    detailCollapseBtn.addEventListener("click", () => togglePanel($(".detail-panel"), "detail-collapsed", () => {
+      const collapsed = appShell.classList.contains("detail-collapsed");
       detailCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
       detailCollapseBtn.title = collapsed ? "Expand focus" : "Collapse focus";
       detailCollapseBtn.setAttribute("aria-label", detailCollapseBtn.title);
       detailCollapseBtn.innerHTML = collapsed
         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>`
         : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>`;
-    });
+    }));
 
     // ── Cache the AI's /api/translate response (skips Claude + web search on repeat asks) ──
     const TRANSLATE_CACHE_KEY = "translate_cache_v1";
