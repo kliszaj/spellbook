@@ -1119,7 +1119,8 @@
     }
 
     .detail-panel img { display: none; }
-    .detail-zoom { display: block; width: min(170px, 60%); margin: 0 auto 14px; padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 4.75% / 3.5%; transition: transform 0.15s ease; }
+    /* Same footprint as the empty-state .detail-ghost placeholder (70%, max 220px). */
+    .detail-zoom { display: block; width: 70%; max-width: 220px; margin: 0 auto 14px; padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 4.75% / 3.5%; transition: transform 0.15s ease; }
     .detail-zoom:hover { transform: translateY(-2px); }
     .detail-zoom:focus-visible { outline: 2px solid #FF9F1C; outline-offset: 3px; }
     .detail-panel .detail-zoom img { display: block; width: 100%; aspect-ratio: 488 / 680; object-fit: cover; border-radius: 4.75% / 3.5%; box-shadow: 0 10px 24px -14px rgba(0,0,0,0.55); background: #efeae1; }
