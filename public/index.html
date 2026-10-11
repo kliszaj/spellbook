@@ -644,28 +644,25 @@
       display: none;
       align-items: center;
       gap: 8px;
-      margin-top: 10px;
-      padding: 7px 12px;
-      background: #EEEEE8;
-      border-radius: 8px;
-      font: 12px/1.3 'SF Mono', 'Fira Code', 'Consolas', monospace;
-      color: #777;
+      margin-top: 8px;
+      padding: 0 4px 0 18px;
+      font: 12px/1.3 ui-monospace, 'SF Mono', 'Consolas', monospace;
+      color: #57524A;
     }
-
     .query-display.visible { display: flex; }
-    .query-display code { flex: 1; word-break: break-all; }
-
+    .query-label { font: 600 10.5px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: #9E9B92; white-space: nowrap; }
+    .query-display code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .query-display button {
-      background: none;
-      border: none;
-      color: #0066CC;
-      font: 11px/1 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      cursor: pointer;
-      white-space: nowrap;
-      padding: 2px 6px;
+      width: 26px; height: 26px; flex: none;
+      display: grid; place-items: center;
+      background: none; border: 0; border-radius: 7px;
+      color: #9E9B92; cursor: pointer;
+      transition: background 0.12s, color 0.12s;
     }
-
-    .query-display button:hover { text-decoration: underline; }
+    .query-display button svg { width: 14px; height: 14px; }
+    .query-display button:hover { background: #E5EFFF; color: #1F6FEB; }
+    .query-display button.copied { color: #15803D; }
+    .query-display button:focus-visible { outline: 2px solid #FF9F1C; outline-offset: 1px; }
 
     /* ── Status ── */
     .status {
@@ -1613,9 +1610,9 @@
     /* ── Sticky deck bar ── */
     .deck-progress-sentinel { height: 1px; margin-top: -1px; }
     .deck-progress[hidden] { display: none; } /* its display:flex would otherwise beat [hidden] on All/Unsorted */
-    .deck-progress { position: sticky; top: 72px; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; padding: 10px 14px; background: rgba(251,250,246,0.97); border: 1px solid rgba(31,29,25,0.12); border-radius: 12px; box-shadow: 0 8px 20px -16px rgba(28,24,18,0); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: padding 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease; }
+    .deck-progress { position: sticky; top: 72px; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; padding: 10px 14px; background: rgba(247,246,241,0.62); border: 1px solid rgba(31,29,25,0.12); border-radius: 12px; box-shadow: 0 8px 20px -16px rgba(28,24,18,0); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); transition: padding 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease; }
     /* Stuck under the header: a touch tighter, lifted with a soft shadow. */
-    .deck-progress.stuck { padding: 7px 14px; background: rgba(255,254,250,0.98); border-color: rgba(31,29,25,0.16); box-shadow: 0 12px 28px -14px rgba(28,24,18,0.45); }
+    .deck-progress.stuck { padding: 7px 14px; background: rgba(247,246,241,0.72); border-color: rgba(31,29,25,0.16); box-shadow: 0 12px 28px -14px rgba(28,24,18,0.45); }
     .deck-progress.dp-enter { animation: dp-enter 0.28s cubic-bezier(0.2, 0.7, 0.2, 1); }
     @keyframes dp-enter { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) { .deck-progress { transition: none; } .deck-progress.dp-enter { animation: none; } }
@@ -2424,9 +2421,10 @@
               <button id="search-btn">Search</button>
             </div>
             <div class="query-display" id="query-display">
+              <span class="query-label">Scryfall query</span>
               <code id="query-text"></code>
-              <button id="copy-query-btn">Copy</button>
-              <button id="open-scryfall-btn">Scryfall</button>
+              <button id="copy-query-btn" type="button" title="Copy the full query" aria-label="Copy the full query"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button id="open-scryfall-btn" type="button" title="Open on Scryfall" aria-label="Open on Scryfall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button>
             </div>
           </div>
 
@@ -3756,8 +3754,7 @@
           }
           if (found > 0) {
             state.currentQuery = usedQuery; // lets sort/pagination re-run the same lookup
-            queryText.textContent = query;
-            queryDisplay.classList.add("visible");
+            queryDisplay.classList.remove("visible"); // identical to what you typed — nothing to show
             rememberSearch(query, ci, forceAiSearch, { type: "query" });
             return;
           }
@@ -3794,8 +3791,10 @@
           setSortMode("search");
           const scryfallQuery = withCommanderFilters(data.query || data.scryfallQuery || "");
           state.currentQuery = scryfallQuery;
-          queryText.textContent = scryfallQuery;
-          queryDisplay.classList.add("visible");
+          const core = stripCommanderFilters(scryfallQuery).trim();
+          queryText.textContent = core || scryfallQuery;
+          queryText.title = scryfallQuery; // full query (with f:commander / identity) on hover
+          queryDisplay.classList.toggle("visible", Boolean(core) && core.toLowerCase() !== query.trim().toLowerCase());
           await searchScryfall(scryfallQuery, null, searchRun.run, searchRun.signal);
         }
       } catch (err) {
@@ -4165,10 +4164,12 @@
 
     loadMoreBtn.addEventListener("click", () => { if (state.nextPage) searchScryfall(null, state.nextPage); });
 
-    $("#copy-query-btn").addEventListener("click", () => {
-      navigator.clipboard.writeText(state.currentQuery);
-      $("#copy-query-btn").textContent = "Copied!";
-      setTimeout(() => ($("#copy-query-btn").textContent = "Copy"), 1500);
+    $("#copy-query-btn").addEventListener("click", async () => {
+      const btn = $("#copy-query-btn");
+      const ok = await copyText(state.currentQuery);
+      btn.classList.toggle("copied", ok);
+      btn.title = ok ? "Copied" : "Copy failed";
+      setTimeout(() => { btn.classList.remove("copied"); btn.title = "Copy the full query"; }, 1500);
     });
 
     $("#open-scryfall-btn").addEventListener("click", () => {
