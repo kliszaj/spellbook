@@ -1508,10 +1508,6 @@
 
     .da-ai { margin-top: 15px; border-top: 1px solid rgba(31,29,25,0.08); padding-top: 14px; }
     .da-ai-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
-    .da-review-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 13px; border: 1px solid #1a1a1a; border-radius: 8px; background: #1a1a1a; color: #fff; cursor: pointer; transition: opacity 0.15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-    .da-review-btn svg { width: 13px; height: 13px; color: #ffd66b; }
-    .da-review-btn:hover:not(:disabled) { opacity: 0.88; }
-    .da-review-btn:disabled { opacity: 0.5; cursor: default; }
     .da-hint { font-size: 12px; color: #9E9B92; line-height: 1.5; margin: 0; max-width: 60ch; }
     .da-err { color: #EC4899; }
     .da-approx { font-size: 10.5px; color: #B0A99E; margin: 10px 0 0; }
@@ -1629,9 +1625,6 @@
     /* ── Analysis actions row + tabs ── */
     .da2-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
     .da2-actions-btns { display: flex; gap: 8px; margin-left: auto; }
-    .da2-staples-btn { font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 12px; border-radius: 9px; border: 1px solid #FF9F1C; background: #FFF1DD; color: #2A2721; cursor: pointer; transition: background 0.12s, border-color 0.12s; }
-    .da2-staples-btn:hover:not(:disabled) { background: #FFE4BF; border-color: #FF9F1C; }
-    .da2-staples-btn:disabled { opacity: 0.6; cursor: default; }
     .da2-tabs { display: flex; gap: 2px; border-bottom: 1px solid rgba(31,29,25,0.10); margin-bottom: 14px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
     .da2-tabs::-webkit-scrollbar { display: none; }
     .da2-tab { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: #9E9B92; padding: 9px 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: color 0.12s; }
@@ -1684,8 +1677,6 @@
     .sim-color { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 7px 10px; border: 1px solid rgba(31,29,25,0.08); border-radius: 9px; font-size: 12px; color: #57524A; }
     .sim-color .da2-srcpip { width: 20px; height: 20px; } .sim-color .da2-srcpip svg { width: 11px; height: 11px; }
     /* ── Autofill ── */
-    .da2-autofill-btn { font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 12px; border-radius: 9px; border: 1px solid #1F6FEB; background: #1F6FEB; color: #fff; cursor: pointer; }
-    .da2-autofill-btn:hover { background: #1A5FD0; }
     .af-scrim { position: fixed; inset: 0; z-index: 450; background: rgba(20,19,16,0.45); display: grid; place-items: center; padding: 16px; }
     .af-scrim[hidden] { display: none; }
     .af-dialog { width: min(720px, 100%); max-height: calc(100dvh - 32px); overflow: auto; background: #FFFEFA; border-radius: 18px; box-shadow: 0 30px 80px -24px rgba(0,0,0,0.55); padding: 20px; }
@@ -1827,6 +1818,16 @@
     .ct-share i.need { background: #64748B; opacity: 0.55; }
     .ct-share i.have.ok { background: #22C55E; } .ct-share i.have.short { background: #F87171; } .ct-share i.have.over { background: #FFB347; }
     @media (max-width: 760px) { .ov-todo, .mana-grid { grid-template-columns: 1fr; } }
+    /* ── Deck actions (option A): two outline buttons + one primary ── */
+    .da2-autofill-btn, .da2-staples-btn, .da-review-btn { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 12px; border-radius: 9px; border: 1px solid transparent; cursor: pointer; white-space: nowrap; transition: background 0.12s, border-color 0.12s, color 0.12s; }
+    .da2-autofill-btn svg, .da2-staples-btn svg, .da-review-btn svg { width: 15px; height: 15px; flex: none; }
+    .da2-autofill-btn, .da2-staples-btn { background: #FFFFFF; border-color: rgba(20,20,40,0.14); color: #15151F; }
+    .da2-autofill-btn svg, .da2-staples-btn svg { color: #1F6FEB; }
+    .da2-autofill-btn:hover:not(:disabled), .da2-staples-btn:hover:not(:disabled) { border-color: #1F6FEB; background: #E5EFFF; }
+    .da-review-btn { background: #1F6FEB; color: #fff; }
+    .da-review-btn svg { color: #fff; }
+    .da-review-btn:hover:not(:disabled) { background: #1A5FD0; }
+    .da2-autofill-btn:disabled, .da2-staples-btn:disabled, .da-review-btn:disabled { opacity: 0.55; cursor: default; }
     /* ── Toast ── */
     .app-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 400; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); background: #181715; color: #FFFEFA; padding: 11px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55); }
     .app-toast button { border: 0; background: none; color: #FFC46B; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
@@ -2879,6 +2880,8 @@
     const navCollapseBtn = $("#nav-collapse-btn");
     const detailCollapseBtn = $("#detail-collapse-btn");
     const ICON_RECENTS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>`;
+    const ICON_WAND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4M19 14v4M10 2v2M7 8H3M21 16h-4M11 3H9"/></svg>`;
+    const ICON_LIST_PLUS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 12H3M16 6H3M16 18H3M18 9v6M21 12h-6"/></svg>`;
     const ICON_ADD_PLUS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
     const ICON_ADD_UPLOAD = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>`;
     const ICON_ADD_BINDER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6M9 13h6"/></svg>`;
@@ -7323,7 +7326,7 @@
     async function addStaplesToDeck(deck, commander) {
       const btn = $("#da2-staples-btn");
       const folderId = deck.id;
-      if (btn) { btn.disabled = true; btn.textContent = "Finding staples…"; }
+      if (btn) { btn.disabled = true; btn.querySelector("span").textContent = "Finding staples…"; }
       try {
         const deckCards = getFolderCards(folderId);
         const main = deckCards.filter((c) => !isMaybe(folderId, c.id));
@@ -7362,7 +7365,7 @@
         showToast(`Couldn't add staples: ${err.message || "network error"}`);
       } finally {
         const b = $("#da2-staples-btn");
-        if (b) { b.disabled = false; b.textContent = "✦ Add staples"; }
+        if (b) { b.disabled = false; b.querySelector("span").textContent = "Add staples"; }
       }
     }
 
@@ -7436,7 +7439,7 @@
       if (s.total < ANALYSIS_MIN_CARDS) {
         renderDeckProgress({ name: deckName, colors, s, grade: null });
         dA.innerHTML = `
-          ${deck ? `<div class="da2-actions"><div class="da2-actions-btns"><button class="da2-autofill-btn" id="da2-autofill-btn" type="button">✦ Autofill</button></div></div>` : ""}
+          ${deck ? `<div class="da2-actions"><div class="da2-actions-btns"><button class="da2-autofill-btn" id="da2-autofill-btn" type="button">${ICON_WAND}<span>Autofill</span></button></div></div>` : ""}
           <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role ledger, bracket and mana checks will appear here.</div>`;
         dA.style.display = "block";
         dA.classList.remove("collapsed");
@@ -7496,7 +7499,7 @@
           <div class="da2-bracket" id="da2-bracket" title="Estimating bracket…">${bracketDialHtml(null)}</div>
           <div class="da2-actions-btns">
             <button class="da2-autofill-btn" id="da2-autofill-btn" type="button" title="Fill the deck to 100 from EDHREC: ramp, draw, removal, your themes and lands, within a budget">✦ Autofill</button>
-            <button class="da2-staples-btn" id="da2-staples-btn" type="button" title="Adds the staples this deck is missing for its colors — rocks, dual lands, and the commander's most-played cards — straight to the main deck">✦ Add staples</button>
+            <button class="da2-staples-btn" id="da2-staples-btn" type="button" title="Adds the staples this deck is missing for its colors — rocks, dual lands, and the commander's most-played cards — straight to the main deck">${ICON_LIST_PLUS}<span>Add staples</span></button>
             <button class="da-review-btn" id="da-review-btn" ${reviewing ? "disabled" : ""}>${ICON_SPARKLE}<span class="da-review-label">${reviewing ? "Analyzing…" : (cached ? "Re-analyze" : "Analyze")}</span></button>
           </div>
           <button class="da2-collapse-btn" id="da2-collapse-btn" title="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-label="${collapsed ? "Expand deck analysis" : "Collapse deck analysis"}" aria-expanded="${collapsed ? "false" : "true"}">${collapseChevronHtml()}</button>
