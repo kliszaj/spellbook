@@ -42,4 +42,18 @@ test("get rejects bad paths and passes through upstream 404s without caching", a
   assert.equal(calls, 2);
 });
 
+test("peek is disk-only; warm fetches in the background once and then peek finds it", async () => {
+  let calls = 0;
+  const fetchImpl = async () => { calls++; return { ok: true, status: 200, arrayBuffer: async () => new Uint8Array([7]).buffer }; };
+  const cache = createImageCache({ dataDir: await mkdtemp(join(tmpdir(), "spellbook-img-")), fetchImpl });
+  assert.equal(await cache.peek(P), null);
+  assert.equal(calls, 0);
+  cache.warm(P);
+  cache.warm(P); // deduped while in flight
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(calls, 1);
+  assert.deepEqual([...(await cache.peek(P))], [7]);
+  assert.equal(cache.upstreamUrl(P), `https://cards.scryfall.io/${P}`);
+});
+
 await run("Image cache");

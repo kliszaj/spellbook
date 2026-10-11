@@ -1725,7 +1725,30 @@
     .af-primary { font: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 9px; border: 1px solid #1F6FEB; background: #1F6FEB; color: #fff; cursor: pointer; }
     .af-primary:disabled { opacity: 0.5; cursor: default; }
     /* ── New deck dialog + empty-deck start screen ── */
-    .nd-dialog { width: min(860px, 100%); }
+    .nd-dialog { width: min(980px, 100%); height: min(760px, calc(100dvh - 32px)); display: flex; flex-direction: column; overflow: hidden; }
+    .nd-dialog #nd-body { flex: 1; min-height: 0; }
+    .nd-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; height: 100%; }
+    .nd-main { min-height: 0; overflow: auto; padding: 2px 6px 8px 2px; }
+    .nd-side { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 14px; padding: 14px; border-radius: 14px; background: #FBFAF6; border: 1px solid rgba(31,29,25,0.10); }
+    .nd-side-card { display: flex; flex-direction: column; gap: 6px; }
+    .nd-side-card h3 { margin: 6px 0 0; font-size: 16px; }
+    .nd-side-art img { max-width: 220px; margin: 0 auto; }
+    .nd-side-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 30px 6px; color: #9E9B92; font-size: 12.5px; }
+    .nd-side-empty b { color: #181715; font-size: 14px; }
+    .nd-side-actions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+    .nd-side-actions button { width: 100%; }
+    @media (max-width: 700px) {
+      .nd-layout { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+      .nd-side { order: -1; display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; padding: 10px; overflow: visible; }
+      .nd-side-card { display: contents; }
+      .nd-side-art { grid-row: span 3; } .nd-side-art img { max-width: 84px; }
+      .nd-side-card h3, .nd-side-card .da2-vsub, .nd-side-card .nd-themes, .nd-side-card .nd-name { grid-column: 2; }
+      .nd-side-card .nd-themes { display: none; }
+      .nd-side-empty { grid-column: 1 / -1; padding: 8px; }
+      .nd-side-actions { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+      .nd-side-actions button { width: auto; flex: 1; }
+      .nd-side-actions .da2-vsub { display: none; }
+    }
     .nd-search { display: flex; align-items: center; gap: 8px; border: 1.5px solid #E2E2EA; border-radius: 12px; padding: 9px 14px; background: #fff; }
     .nd-search:focus-within { border-color: #1F6FEB; }
     .nd-search input { border: 0; outline: 0; flex: 1; background: none; font: inherit; font-size: 14.5px; }
@@ -1759,7 +1782,7 @@
     .deck-start-crown { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; background: #E5EFFF; color: #1F6FEB; font-size: 28px; }
     .deck-start-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
     .deck-start-btns button[hidden] { display: none; }
-    @media (max-width: 600px) { .nd-picked { grid-template-columns: 100px minmax(0, 1fr); } }
+
     /* ── Toast ── */
     .app-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 400; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); background: #181715; color: #FFFEFA; padding: 11px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 12px 32px -12px rgba(0,0,0,0.55); }
     .app-toast button { border: 0; background: none; color: #FFC46B; font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
@@ -6701,27 +6724,33 @@
       const owned = ownedCommanders(ndCtx.query);
       const results = ndCtx.ownedOnly ? [] : ndCtx.results;
       const p = ndCtx.picked;
+      const side = p ? `
+          <span class="nd-art nd-side-art"><img src="${getCardImage(p)}" alt="${esc(p.name)}"></span>
+          <h3>${esc(p.name)}</h3>
+          <div class="da2-vsub">${(p.color_identity || []).join("") || "Colourless"}${ndCtx.numDecks ? ` · ${ndCtx.numDecks.toLocaleString()} decks on EDHREC` : ""}${ownedQty(collectionIndex, p) > 0 ? " · you own it" : ""}</div>
+          ${ndCtx.themes.length ? `<div class="nd-themes">${ndCtx.themes.slice(0, 6).map((t) => `<span>${esc(t.name)} <em>${t.count}</em></span>`).join("")}</div>` : ""}
+          ${ndCtx.deck ? "" : `<label class="nd-name">Deck name<input id="nd-name" value="${esc(ndCtx.name)}" maxlength="80"></label>`}`
+        : `<div class="nd-side-empty"><div class="deck-start-crown" aria-hidden="true">♛</div><b>Pick a commander</b><span>Click a card on the left to see it here.</span></div>`;
       body.innerHTML = `
-        <div class="nd-search"><span aria-hidden="true">⌕</span><input id="nd-q" type="search" placeholder="Search commanders… e.g. Codie, Atraxa, t:dragon" value="${esc(ndCtx.query)}" autocomplete="off"></div>
-        <div class="nd-filters"><div class="nd-seg" role="group" aria-label="Which commanders">
-          <button type="button" data-nd-owned="0" class="${ndCtx.ownedOnly ? "" : "on"}">All commanders</button>
-          <button type="button" data-nd-owned="1" class="${ndCtx.ownedOnly ? "on" : ""}">I own</button></div></div>
-        ${owned.length ? `<div class="da-h nd-h">From your collection</div><div class="nd-results">${owned.map(ndTile).join("")}</div>` : (ndCtx.ownedOnly ? `<div class="da2-vsub">No owned commanders match.${hasCollection() ? "" : " Upload your collection on the Collection tab."}</div>` : "")}
-        ${ndCtx.ownedOnly ? "" : `<div class="da-h nd-h">${ndCtx.searching ? "Searching…" : "Most popular first"}</div>
-          ${ndCtx.error ? `<div class="da2-vsub">${esc(ndCtx.error)}</div>` : `<div class="nd-results">${results.map(ndTile).join("") || `<span class="da2-vsub">No commanders match.</span>`}</div>`}`}
-        ${p ? `<div class="nd-picked">
-          <span class="nd-art"><img src="${getCardImage(p)}" alt="${esc(p.name)}"></span>
-          <div>
-            <h3>${esc(p.name)}</h3>
-            <div class="da2-vsub">${(p.color_identity || []).join("") || "Colourless"}${ndCtx.numDecks ? ` · ${ndCtx.numDecks.toLocaleString()} decks on EDHREC` : ""}${ownedQty(collectionIndex, p) > 0 ? " · you own it" : ""}</div>
-            ${ndCtx.themes.length ? `<div class="da-h nd-h">Popular themes</div><div class="nd-themes">${ndCtx.themes.slice(0, 6).map((t) => `<span>${esc(t.name)} <em>${t.count}</em></span>`).join("")}</div>` : ""}
-            ${ndCtx.deck ? "" : `<label class="nd-name">Deck name<input id="nd-name" value="${esc(ndCtx.name)}" maxlength="80"></label>`}
-          </div></div>` : ""}
-        <div class="af-foot">
-          <span class="da2-vsub" style="margin-right:auto;align-self:center">You can change the commander later with the crown.</span>
-          <button class="btn-plain" type="button" data-nd-close>Cancel</button>
-          <button class="btn-plain" type="button" data-nd-create="plain" ${p ? "" : "disabled"}>${ndCtx.deck ? "Set commander" : "Create deck"}</button>
-          <button class="af-primary" type="button" data-nd-create="fill" ${p ? "" : "disabled"}>${ndCtx.deck ? "Set & Autofill" : "Create & Autofill"}</button>
+        <div class="nd-layout">
+          <div class="nd-main">
+            <div class="nd-search"><span aria-hidden="true">⌕</span><input id="nd-q" type="search" placeholder="Search commanders… e.g. Codie, Atraxa, t:dragon" value="${esc(ndCtx.query)}" autocomplete="off"></div>
+            <div class="nd-filters"><div class="nd-seg" role="group" aria-label="Which commanders">
+              <button type="button" data-nd-owned="0" class="${ndCtx.ownedOnly ? "" : "on"}">All commanders</button>
+              <button type="button" data-nd-owned="1" class="${ndCtx.ownedOnly ? "on" : ""}">I own</button></div></div>
+            ${owned.length ? `<div class="da-h nd-h">From your collection</div><div class="nd-results">${owned.map(ndTile).join("")}</div>` : (ndCtx.ownedOnly ? `<div class="da2-vsub">No owned commanders match.${hasCollection() ? "" : " Upload your collection on the Collection tab."}</div>` : "")}
+            ${ndCtx.ownedOnly ? "" : `<div class="da-h nd-h">${ndCtx.searching ? "Searching…" : "Most popular first"}</div>
+              ${ndCtx.error ? `<div class="da2-vsub">${esc(ndCtx.error)}</div>` : `<div class="nd-results">${results.map(ndTile).join("") || `<span class="da2-vsub">No commanders match.</span>`}</div>`}`}
+          </div>
+          <aside class="nd-side" aria-live="polite">
+            <div class="nd-side-card">${side}</div>
+            <div class="nd-side-actions">
+              <button class="af-primary" type="button" data-nd-create="fill" ${p ? "" : "disabled"}>${ndCtx.deck ? "Set & Autofill" : "Create & Autofill"}</button>
+              <button class="btn-plain" type="button" data-nd-create="plain" ${p ? "" : "disabled"}>${ndCtx.deck ? "Set commander" : "Create deck"}</button>
+              <button class="btn-plain" type="button" data-nd-close>Cancel</button>
+              <span class="da2-vsub">You can change the commander later with the crown.</span>
+            </div>
+          </aside>
         </div>`;
     }
     let ndSearchTimer = null;
@@ -6746,16 +6775,21 @@
     }
     function closeNewDeck() { $("#nd-dialog").hidden = true; ndCtx = null; }
     async function pickCommander(card) {
+      const scroller = $(".nd-main");
+      const keep = scroller ? scroller.scrollTop : 0;
       ndCtx.picked = card;
       ndCtx.name = frontFaceName(card.name).split(",")[0];
       ndCtx.themes = []; ndCtx.numDecks = 0; ndCtx.typing = false;
       renderNewDeck();
+      if ($(".nd-main")) $(".nd-main").scrollTop = keep;
       try {
         const d = await edhrecPage(card.name);
         if (ndCtx && ndCtx.picked?.id === card.id) {
           ndCtx.themes = (d.themes || []).filter((t) => !/companion/i.test(t.slug));
           ndCtx.numDecks = d.numDecks || 0;
+          const s = $(".nd-main"), top = s ? s.scrollTop : 0;
           renderNewDeck();
+          if ($(".nd-main")) $(".nd-main").scrollTop = top;
         }
       } catch { /* themes are a nice-to-have */ }
     }

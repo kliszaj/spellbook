@@ -997,11 +997,19 @@ const GC_TTL = 1000 * 60 * 60 * 24;
 const imageCache = createImageCache({ dataDir: DATA_DIR });
 app.get(/^\/img\/(.+)$/, async (req, res) => {
   try {
-    const { buf, hit } = await imageCache.get(req.params[0]);
+    const p = req.params[0];
+    const buf = await imageCache.peek(p);
+    if (!buf) {
+      // Not cached yet: send the browser straight to Scryfall (as fast as before the cache)
+      // and save a copy in the background, so the next load comes from this server.
+      imageCache.warm(p);
+      res.set({ "Cache-Control": "no-store", "X-Image-Cache": "miss" });
+      return res.redirect(302, imageCache.upstreamUrl(p));
+    }
     res.set({
-      "Content-Type": req.params[0].endsWith(".png") ? "image/png" : "image/jpeg",
+      "Content-Type": p.endsWith(".png") ? "image/png" : "image/jpeg",
       "Cache-Control": "public, max-age=31536000, immutable",
-      "X-Image-Cache": hit ? "hit" : "miss",
+      "X-Image-Cache": "hit",
     });
     res.send(buf);
   } catch (err) {
