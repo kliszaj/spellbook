@@ -2384,10 +2384,9 @@
     #gameplan-input { width: 100%; min-height: 240px; }
     #gameplan-count.over { color: #B3261E; font-weight: 700; }
     /* ════ Phone layout (≤ 760px). Desktop is untouched: everything here is phone-only. ════ */
-    .m-tabbar, .m-ctx-row, .m-scrim { display: none; }
+    .m-tabbar, .m-ctx-row, .m-scrim, .m-sheet { display: none; }
     @media (max-width: 760px) {
       body { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
-      body.m-locked { overflow: hidden; }
       main { width: calc(100% - 20px); padding-top: 10px; }
       /* Header: one slim row (title + settings); tabs live in the bottom bar. */
       header { grid-template-columns: 1fr auto; height: 56px; padding: 0 14px; gap: 10px; }
@@ -2421,7 +2420,8 @@
       .m-scrim.on { opacity: 1; pointer-events: auto; }
 
       /* Side panel and card focus become bottom sheets. */
-      .side-menu, .detail-panel {
+      .side-menu { display: none !important; }
+      .m-sheet, .detail-panel {
         position: fixed !important; left: 0; right: 0; bottom: 0; top: auto !important; z-index: 460;
         max-height: 88dvh; overflow: auto; overscroll-behavior: contain;
         margin: 0; border-radius: 22px 22px 0 0; padding: 14px 14px calc(22px + env(safe-area-inset-bottom, 0px)) !important;
@@ -2429,10 +2429,13 @@
         transform: translateY(105%); transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
         display: block !important; grid-column: auto !important; min-height: 0 !important;
       }
-      .side-menu.m-open, .detail-panel.m-open { transform: none; }
-      .side-menu.m-dragging, .detail-panel.m-dragging { transition: none; }
-      .side-menu::before, .detail-panel::before { content: ""; display: block; width: 40px; height: 5px; border-radius: 999px; background: #D4D4DC; margin: 0 auto 12px; }
-      .side-menu .rail-header, .side-menu .workspace-section, .detail-panel .detail-header { display: none !important; }
+      .m-sheet.m-open, .detail-panel.m-open { transform: none; }
+      .m-sheet.m-dragging, .detail-panel.m-dragging { transition: none; }
+      .m-sheet::before, .detail-panel::before { content: ""; display: block; width: 40px; height: 5px; border-radius: 999px; background: #D4D4DC; margin: 0 auto 12px; }
+      .detail-panel .detail-header { display: none !important; }
+      .m-sheet { border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+      .detail-panel { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+      .m-sheet .rail-section { display: block !important; margin: 0; }
       .detail-panel .detail-empty { display: none !important; }
       .folder-rail { flex-direction: column; flex-wrap: nowrap; }
       .folder-rail .rail-label { display: block; }
@@ -2495,6 +2498,7 @@
     <button class="tab-btn m-tab" data-tab="collection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v16H4zM14 4h6v16h-6z"/></svg>Collection</button>
   </nav>
   <div class="m-scrim" id="m-scrim"></div>
+  <div class="m-sheet" id="m-sheet" role="dialog" aria-label="Choose"></div>
   <main>
     <div class="app-shell" id="app-shell">
       <aside class="side-menu search-mode" id="side-menu" aria-label="Spellbook navigation">
@@ -9359,7 +9363,23 @@
     const phoneMq = window.matchMedia("(max-width: 760px)");
     const isPhone = () => phoneMq.matches;
     const mScrim = $("#m-scrim");
-    const sidePanel = $("#side-menu");
+    const sidePanel = $("#m-sheet");
+    // On phone the relevant side-panel section (decks / binders / recents) is moved into the
+    // standalone sheet while it's open, then put back, so its listeners and renderers keep working.
+    let borrowed = null;
+    function borrowSection() {
+      returnSection();
+      const sel = state.activeTab === "saved" ? ".folders-section" : state.activeTab === "collection" ? ".binders-section" : ".history-section";
+      const sec = $("#side-menu " + sel);
+      if (!sec) return;
+      borrowed = { sec, parent: sec.parentNode, next: sec.nextSibling };
+      sidePanel.appendChild(sec);
+    }
+    function returnSection() {
+      if (!borrowed) return;
+      borrowed.parent.insertBefore(borrowed.sec, borrowed.next);
+      borrowed = null;
+    }
     const detailPanelEl = $("#detail-panel");
     function openSheet(el) {
       if (!isPhone() || !el) return;
@@ -9367,11 +9387,10 @@
       el.classList.add("m-open");
       el.scrollTop = 0;
       mScrim.classList.add("on");
-      document.body.classList.add("m-locked");
     }
     function closeSheets(except = null) {
       [sidePanel, detailPanelEl].forEach((el) => { if (el !== except) el?.classList.remove("m-open"); });
-      if (!except) { mScrim.classList.remove("on"); document.body.classList.remove("m-locked"); }
+      if (!except) { mScrim.classList.remove("on"); if (borrowed) setTimeout(() => { if (!sidePanel.classList.contains("m-open")) returnSection(); }, 300); }
     }
     mScrim.addEventListener("click", () => closeSheets());
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && isPhone()) closeSheets(); });
@@ -9414,7 +9433,7 @@
       }
       $("#m-ctx-icon").innerHTML = state.activeTab === "search" ? ICON_RECENTS : ICON_FOLDER;
     }
-    $("#m-ctx").addEventListener("click", () => { updateMobileCtx(); openSheet(sidePanel); });
+    $("#m-ctx").addEventListener("click", () => { updateMobileCtx(); borrowSection(); openSheet(sidePanel); });
     $("#m-ctx-add").addEventListener("click", () => openNewDeck());
     // Picking a deck / binder / recent search (or an action) closes the sheet.
     sidePanel.addEventListener("click", (e) => {
@@ -9424,7 +9443,7 @@
     });
     // Keep the label current as tabs, decks and binders change.
     const _setActiveTab = setActiveTab;
-    setActiveTab = function (tab) { closeSheets(); _setActiveTab(tab); updateMobileCtx(); };
+    setActiveTab = function (tab) { closeSheets(); _setActiveTab(tab); updateMobileCtx(); if (isPhone()) window.scrollTo(0, 0); };
     const _renderFolderRail = renderFolderRail;
     renderFolderRail = function () { _renderFolderRail(); updateMobileCtx(); };
     const _renderBinderRail = renderBinderRail;
