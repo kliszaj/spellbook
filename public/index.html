@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Spellbook">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F7F6F1">
   <title>Spellbook</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2387,10 +2396,15 @@
     .m-tabbar, .m-ctx-row, .m-scrim, .m-sheet { display: none; }
     @media (max-width: 760px) {
       body { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
-      html, body { overflow-x: clip; max-width: 100%; }
+      html { overflow-x: hidden; } body { overflow-x: clip; max-width: 100%; }
+      /* The search glow overlay extends 26px past the field; on a phone that widened the page
+         (iOS then grows the layout viewport: "zoomed in" + sideways panning). It's a hover effect anyway. */
+      .search-bar > .search-edge-light { display: none !important; }
+      .content-panel { overflow-x: clip; }
+      .content-panel input, .content-panel select, .content-panel textarea { min-width: 0; max-width: 100%; }
       main { width: calc(100% - 20px); padding-top: 10px; overflow-x: clip; }
       /* Header: one slim row (title + settings); tabs live in the bottom bar. */
-      header { grid-template-columns: 1fr auto; height: 56px; padding: 0 14px; gap: 10px; }
+      header { grid-template-columns: 1fr auto; height: calc(56px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) 14px 0; gap: 10px; }
       header h1 { font-size: 21px; }
       header .nav-pills { display: none; }
       .content-panel { padding: 12px; border-radius: 18px; }
@@ -2471,7 +2485,7 @@
       .card-name { font-size: 11.5px; } .card-price { font-size: 11px; }
 
       /* Deck bar: compact under the slimmer header. */
-      .deck-progress { top: 62px; gap: 8px; padding: 8px 10px; }
+      .deck-progress { top: calc(62px + env(safe-area-inset-top, 0px)); gap: 8px; padding: 8px 10px; }
       .deck-progress .dp-id small { display: none; }
       .deck-progress .dp-bar { min-width: 50px; }
       .deck-start p { display: none; }
