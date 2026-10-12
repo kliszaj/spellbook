@@ -2413,6 +2413,8 @@
       .m-ctx-count { margin-left: auto; color: #9E9B92; font-size: 12px; font-weight: 600; white-space: nowrap; }
       .m-ctx-add { width: 44px; flex: none; border-radius: 12px; border: 1px solid rgba(31,29,25,0.12); background: rgba(255,255,255,0.85); color: #1F6FEB; font-size: 20px; font-weight: 700; }
       .m-ctx-add[hidden] { display: none; }
+      .m-ctx-caret { color: #1F6FEB; font-size: 13px; }
+      .m-ctx-count { padding: 2px 8px; border-radius: 999px; background: #E5EFFF; color: #1F6FEB; }
 
       /* Backdrop for sheets. */
       .m-scrim { display: block; position: fixed; inset: 0; z-index: 450; background: rgba(15,15,25,0.38); opacity: 0; pointer-events: none; transition: opacity 0.22s ease; }
@@ -2533,7 +2535,7 @@
       </aside>
 
       <section class="content-panel">
-        <div class="m-ctx-row"><button class="m-ctx" id="m-ctx" type="button"><span id="m-ctx-icon"></span><span class="m-ctx-label" id="m-ctx-label"></span><span class="m-ctx-count" id="m-ctx-count"></span><span aria-hidden="true">▾</span></button><button class="m-ctx-add" id="m-ctx-add" type="button" aria-label="New deck" hidden>+</button></div>
+        <div class="m-ctx-row"><button class="m-ctx" id="m-ctx" type="button"><span id="m-ctx-icon"></span><span class="m-ctx-label" id="m-ctx-label"></span><span class="m-ctx-count" id="m-ctx-count"></span><span class="m-ctx-caret" aria-hidden="true">▾</span></button><button class="m-ctx-add" id="m-ctx-add" type="button" aria-label="New deck" hidden>+</button></div>
         <div class="search-content" id="search-content">
           <div class="search-section">
             <div class="color-identity">
@@ -9398,7 +9400,7 @@
       if (state.activeTab === "saved") {
         const deck = state.folders.find((f) => f.id === state.activeFolder);
         label.textContent = deck ? deck.name : "Choose a deck";
-        count.textContent = deck ? String(folderCount(deck.id)) : "";
+        count.textContent = state.folders.length > 1 ? `${state.folders.length} decks` : (deck ? `${folderCount(deck.id)} cards` : "");
         add.hidden = false;
       } else if (state.activeTab === "collection") {
         label.textContent = collectionUi.binder || "All cards";
