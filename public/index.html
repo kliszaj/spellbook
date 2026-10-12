@@ -2393,7 +2393,8 @@
     #gameplan-input { width: 100%; min-height: 240px; }
     #gameplan-count.over { color: #B3261E; font-weight: 700; }
     /* ════ Phone layout (≤ 760px). Desktop is untouched: everything here is phone-only. ════ */
-    .m-tabbar, .m-ctx-row, .m-scrim, .m-sheet { display: none; }
+    .m-tabbar, .m-ctx-row, .m-scrim, .m-sheet, .m-only { display: none; }
+    @media (max-width: 760px) { .m-sheet .m-only { display: block; } }
     @media (max-width: 760px) {
       body { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
       html { overflow-x: hidden; } body { overflow-x: clip; max-width: 100%; }
@@ -2485,7 +2486,15 @@
       .card-name { font-size: 11.5px; } .card-price { font-size: 11px; }
 
       /* Deck bar: compact under the slimmer header. */
-      .deck-progress { top: calc(62px + env(safe-area-inset-top, 0px)); gap: 8px; padding: 8px 10px; }
+      /* Same box stuck or not: a size change on stick moved the sentinel and made the bar flicker. */
+      .deck-progress, .deck-progress.stuck { top: calc(62px + env(safe-area-inset-top, 0px)); gap: 8px; padding: 8px 10px; transition: box-shadow 0.22s ease, background-color 0.22s ease; }
+      /* Sheet lists share one type scale: recents and binders match the deck rows. */
+      .m-sheet .history-btn, .m-sheet .folder-btn, .m-sheet .folder-add { font-size: 14px; font-weight: 500; line-height: 1.25; padding: 11px 10px; }
+      .m-sheet .history-btn { color: #555; }
+      .m-sheet .history-row { padding: 0; }
+      .m-sheet .history-meta, .m-sheet .folder-count { font-size: 12px; font-weight: 600; }
+      .m-sheet .rail-empty { font-size: 14px; padding: 11px 10px; }
+      .m-sheet .history-remove { width: 32px; height: 32px; font-size: 18px; }
       .deck-progress .dp-id small { display: none; }
       .deck-progress .dp-bar { min-width: 50px; }
       .deck-start p { display: none; }
