@@ -2383,6 +2383,95 @@
     .owned-chip.stacked { top: 34px; }
     #gameplan-input { width: 100%; min-height: 240px; }
     #gameplan-count.over { color: #B3261E; font-weight: 700; }
+    /* ════ Phone layout (≤ 760px). Desktop is untouched: everything here is phone-only. ════ */
+    .m-tabbar, .m-ctx-row, .m-scrim { display: none; }
+    @media (max-width: 760px) {
+      body { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+      body.m-locked { overflow: hidden; }
+      main { width: calc(100% - 20px); padding-top: 10px; }
+      /* Header: one slim row (title + settings); tabs live in the bottom bar. */
+      header { grid-template-columns: 1fr auto; height: 56px; padding: 0 14px; gap: 10px; }
+      header h1 { font-size: 21px; }
+      header .nav-pills { display: none; }
+      .content-panel { padding: 12px; border-radius: 18px; }
+      #nav-collapse-btn, #detail-collapse-btn { display: none; }
+
+      /* Bottom tab bar: same glass as the header and deck bar. */
+      .m-tabbar { display: grid; position: fixed; left: 0; right: 0; bottom: 0; z-index: 400; grid-template-columns: repeat(3, 1fr);
+        padding: 7px 10px calc(9px + env(safe-area-inset-bottom, 0px));
+        background: rgba(247,246,241,0.62); border-top: 1px solid rgba(31,29,25,0.12);
+        backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+      .m-tabbar .m-tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border: 0; border-radius: 12px; background: none; box-shadow: none; font: inherit; font-size: 11px; font-weight: 600; color: #8A8A9C; }
+      .m-tabbar .m-tab svg { width: 22px; height: 22px; }
+      .m-tabbar .m-tab.active { color: #1F6FEB; background: none; box-shadow: none; }
+
+      /* Context switcher (deck / binder / recents) at the top of the content. */
+      .m-ctx-row { display: flex; gap: 8px; margin-bottom: 12px; }
+      .m-ctx { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(31,29,25,0.12); background: rgba(255,255,255,0.85); font: inherit; font-size: 14px; font-weight: 700; color: #181715; text-align: left; }
+      .m-ctx svg { width: 17px; height: 17px; color: #1F6FEB; flex: none; }
+      .m-ctx-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .m-ctx-count { margin-left: auto; color: #9E9B92; font-size: 12px; font-weight: 600; white-space: nowrap; }
+      .m-ctx-add { width: 44px; flex: none; border-radius: 12px; border: 1px solid rgba(31,29,25,0.12); background: rgba(255,255,255,0.85); color: #1F6FEB; font-size: 20px; font-weight: 700; }
+      .m-ctx-add[hidden] { display: none; }
+
+      /* Backdrop for sheets. */
+      .m-scrim { display: block; position: fixed; inset: 0; z-index: 450; background: rgba(15,15,25,0.38); opacity: 0; pointer-events: none; transition: opacity 0.22s ease; }
+      .m-scrim.on { opacity: 1; pointer-events: auto; }
+
+      /* Side panel and card focus become bottom sheets. */
+      .side-menu, .detail-panel {
+        position: fixed !important; left: 0; right: 0; bottom: 0; top: auto !important; z-index: 460;
+        max-height: 88dvh; overflow: auto; overscroll-behavior: contain;
+        margin: 0; border-radius: 22px 22px 0 0; padding: 14px 14px calc(22px + env(safe-area-inset-bottom, 0px)) !important;
+        background: #FFFEFA !important; box-shadow: 0 -14px 44px -18px rgba(0,0,0,0.45);
+        transform: translateY(105%); transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+        display: block !important; grid-column: auto !important; min-height: 0 !important;
+      }
+      .side-menu.m-open, .detail-panel.m-open { transform: none; }
+      .side-menu.m-dragging, .detail-panel.m-dragging { transition: none; }
+      .side-menu::before, .detail-panel::before { content: ""; display: block; width: 40px; height: 5px; border-radius: 999px; background: #D4D4DC; margin: 0 auto 12px; }
+      .side-menu .rail-header, .side-menu .workspace-section, .detail-panel .detail-header { display: none !important; }
+      .detail-panel .detail-empty { display: none !important; }
+      .folder-rail { flex-direction: column; flex-wrap: nowrap; }
+      .folder-rail .rail-label { display: block; }
+      .folder-btn, .folder-add { width: 100%; padding: 11px 10px; font-size: 14px; }
+
+      /* Long-press menu as a bottom action sheet. */
+      .context-menu.visible { left: 8px !important; right: 8px; top: auto !important; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); min-width: 0; border-radius: 18px; padding: 8px; box-shadow: 0 -10px 40px -10px rgba(0,0,0,0.45); z-index: 470; }
+      .context-menu .ctx-item { padding: 13px 12px; font-size: 15px; }
+      .card-item, .card-item img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
+      /* Search field: one line, icon buttons inside. */
+      .search-bar { flex-direction: row !important; align-items: center; padding: 4px 4px 4px 14px !important; gap: 4px !important; }
+      .search-bar input { padding: 10px 0 !important; }
+      #search-input { height: 41px !important; min-height: 41px; max-height: 41px; white-space: nowrap; overflow: hidden; padding: 10px 0; }
+      .search-bar #search-btn { width: 38px !important; height: 38px; padding: 0 !important; flex: none; font-size: 0; border-radius: 10px; }
+      .search-bar #search-btn::before { content: "→"; font-size: 17px; font-weight: 700; }
+      .search-bar .ai-search-toggle { width: 34px; height: 34px; min-width: 34px; max-width: 34px; flex-basis: 34px; }
+
+      /* Filters: compact colours; sort + chips in one swipeable row. */
+      .color-toggle { width: 30px; height: 30px; }
+      .sort-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+      .sort-bar::-webkit-scrollbar { display: none; }
+      .sort-bar .sort-label { display: none; }
+      .mv-chips, .land-chips { flex-wrap: nowrap; }
+      .deck-io { margin-left: 8px; }
+
+      /* Grid: two cards per row. */
+      .results-grid { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+      .card-name { font-size: 11.5px; } .card-price { font-size: 11px; }
+
+      /* Deck bar: compact under the slimmer header. */
+      .deck-progress { top: 62px; gap: 8px; padding: 8px 10px; }
+      .deck-progress .dp-id small { display: none; }
+      .deck-progress .dp-bar { min-width: 50px; }
+      .deck-start p { display: none; }
+
+      /* Dialogs as bottom sheets. */
+      .af-scrim { padding: 0; place-items: end center; }
+      .af-dialog { width: 100%; max-height: 92dvh; border-radius: 22px 22px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+      .nd-dialog { height: 92dvh; }
+    }
   </style>
 </head>
 <body>
@@ -2398,6 +2487,12 @@
     </div>
   </header>
 
+  <nav class="m-tabbar" aria-label="Sections">
+    <button class="tab-btn m-tab active" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</button>
+    <button class="tab-btn m-tab" data-tab="saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="13" height="17" rx="2"/><path d="M8 21h11a1 1 0 0 0 1-1V7"/></svg>Decks</button>
+    <button class="tab-btn m-tab" data-tab="collection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v16H4zM14 4h6v16h-6z"/></svg>Collection</button>
+  </nav>
+  <div class="m-scrim" id="m-scrim"></div>
   <main>
     <div class="app-shell" id="app-shell">
       <aside class="side-menu search-mode" id="side-menu" aria-label="Spellbook navigation">
@@ -2438,6 +2533,7 @@
       </aside>
 
       <section class="content-panel">
+        <div class="m-ctx-row"><button class="m-ctx" id="m-ctx" type="button"><span id="m-ctx-icon"></span><span class="m-ctx-label" id="m-ctx-label"></span><span class="m-ctx-count" id="m-ctx-count"></span><span aria-hidden="true">▾</span></button><button class="m-ctx-add" id="m-ctx-add" type="button" aria-label="New deck" hidden>+</button></div>
         <div class="search-content" id="search-content">
           <div class="search-section">
             <div class="color-identity">
@@ -9256,6 +9352,132 @@
       gameplanModal.classList.remove("visible");
       renderSavedCards();
     });
+    // ═══ Phone layout (≤ 760px): bottom tabs, context switcher, sheets, long-press ═══
+    // Desktop is untouched: every behaviour here is gated on isPhone().
+    const phoneMq = window.matchMedia("(max-width: 760px)");
+    const isPhone = () => phoneMq.matches;
+    const mScrim = $("#m-scrim");
+    const sidePanel = $("#side-menu");
+    const detailPanelEl = $("#detail-panel");
+    function openSheet(el) {
+      if (!isPhone() || !el) return;
+      closeSheets(el);
+      el.classList.add("m-open");
+      el.scrollTop = 0;
+      mScrim.classList.add("on");
+      document.body.classList.add("m-locked");
+    }
+    function closeSheets(except = null) {
+      [sidePanel, detailPanelEl].forEach((el) => { if (el !== except) el?.classList.remove("m-open"); });
+      if (!except) { mScrim.classList.remove("on"); document.body.classList.remove("m-locked"); }
+    }
+    mScrim.addEventListener("click", () => closeSheets());
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && isPhone()) closeSheets(); });
+    // Swipe a sheet down (from its top) to close it.
+    [sidePanel, detailPanelEl].forEach((el) => {
+      let startY = null, dy = 0;
+      el.addEventListener("touchstart", (e) => { if (!el.classList.contains("m-open") || el.scrollTop > 0) return; startY = e.touches[0].clientY; dy = 0; }, { passive: true });
+      el.addEventListener("touchmove", (e) => {
+        if (startY == null) return;
+        dy = e.touches[0].clientY - startY;
+        if (dy > 0) { el.classList.add("m-dragging"); el.style.transform = `translateY(${dy}px)`; }
+      }, { passive: true });
+      el.addEventListener("touchend", () => {
+        if (startY == null) return;
+        el.classList.remove("m-dragging");
+        el.style.transform = "";
+        if (dy > 90) closeSheets();
+        startY = null;
+      });
+    });
+
+    // Context switcher: the deck (Decks), the binder (Collection) or recent searches (Search).
+    function updateMobileCtx() {
+      const label = $("#m-ctx-label"), count = $("#m-ctx-count"), add = $("#m-ctx-add");
+      if (!label) return;
+      if (state.activeTab === "saved") {
+        const deck = state.folders.find((f) => f.id === state.activeFolder);
+        label.textContent = deck ? deck.name : "Choose a deck";
+        count.textContent = deck ? String(folderCount(deck.id)) : "";
+        add.hidden = false;
+      } else if (state.activeTab === "collection") {
+        label.textContent = collectionUi.binder || "All cards";
+        const n = collectionUi.binder ? (binderCounts().find(([b]) => b === collectionUi.binder)?.[1] || 0) : (collectionIndex?.list.length || 0);
+        count.textContent = collectionIndex?.list.length ? n.toLocaleString() : "";
+        add.hidden = true;
+      } else {
+        label.textContent = "Recent searches";
+        count.textContent = "";
+        add.hidden = true;
+      }
+      $("#m-ctx-icon").innerHTML = state.activeTab === "search" ? ICON_RECENTS : ICON_FOLDER;
+    }
+    $("#m-ctx").addEventListener("click", () => { updateMobileCtx(); openSheet(sidePanel); });
+    $("#m-ctx-add").addEventListener("click", () => openNewDeck());
+    // Picking a deck / binder / recent search (or an action) closes the sheet.
+    sidePanel.addEventListener("click", (e) => {
+      if (!isPhone()) return;
+      if (e.target.closest(".folder-edit")) return; // rename/delete stay in the sheet
+      if (e.target.closest(".folder-btn, [data-binder], .history-btn, .folder-add")) setTimeout(() => { closeSheets(); updateMobileCtx(); }, 0);
+    });
+    // Keep the label current as tabs, decks and binders change.
+    const _setActiveTab = setActiveTab;
+    setActiveTab = function (tab) { closeSheets(); _setActiveTab(tab); updateMobileCtx(); };
+    const _renderFolderRail = renderFolderRail;
+    renderFolderRail = function () { _renderFolderRail(); updateMobileCtx(); };
+    const _renderBinderRail = renderBinderRail;
+    renderBinderRail = function () { _renderBinderRail(); updateMobileCtx(); };
+
+    // Tapping a card opens its details as a sheet (only for real taps, not background
+    // refreshes that re-render the panel).
+    const _showDetail = showDetail;
+    showDetail = function (card) {
+      _showDetail(card);
+      const ev = window.event;
+      if (isPhone() && ev && (ev.type === "click" || ev.type === "keydown" || ev.type === "touchend")) openSheet(detailPanelEl);
+    };
+
+    // Long-press a card (≈450ms) = right-click: opens the same action menu.
+    let lp = null, lpFired = false;
+    document.addEventListener("touchstart", (e) => {
+      if (!isPhone() || e.touches.length !== 1) return;
+      const el = e.target.closest(".card-item");
+      if (!el) return;
+      const t = e.touches[0];
+      clearTimeout(lp?.timer);
+      lp = { el, x: t.clientX, y: t.clientY, timer: setTimeout(() => {
+        lpFired = true;
+        navigator.vibrate?.(10);
+        el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY }));
+      }, 450) };
+    }, { passive: true });
+    document.addEventListener("touchmove", (e) => {
+      if (!lp) return;
+      const t = e.touches[0];
+      if (Math.hypot(t.clientX - lp.x, t.clientY - lp.y) > 10) { clearTimeout(lp.timer); lp = null; }
+    }, { passive: true });
+    document.addEventListener("touchend", () => { if (lp) { clearTimeout(lp.timer); lp = null; } });
+    // The tap that ends a long-press must not also open the card.
+    document.addEventListener("click", (e) => {
+      if (!lpFired) return;
+      lpFired = false;
+      if (!e.target.closest(".context-menu")) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+
+    // Phone: no collapsed side panels, a shorter search placeholder; restore on desktop.
+    const desktopPlaceholder = searchInput.getAttribute("placeholder");
+    function applyPhoneMode() {
+      if (isPhone()) {
+        appShell.classList.remove("nav-collapsed", "detail-collapsed");
+        searchInput.setAttribute("placeholder", "Search spells…");
+        updateMobileCtx();
+      } else {
+        closeSheets();
+        searchInput.setAttribute("placeholder", desktopPlaceholder);
+      }
+    }
+    phoneMq.addEventListener?.("change", applyPhoneMode);
+    applyPhoneMode();
   </script>
 </body>
 </html>
