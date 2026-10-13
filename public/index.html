@@ -1630,6 +1630,41 @@
     .dp-pill { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; color: #57524A; background: #EFEBE2; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .dp-pill.cut { color: #DC2626; background: #FEE2E2; }
     .dp-pill.ok { color: #15803D; background: #DCFCE7; }
+    .dp-path { flex: 1 0 100%; display: grid; gap: 8px; }
+    .dp-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+    .dp-step { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 5px 8px; border-radius: 9px; border: 1px solid rgba(31,29,25,0.12); background: #FFFEFA; font: inherit; font-size: 12px; font-weight: 650; color: #57524A; cursor: pointer; text-align: left; }
+    .dp-step span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dp-step em { font-style: normal; flex: none; width: 17px; height: 17px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: #ECE8DE; color: #7A766C; }
+    .dp-step.done em { background: #15803D; color: #fff; }
+    .dp-step.now { border-color: #1F6FEB; box-shadow: 0 0 0 3px rgba(31,111,235,0.14); color: #181715; }
+    .dp-step.now em { background: #1F6FEB; color: #fff; }
+    .dp-step.sel { outline: 2px solid #181715; outline-offset: 1px; }
+    .dp-next { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 10px; border-radius: 10px; background: #E5EFFF; }
+    .dp-next.done { background: #DCFCE7; }
+    .dp-next-t { flex: 1 1 200px; min-width: 0; font-size: 13px; font-weight: 700; color: #181715; }
+    .dp-next-t small { display: block; margin-top: 1px; font-size: 12px; font-weight: 500; color: #6E6A61; }
+    .dp-next-step { display: none; }
+    .dp-next-btn { flex: none; border: 0; border-radius: 9px; padding: 7px 12px; background: #1F6FEB; color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .dp-next-btn:hover { background: #1A5FD0; }
+    .build-target { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; padding: 8px 10px 8px 12px; border-radius: 12px; background: #E5EFFF; border: 1px solid rgba(31,111,235,0.18); font-size: 13px; }
+    .build-target[hidden] { display: none; }
+    .bt-lbl { font-size: 12px; font-weight: 650; color: #6E6A61; }
+    .bt-deck { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; min-width: 0; }
+    .bt-deck select { font: inherit; font-weight: 700; color: #181715; border: 1px solid rgba(31,29,25,0.14); background: #FFFEFA; border-radius: 8px; padding: 4px 8px; max-width: 220px; }
+    .bt-goal { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; color: #57524A; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .bt-bar { width: 80px; height: 6px; border-radius: 999px; background: rgba(31,29,25,0.1); overflow: hidden; }
+    .bt-bar i { display: block; height: 100%; background: #FF9F1C; border-radius: inherit; transition: width .3s ease; }
+    .bt-bar i.ok { background: #15803D; }
+    .bt-back { border: 0; background: none; color: #1F6FEB; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 4px 2px; }
+    .add-to-deck { position: absolute; top: 8px; right: 8px; z-index: 5; height: 30px; padding: 0 11px 0 9px; display: inline-flex; align-items: center; gap: 4px; border: 0; border-radius: 999px; background: #1F6FEB; color: #fff; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; box-shadow: 0 6px 14px -6px rgba(31,111,235,0.85); transition: background .15s, transform .12s; }
+    .add-to-deck:hover { background: #1A5FD0; }
+    .add-to-deck:active { transform: scale(0.95); }
+    .add-to-deck.in { background: #15803D; box-shadow: none; }
+    .card-item.off-deck img { filter: grayscale(1); opacity: 0.5; }
+    .off-deck-tag { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 5; text-align: center; padding: 4px 6px; border-radius: 7px; background: rgba(24,23,21,0.82); color: #fff; font-size: 11px; font-weight: 700; pointer-events: none; }
+    .card-skeleton { aspect-ratio: 488 / 680; border-radius: 12px; background: linear-gradient(100deg, #ECE8DE 30%, #F5F2EA 50%, #ECE8DE 70%); background-size: 300% 100%; animation: sk-shimmer 1.4s linear infinite; }
+    @keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+    @media (prefers-reduced-motion: reduce) { .card-skeleton { animation: none; } }
     .dp-grade { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: #DCFCE7; border: 1px solid #BBF7D0; color: #15803D; flex: none; }
     /* ── Analysis actions row + tabs ── */
     .da2-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -2502,6 +2537,13 @@
       .m-sheet .history-remove { width: 32px; height: 32px; font-size: 18px; }
       .deck-progress .dp-id small { display: none; }
       .deck-progress .dp-bar { min-width: 50px; }
+      .dp-steps { display: none; }
+      .dp-next-step { display: block; font-size: 10.5px; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; color: #1F6FEB; margin-bottom: 1px; }
+      .dp-next { padding: 8px; }
+      .add-to-deck { width: 36px; height: 36px; padding: 0; justify-content: center; font-size: 18px; }
+      .add-to-deck .atd-l { display: none; }
+      .build-target .bt-lbl { display: none; }
+      .bt-deck select { max-width: 150px; }
       .deck-start p { display: none; }
 
       /* Dialogs as bottom sheets. */
@@ -2620,10 +2662,12 @@
               <option value="power">Power</option>
               <option value="toughness">Toughness</option>
               <option value="eur">Price</option>
+              <option value="edhrec">Popularity</option>
             </select>
             <button class="sort-dir-btn" id="sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
           </div>
           <div class="type-filter" id="type-filter" style="display:none" aria-label="Filter by card type"></div>
+          <div class="build-target" id="build-target" hidden></div>
           <div id="results" class="results-grid"></div>
           <div id="pagination" class="pagination" style="display:none">
             <button id="load-more-btn">Load more</button>
@@ -3892,6 +3936,7 @@
       // starts a new run that supersedes this one: startSearchRun() aborts the old
       // controller and every await below re-checks isActiveSearch before touching UI.
       const searchRun = startSearchRun();
+      state.buildTarget = null;
       searchBtn.textContent = "Searching...";
       startLoadingAnimation();
       queryDisplay.classList.remove("visible");
@@ -4559,6 +4604,7 @@
 
     // Render the current search results honoring the active type/subtype chips.
     function renderSearchView() {
+      renderBuildTarget();
       renderTypeFilterChips(typeFilterEl, state.results, searchTypeFilter, renderSearchView);
       renderResults(state.results.filter((c) => matchesTypeFilter(c, searchTypeFilter)), false);
     }
@@ -4571,10 +4617,15 @@
         const imgUrl = getCardImage(card);
         const price = getPrice(card);
         const isSaved = state.savedCards.some((s) => s.id === card.id);
+        const deck = activeDeck();
+        const ident = deck ? deckIdentity(deck) : null;
+        const offColor = ident && (card.color_identity || []).some((c) => !ident.has(c));
+        if (offColor) el.classList.add("off-deck");
 
         el.innerHTML = `
           <img src="${imgUrl}" alt="${esc(card.name)}" loading="lazy">
           ${aiMark(card)}
+          ${deck ? (offColor ? `<span class="off-deck-tag">Outside ${esc([...ident].join("/") || "colourless")}</span>` : `<button class="add-to-deck" type="button" data-id="${card.id}"></button>`) : ""}
           <div class="card-info">
             <div class="card-text">
               <div class="card-name" title="${esc(card.name)}">${esc(card.name)}</div>
@@ -4588,6 +4639,11 @@
           </div>`;
 
         wireFlipBtn(el, card);
+        const atd = el.querySelector(".add-to-deck");
+        if (atd) {
+          setAddBtnState(atd, cardFolders(card.id).includes(deck.id));
+          atd.addEventListener("click", (e) => { e.stopPropagation(); toggleInActiveDeck(card); });
+        }
         el.querySelector(".save-btn").addEventListener("click", (e) => {
           e.stopPropagation();
           openSavePopover(card, e.currentTarget);
@@ -7399,9 +7455,201 @@
     }
 
     // Sticky bar above the deck: name, colors, stats, progress toward 100, grade.
-    function renderDeckProgress({ name, colors, s, grade }) {
+    // ── Guided build: commander → core roles → theme → mana → cut to 100 ──
+    // Scryfall oracle tags per role (checked against the live API); used to open Search
+    // already filtered for the step's job, ordered by EDHREC popularity. No AI involved.
+    const ROLE_SEARCH = {
+      ramp: "otag:ramp", draw: "otag:draw", removal: "otag:removal -otag:board-wipe", wipes: "otag:board-wipe",
+      tutors: "otag:tutor", interaction: "(otag:counterspell or (otag:removal (t:instant or kw:flash)))",
+      graveyardHate: "otag:graveyard-hate", protection: "(otag:gives-protection or otag:gives-hexproof or otag:gives-indestructible)",
+    };
+    const PATH_ROLE_KEYS = ["ramp", "draw", "removal", "wipes", "interaction"];
+    let pathSel = null;      // a step the user clicked to read (null = the current step)
+    let lastDeckPath = null;
+    // Pure-ish: everything it reads is passed in or derived from the deck's cards.
+    function deckPath(deck, cards, pre = {}) {
+      const folderId = deck.id;
+      const s = pre.s || computeDeckStats(cards, folderId);
+      const commander = pre.commander !== undefined ? pre.commander : (deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null);
+      const colors = deckColors(cards, commander);
+      const tags = deckReviewCache[folderId]?.data?.identityTags;
+      const profile = pre.profile || effectiveDeckProfile(Array.isArray(tags) ? tags : []);
+      const counts = pre.counts || countsFromRoleDetails(detectRoleDetails(cards, folderId, profilesFromCache(cards)));
+      const sources = pre.sources || colorSourceStats(cards, folderId, colors);
+      const items = computeGrade(counts, sources, s, profile).items;
+      const short = (keys) => items.filter((i) => keys(i.key) && i.status === "low").sort((a, b) => (b.weight * (b.lo - b.value)) - (a.weight * (a.lo - a.value)));
+      const id = colors.join("").toLowerCase() || "c";
+      const steps = [];
+
+      steps.push(commander
+        ? { key: "commander", label: "Commander", sub: commander.name, done: true, title: `Commander: ${commander.name}`, note: "Change it from the empty-deck screen or the card's crown." }
+        : { key: "commander", label: "Commander", sub: "Not set", done: false, title: "Pick a commander", note: "Everything else is built around it.", action: { label: "Choose a commander", run: () => openNewDeck({ deck }) } });
+
+      const roleShort = short((k) => PATH_ROLE_KEYS.includes(k));
+      const r0 = roleShort[0];
+      steps.push(r0
+        ? { key: "roles", label: "Core roles", sub: `${roleShort.length} role${roleShort.length === 1 ? "" : "s"} short`, done: false,
+            title: `Add ${Math.ceil(r0.lo - r0.value)} ${r0.label.toLowerCase()}`, note: `You have ${fmtScoreNum(r0.value)} of ${r0.lo}.${roleShort.length > 1 ? ` Also short: ${roleShort.slice(1).map((i) => i.label.toLowerCase()).join(", ")}.` : ""}`,
+            action: { label: `Find ${r0.label.toLowerCase()}`, run: () => guidedSearch(deck, { role: r0.key, label: r0.label, want: r0.lo, query: `${ROLE_SEARCH[r0.key]} id<=${id}` }) } }
+        : { key: "roles", label: "Core roles", sub: "On target", done: true, title: "Core roles are covered", note: "Ramp, draw, removal, wipes and interaction are all at target." });
+
+      const landLo = profile.landTarget[0];
+      const landsOwed = Math.max(0, landLo - s.lands);
+      const themeOpen = Math.max(0, 100 - s.total - landsOwed);
+      steps.push(themeOpen > 0
+        ? { key: "theme", label: "Theme", sub: `${themeOpen} slot${themeOpen === 1 ? "" : "s"} open`, done: false, title: `Fill ${themeOpen} slot${themeOpen === 1 ? "" : "s"} with your theme`, note: "Autofill picks from EDHREC within your budget.", action: { label: "Autofill", run: () => openAutofill(deck, commander) } }
+        : { key: "theme", label: "Theme", sub: "Filled", done: true, title: "Theme slots are filled", note: `${s.total - s.lands} nonland cards.` });
+
+      const manaShort = short((k) => k === "lands" || k.startsWith("source-"));
+      const curve = items.find((i) => i.key === "curve");
+      const landsHigh = items.find((i) => i.key === "lands" && i.status === "high");
+      const m0 = manaShort[0];
+      let mana;
+      if (m0 && m0.key === "lands") mana = { title: `Add ${Math.ceil(m0.lo - m0.value)} lands`, note: `You have ${s.lands}; aim for ${m0.lo}–${m0.hi}.`, action: { label: "Find lands", run: () => guidedSearch(deck, { role: "lands", label: "Lands", want: m0.lo, query: `t:land -t:basic id<=${id}` }) } };
+      else if (m0) { const col = m0.key.slice(7).toLowerCase(); mana = { title: `More ${m0.label.toLowerCase()}`, note: `${fmtScoreNum(m0.value)} of ${m0.lo} needed.`, action: { label: `Find ${COLOR_FULL[col.toUpperCase()] || ""} sources`.replace("  ", " "), run: () => guidedSearch(deck, { role: m0.key, label: m0.label, want: m0.lo, query: `(t:land or otag:ramp) produces:${col} id<=${id}` }) } }; }
+      else if (landsHigh) mana = { title: `Cut ${Math.ceil(landsHigh.value - landsHigh.hi)} lands`, note: `${s.lands} lands is above the ${landsHigh.hi} target.` };
+      else if (curve && curve.status === "high") mana = { title: "Lower your curve", note: `Average MV ${s.avgMv.toFixed(1)}; aim for ${curve.hi} or less.` };
+      steps.push(mana
+        ? { key: "mana", label: "Mana", sub: `${s.lands} lands`, done: false, ...mana }
+        : { key: "mana", label: "Mana", sub: `${s.lands} lands · ok`, done: true, title: "Mana base on target", note: `${s.lands} lands, colour sources covered, avg MV ${s.avgMv.toFixed(1)}.` });
+
+      const over = s.total - 100;
+      const openCuts = () => { daTab = "build"; try { lsSet("deck_analysis_tab", daTab); } catch {} renderSavedCards(); dA.scrollIntoView({ behavior: "smooth", block: "start" }); };
+      steps.push(over > 0
+        ? { key: "cut", label: "Cut to 100", sub: `${over} over`, done: false, title: `Cut ${over} card${over === 1 ? "" : "s"}`, note: "Cuts go to the maybeboard, so nothing is lost.", action: { label: "Show cut suggestions", run: openCuts } }
+        : { key: "cut", label: "Cut to 100", sub: s.total === 100 ? "100 ✓" : `${s.total} now`, done: s.total === 100, title: s.total === 100 ? "Exactly 100" : `${100 - s.total} to go`, note: s.total === 100 ? "Deck is complete." : "Add cards first; cut once you're over 100." });
+
+      // Over 100, cutting comes first; otherwise the first unfinished step in order.
+      let current = over > 0 ? 4 : steps.findIndex((st) => !st.done);
+      if (current < 0) current = 4;
+      return { steps, current, deckId: deck.id };
+    }
+    function deckPathHtml(path) {
+      if (!path) return "";
+      const sel = pathSel != null && path.steps[pathSel] ? pathSel : path.current;
+      const st = path.steps[sel];
+      const isNow = sel === path.current;
+      const allDone = path.steps.every((x) => x.done);
+      return `
+        <div class="dp-path">
+          <div class="dp-steps" role="list">${path.steps.map((x, i) => `<button type="button" role="listitem" class="dp-step${x.done ? " done" : ""}${i === path.current && !allDone ? " now" : ""}${i === sel && !isNow ? " sel" : ""}" data-path-step="${i}" title="${escAttr(x.sub)}"><em>${x.done ? "✓" : i + 1}</em><span>${esc(x.label)}</span></button>`).join("")}</div>
+          <div class="dp-next${allDone ? " done" : ""}"><div class="dp-next-t"><span class="dp-next-step">Step ${sel + 1}/5</span>${isNow && !allDone && !st.done ? "Next: " : ""}${esc(st.title)}<small>${esc(st.note)}</small></div>${st.action && !st.done ? `<button class="dp-next-btn" type="button">${esc(st.action.label)}</button>` : ""}</div>
+        </div>`;
+    }
+    function wireDeckPath(el) {
+      const btn = el.querySelector(".dp-next-btn");
+      if (!btn || !lastDeckPath) return;
+      const sel = pathSel != null && lastDeckPath.steps[pathSel] ? pathSel : lastDeckPath.current;
+      btn.addEventListener("click", () => { pathSel = null; lastDeckPath.steps[sel].action?.run(); });
+    }
+
+    // Open Search for one job ("removal for this deck"): a direct Scryfall query, no AI.
+    // The "Adding to" bar then tracks that job's progress as cards are added.
+    async function guidedSearch(deck, { role, label, want, query }) {
+      state.buildTarget = { folderId: deck.id, role, label, want };
+      setActiveTab("search");
+      const searchRun = startSearchRun();
+      queryDisplay.classList.remove("visible");
+      aiSummary.style.display = "none";
+      comboHeader.style.display = "none";
+      comboRun++;
+      resultsEl.innerHTML = "";
+      paginationEl.style.display = "none";
+      sortBar.style.display = "none";
+      searchTypeFilter.types.clear();
+      searchTypeFilter.subtypes.clear();
+      typeFilterEl.style.display = "none";
+      typeFilterEl.replaceChildren();
+      state.results = [];
+      state.nextPage = null;
+      state.mode = "search";
+      setSortMode("search");
+      state.sortField = "edhrec"; state.sortDir = "asc";
+      sortField.value = "edhrec";
+      const full = `${query} f:commander -t:basic game:paper`;
+      state.currentQuery = full;
+      queryText.textContent = stripCommanderFilters(full);
+      queryText.title = full;
+      queryDisplay.classList.add("visible");
+      searchInput.value = "";
+      renderBuildTarget();
+      showSkeletons(resultsEl);
+      window.scrollTo(0, 0);
+      await searchScryfall(full, null, searchRun.run, searchRun.signal);
+    }
+
+    // How many cards in the deck fill a job right now (role, lands, or a colour's sources).
+    function buildTargetHave(t) {
+      const deck = state.folders.find((x) => x.id === t.folderId);
+      if (!deck) return 0;
+      const cards = getFolderCards(deck.id).filter((c) => !isMaybe(deck.id, c.id));
+      if (t.role === "lands") return computeDeckStats(cards, deck.id).lands;
+      if (t.role.startsWith("source-")) {
+        const commander = deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
+        return colorSourceStats(cards, deck.id, deckColors(cards, commander)).find((x) => x.c === t.role.slice(7))?.have || 0;
+      }
+      return countsFromRoleDetails(detectRoleDetails(cards, deck.id, profilesFromCache(cards)))[t.role] || 0;
+    }
+    function activeDeck() { return state.folders.find((x) => x.id === state.activeFolder && x.id !== pendingDeckDelete?.id) || null; }
+    function deckIdentity(deck) {
+      if (!deck?.commanderId) return null;
+      const cmd = state.savedCards.find((c) => c.id === deck.commanderId);
+      return cmd ? new Set(cmd.color_identity || []) : null;
+    }
+    function renderBuildTarget() {
+      const el = $("#build-target");
+      if (!el) return;
+      const deck = activeDeck();
+      if (!deck || state.mode === "combos") { el.hidden = true; return; }
+      const t = state.buildTarget && state.buildTarget.folderId === deck.id ? state.buildTarget : null;
+      const cards = getFolderCards(deck.id).filter((c) => !isMaybe(deck.id, c.id));
+      const total = cards.reduce((n, c) => n + cardQty(deck.id, c.id), 0);
+      const ident = deckIdentity(deck);
+      const pips = ident ? manaPipsHtml([...ident]) : "";
+      let goal = "";
+      if (t) {
+        const have = buildTargetHave(t);
+        const pct = Math.min(100, (have / Math.max(1, t.want)) * 100);
+        goal = `<span class="bt-goal" title="${escAttr(t.label)}: ${fmtScoreNum(have)} of ${t.want}">${esc(t.label)} <span class="bt-bar"><i class="${have >= t.want ? "ok" : ""}" style="width:${pct}%"></i></span>${fmtScoreNum(have)}/${t.want}</span>`;
+      } else {
+        goal = `<span class="bt-goal">${total}/100</span>`;
+      }
+      el.innerHTML = `<span class="bt-lbl">Adding to</span>
+        <label class="bt-deck">${pips}<select id="bt-deck-select" aria-label="Deck to add cards to">${state.folders.filter((x) => x.id !== pendingDeckDelete?.id).map((x) => `<option value="${x.id}"${x.id === deck.id ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>
+        ${goal}
+        ${t ? `<button class="bt-back" type="button" id="bt-back">← Back to deck</button>` : ""}`;
+      el.hidden = false;
+      $("#bt-deck-select").addEventListener("change", (e) => { state.activeFolder = e.target.value; state.buildTarget = null; renderBuildTarget(); renderSearchView(); renderFolderRail(); });
+      $("#bt-back")?.addEventListener("click", () => { state.buildTarget = null; setActiveTab("saved"); window.scrollTo(0, 0); });
+    }
+    // Add / un-add a search result to the deck in the "Adding to" bar.
+    function toggleInActiveDeck(card) {
+      const deck = activeDeck();
+      if (!deck) return;
+      const inDeck = cardFolders(card.id).includes(deck.id);
+      setCardFolder(card, deck.id, !inDeck);
+      if (!inDeck && isMaybe(deck.id, card.id)) setMaybe(deck.id, card.id, false);
+      renderBuildTarget();
+      renderFolderRail();
+      document.querySelectorAll(`.add-to-deck[data-id="${card.id}"]`).forEach((b) => setAddBtnState(b, !inDeck));
+      if (!inDeck) showToast(`Added ${card.name} to ${deck.name}`, { actionLabel: "Undo", ms: 4000, onAction: () => toggleInActiveDeck(card) });
+    }
+    function setAddBtnState(btn, inDeck) {
+      btn.classList.toggle("in", inDeck);
+      btn.innerHTML = inDeck ? `<span aria-hidden="true">✓</span><span class="atd-l">In deck</span>` : `<span aria-hidden="true">+</span><span class="atd-l">Add</span>`;
+      btn.setAttribute("aria-label", inDeck ? "Remove from the deck" : "Add to the deck");
+      btn.title = inDeck ? "In the deck — click to remove" : "Add to the deck";
+    }
+    // Shimmer placeholders while results load.
+    function showSkeletons(el, n = 10) {
+      el.innerHTML = Array.from({ length: n }, () => `<div class="card-skeleton" aria-hidden="true"></div>`).join("");
+    }
+
+    function renderDeckProgress({ name, colors, s, grade, path = null }) {
       const el = $("#deck-progress");
       if (!el) return;
+      lastDeckPath = path;
+      if (el.dataset.deck !== name) pathSel = null; // a clicked step is per deck
       const over = Math.max(0, s.total - 100);
       const within = Math.min(s.total, 100);
       const scale = Math.max(100, s.total);
@@ -7411,7 +7659,10 @@
         <div class="dp-id">${esc(name)}${colors.length ? manaPipsHtml(colors) : ""}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
         <div class="dp-bar" title="${s.total} of 100${over ? `, ${over} over` : ""}"><i class="in" style="width:${(within / scale) * 100}%"></i><i class="over" style="width:${(over / scale) * 100}%"></i></div>
         ${pill}
-        ${grade ? `<span class="dp-grade ${gradeTone(grade)}" id="deck-progress-grade">${grade}</span>` : ""}`;
+        ${grade ? `<span class="dp-grade ${gradeTone(grade)}" id="deck-progress-grade">${grade}</span>` : ""}
+        ${path ? deckPathHtml(path) : ""}`;
+      el.querySelectorAll("[data-path-step]").forEach((b) => b.addEventListener("click", () => { pathSel = +b.dataset.pathStep; el.querySelector(".dp-path").outerHTML = deckPathHtml(lastDeckPath).replace(/^\s+/, ""); wireDeckPath(el); }));
+      wireDeckPath(el);
       const switched = el.dataset.deck !== name;
       el.dataset.deck = name;
       el.hidden = false;
@@ -7575,7 +7826,7 @@
       // Below a near-complete count, targets calibrated for a 100-card deck would flag
       // everything as "short" — noise. Show only the deck's identity + a build prompt.
       if (s.total < ANALYSIS_MIN_CARDS) {
-        renderDeckProgress({ name: deckName, colors, s, grade: null });
+        renderDeckProgress({ name: deckName, colors, s, grade: null, path: deck ? deckPath(deck, cards) : null });
         dA.innerHTML = `
           ${deck ? `<div class="da2-actions"><div class="da2-actions-btns"><button class="da2-autofill-btn" id="da2-autofill-btn" type="button">${ICON_WAND}<span>Autofill</span></button></div></div>` : ""}
           <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role ledger, bracket and mana checks will appear here.</div>`;
@@ -7624,7 +7875,7 @@
       const toCutKpi = s.total > 100
         ? { n: s.total - 100, label: "to cut", tone: "bad" }
         : s.total < 100 ? { n: 100 - s.total, label: "to go", tone: "" } : { n: 100, label: "cards · complete", tone: "good" };
-      renderDeckProgress({ name: deckName, colors, s, grade: s.total >= 90 ? grade.letter : null });
+      renderDeckProgress({ name: deckName, colors, s, grade: s.total >= 90 ? grade.letter : null, path: deck ? deckPath(deck, cards, { s, counts, sources, profile, commander }) : null });
       const tab = DA_TABS.some(([k]) => k === daTab) ? daTab : "overview";
       const tabBtn = ([k, label]) => {
         const badge = k === "build" && s.total > 100 ? ` <span class="da2-tab-badge">${s.total - 100}</span>` : "";
@@ -9549,7 +9800,7 @@
     });
     // Keep the label current as tabs, decks and binders change.
     const _setActiveTab = setActiveTab;
-    setActiveTab = function (tab) { closeSheets(); _setActiveTab(tab); updateMobileCtx(); if (isPhone()) window.scrollTo(0, 0); };
+    setActiveTab = function (tab) { closeSheets(); _setActiveTab(tab); updateMobileCtx(); if (tab === "search") renderBuildTarget(); if (isPhone()) window.scrollTo(0, 0); };
     const _renderFolderRail = renderFolderRail;
     renderFolderRail = function () { _renderFolderRail(); updateMobileCtx(); };
     const _renderBinderRail = renderBinderRail;
