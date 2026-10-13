@@ -1093,6 +1093,59 @@
     .app-shell.detail-collapsed .detail-content { display: none; }
 
     .detail-panel.empty .detail-content { display: none; }
+    /* Card + maybeboard stacked: fixed-height panel, each part scrolls on its own. */
+    .mb-pane, .focus-split { display: none; }
+    .detail-panel.stacked { display: flex; flex-direction: column; height: calc(100dvh - 104px); overflow: hidden; }
+    .detail-panel.stacked .detail-header { flex: none; order: 0; }
+    .detail-panel.stacked .focus-card-pane { order: 1; flex: var(--card-flex, 0.58) 1 0; min-height: 0; overflow: auto; border-radius: 12px; transition: background .15s, box-shadow .15s; scrollbar-width: thin; }
+    .detail-panel.stacked .focus-split { order: 2; display: grid; place-items: center; flex: none; height: 14px; cursor: row-resize; touch-action: none; border-radius: 6px; }
+    .detail-panel.stacked .mb-pane { order: 3; display: flex; flex: var(--mb-flex, 0.42) 1 0; }
+    .detail-panel.stacked.mb-first .mb-pane { order: 1; }
+    .detail-panel.stacked.mb-first .focus-card-pane { order: 3; }
+    .focus-split i { width: 36px; height: 4px; border-radius: 999px; background: rgba(31,29,25,0.16); transition: background .15s, width .15s; }
+    .focus-split:hover i, .focus-split.on i, .focus-split:focus-visible i { background: #1F6FEB; width: 56px; }
+    .focus-card-pane.swap-target { background: #E5EFFF; box-shadow: inset 0 0 0 2px #1F6FEB; }
+    .mb-pane { flex-direction: column; min-height: 0; border-radius: 12px; transition: background .15s, box-shadow .15s, opacity .15s; }
+    .mb-pane.lift { opacity: 0.6; }
+    .mb-pane.mb-drop, .results-grid.mb-drop { background: #FFEFD5; box-shadow: inset 0 0 0 2px #FF9F1C; border-radius: 12px; }
+    .mb-head { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 4px 6px 6px; cursor: grab; user-select: none; touch-action: none; }
+    .mb-head:active { cursor: grabbing; }
+    .mb-grip { font-size: 13px; color: #A8A49A; }
+    .mb-title { flex: 1; font-size: 11px; font-weight: 750; letter-spacing: 0.075em; text-transform: uppercase; color: #9E9B92; }
+    .mb-title b { color: #B45309; }
+    .mb-total { font-size: 11.5px; font-weight: 600; color: #9E9B92; font-variant-numeric: tabular-nums; }
+    .mb-icon { width: 26px; height: 26px; flex: none; display: grid; place-items: center; border: 1px solid rgba(31,29,25,0.12); border-radius: 8px; background: #FFFEFA; color: #7A766C; cursor: pointer; font: inherit; font-size: 13px; }
+    .mb-icon:hover { color: #181715; border-color: rgba(31,29,25,0.24); }
+    .mb-icon svg { width: 14px; height: 14px; }
+    .mb-icon[hidden] { display: none; }
+    .mb-list { flex: 1; min-height: 0; overflow: auto; display: grid; gap: 10px; align-content: start; padding: 2px 2px 6px; scrollbar-width: thin; }
+    .mb-group h4 { margin: 0 0 2px; padding: 0 8px; display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 750; letter-spacing: 0.075em; text-transform: uppercase; color: #A8A49A; }
+    .mb-row { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #3F3B34; cursor: pointer; }
+    .mb-row:hover { background: #EFEEE7; }
+    .mb-row.sel { background: #E5EFFF; box-shadow: inset 0 0 0 1px rgba(31,111,235,0.45); }
+    .mb-row.dragging { opacity: 0.4; }
+    .mb-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mb-pr { font-size: 11.5px; color: #A8A49A; font-variant-numeric: tabular-nums; }
+    .mb-acts { display: none; gap: 3px; }
+    .mb-row:hover .mb-acts, .mb-row:focus-within .mb-acts { display: flex; }
+    .mb-row:hover .mb-pr, .mb-row:focus-within .mb-pr { display: none; }
+    .mb-acts button { width: 24px; height: 22px; border: 1px solid rgba(31,29,25,0.14); border-radius: 6px; background: #FFFEFA; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: #57524A; }
+    .mb-acts button[data-mb-act="back"] { color: #1F6FEB; }
+    .mb-acts button:hover { border-color: currentColor; }
+    .mb-empty { margin: 4px 2px; padding: 18px 12px; text-align: center; border: 1.5px dashed rgba(31,29,25,0.16); border-radius: 12px; font-size: 12.5px; color: #7A766C; line-height: 1.5; }
+    .mb-empty span { color: #A8A49A; font-size: 11.5px; }
+    .mc { display: inline-flex; gap: 1px; flex: none; }
+    .mc i { min-width: 14px; height: 14px; padding: 0 2px; border-radius: 999px; display: inline-grid; place-items: center; font-style: normal; font-size: 8.5px; font-weight: 800; color: #2B2925; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.16); background: #DCD8CF; }
+    .mc .mc-W { background: #F8F1D4; } .mc .mc-U { background: #A9D3EE; } .mc .mc-B { background: #BDB4AE; } .mc .mc-R { background: #F3A07F; } .mc .mc-G { background: #9FCB9C; } .mc .mc-H { background: linear-gradient(135deg, #F8F1D4, #F3A07F); }
+    .mb-float { position: fixed; z-index: 330; display: flex; flex-direction: column; min-width: 240px; min-height: 200px; background: #FFFEFA; border: 1px solid rgba(31,29,25,0.14); border-radius: 14px; box-shadow: 0 24px 60px -18px rgba(28,24,18,0.5); overflow: hidden; resize: both; }
+    .mb-float[hidden] { display: none; }
+    .mb-float-h { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-bottom: 1px solid rgba(31,29,25,0.1); font-size: 12.5px; font-weight: 750; cursor: move; user-select: none; touch-action: none; }
+    .mb-float-h span { flex: 1; }
+    .mb-float-body { flex: 1; min-height: 0; display: flex; padding: 4px 8px 8px; }
+    .mb-float-body .mb-pane { display: flex; flex: 1; }
+    .mb-float-body .mb-head { cursor: default; }
+    .mb-float-body .mb-grip { display: none; }
+    .card-item.dragging { opacity: 0.4; }
     .detail-panel:not(.empty) .detail-empty { display: none; }
 
     .detail-empty {
@@ -2534,6 +2587,12 @@
       .m-sheet .history-meta, .m-sheet .folder-count { font-size: 12px; font-weight: 600; }
       .m-sheet .rail-empty { font-size: 14px; padding: 11px 10px; }
       .m-sheet .folder-edit { visibility: visible !important; width: 32px; height: 32px; }
+      .m-sheet .mb-pane { display: flex; }
+      .m-sheet .mb-pop, .m-sheet #mb-pop, .m-sheet #mb-swap, .m-sheet .mb-grip { display: none; }
+      .m-sheet .mb-row { padding: 10px 8px; font-size: 14px; }
+      .m-sheet .mb-acts { display: flex; }
+      .m-sheet .mb-pr { display: none; }
+      .m-sheet .mb-acts button { width: 34px; height: 32px; font-size: 14px; }
       .m-sheet .history-remove { width: 32px; height: 32px; font-size: 18px; }
       .deck-progress .dp-id small { display: none; }
       .deck-progress .dp-bar { min-width: 50px; }
@@ -2573,6 +2632,10 @@
   </nav>
   <div class="m-scrim" id="m-scrim"></div>
   <div class="m-sheet" id="m-sheet" role="dialog" aria-label="Choose"></div>
+  <div class="mb-float" id="mb-float" hidden role="dialog" aria-label="Maybeboard window">
+    <div class="mb-float-h" id="mb-float-h"><span>Maybeboard</span><button class="mb-icon" type="button" id="mb-dock" title="Dock in the Focus panel" aria-label="Dock the maybeboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></button></div>
+    <div class="mb-float-body" id="mb-float-body"></div>
+  </div>
   <main>
     <div class="app-shell" id="app-shell">
       <aside class="side-menu search-mode" id="side-menu" aria-label="Spellbook navigation">
@@ -2797,6 +2860,7 @@
           <span class="detail-header-title">Focus</span>
           <button class="panel-toggle" id="detail-collapse-btn" title="Collapse focus" aria-label="Collapse focus" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
         </div>
+        <div class="focus-card-pane" id="focus-card-pane">
         <div class="detail-empty">
           <div class="detail-ghost" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M3 15v4a2 2 0 0 0 2 2h4"/><circle cx="12" cy="12" r="3"/></svg></div>
           <strong>Click a card to inspect it</strong>
@@ -2833,6 +2897,18 @@
             </div>
           </div>
         </div>
+        </div>
+        <div class="focus-split" id="focus-split" role="separator" aria-orientation="horizontal" aria-label="Resize card and maybeboard" tabindex="0"><i></i></div>
+        <section class="mb-pane" id="mb-pane" aria-label="Maybeboard">
+          <div class="mb-head" id="mb-head" title="Drag onto the card to swap their order">
+            <span class="mb-grip" aria-hidden="true">⠿</span>
+            <span class="mb-title">Maybeboard <b id="mb-count">0</b></span>
+            <span class="mb-total" id="mb-total"></span>
+            <button class="mb-icon" type="button" id="mb-swap" title="Swap order" aria-label="Swap the card and maybeboard">⇅</button>
+            <button class="mb-icon" type="button" id="mb-pop" title="Pop out" aria-label="Pop out the maybeboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button>
+          </div>
+          <div class="mb-list" id="mb-list"></div>
+        </section>
       </aside>
     </div>
   </main>
@@ -4967,6 +5043,89 @@
 
     // filtersOnly: only the view filters changed (text, type/color/MV chips) — the deck
     // itself didn't, so the analysis stays and only its mana curve is repainted.
+    // ── Maybeboard list (Focus panel, pop-out window, or the phone sheet) ──
+    const MB_TYPES = [["Creature", "Creatures"], ["Planeswalker", "Planeswalkers"], ["Battle", "Battles"], ["Instant", "Instants"], ["Sorcery", "Sorceries"], ["Artifact", "Artifacts"], ["Enchantment", "Enchantments"], ["Land", "Lands"]];
+    // var + hoisted helpers: renderSavedCards can run before this line during start-up.
+    function isPhoneNow() { return window.matchMedia("(max-width: 760px)").matches; }
+    var mbUi = (() => {
+      const d = { order: "card", split: 0.58, popped: false, x: null, y: null, w: 300, hgt: 420 };
+      try { return { ...d, ...JSON.parse(localStorage.getItem("mb_ui") || "{}") }; } catch { return d; }
+    })();
+    const saveMbUi = () => lsSet("mb_ui", JSON.stringify(mbUi));
+    var mbDrag = null; // { id, from: "deck" | "maybe" } while a card is dragged
+    function mbTypeOf(card) {
+      const tl = (card.type_line || card.card_faces?.[0]?.type_line || "").split("//")[0];
+      return (MB_TYPES.find(([t]) => tl.includes(t)) || ["Other", "Other"])[0];
+    }
+    function costPipsHtml(cost) {
+      const syms = (cost || "").split("//")[0].match(/\{[^}]+\}/g) || [];
+      return `<span class="mc">${syms.map((s) => { const v = s.slice(1, -1).toUpperCase(); const k = /^[WUBRG]$/.test(v) ? v : (/^\d+$|^X$/.test(v) ? "N" : "H"); return `<i class="mc-${k}">${esc(v.replace("/", ""))}</i>`; }).join("")}</span>`;
+    }
+    // Is the list visible somewhere, so the grid can drop its Maybeboard section?
+    function maybeListShown() {
+      if (!mbUi) return false;
+      if (isPhoneNow()) return true; // the deck bar's Maybe chip opens it as a sheet
+      return mbUi.popped || !appShell.classList.contains("detail-collapsed");
+    }
+    function maybeCards(deck) { return deck ? getFolderCards(deck.id).filter((c) => isMaybe(deck.id, c.id)) : []; }
+    function renderMaybeList() {
+      if (!mbUi) return;
+      updateFocusStack();
+      const list = $("#mb-list");
+      const deck = activeDeck();
+      if (!list) return;
+      const cards = maybeCards(deck);
+      $("#mb-count").textContent = cards.length;
+      const total = cards.reduce((n, c) => n + (parseFloat(c.prices?.eur || c.prices?.usd || 0) || 0) * cardQty(deck.id, c.id), 0);
+      $("#mb-total").textContent = cards.length ? `€${total.toFixed(2)}` : "";
+      if (!cards.length) {
+        list.innerHTML = `<div class="mb-empty">${isPhoneNow() ? "Swipe a card left to move it here." : "Drag cards here to cut them from the deck."}<br><span>They stay in the deck's list, outside the 100.</span></div>`;
+        return;
+      }
+      const groups = MB_TYPES.map(([t, label]) => [label, cards.filter((c) => mbTypeOf(c) === t)]);
+      groups.push(["Other", cards.filter((c) => mbTypeOf(c) === "Other")]);
+      const sel = state.detailCard?.id;
+      list.innerHTML = groups.filter(([, l]) => l.length).map(([label, l]) => `
+        <div class="mb-group"><h4><span>${label}</span><span>${l.length}</span></h4>
+        ${l.sort((a, b) => (a.cmc || 0) - (b.cmc || 0) || a.name.localeCompare(b.name)).map((c) => `<div class="mb-row${c.id === sel ? " sel" : ""}" data-mb-id="${c.id}" draggable="${!isPhoneNow()}" tabindex="0" role="button" aria-label="Show ${escAttr(c.name)}">
+          <span class="mb-nm">${esc(c.name)}</span>${costPipsHtml(c.mana_cost || c.card_faces?.[0]?.mana_cost)}<span class="mb-pr">${esc(getPrice(c) || "")}</span>
+          <span class="mb-acts"><button type="button" data-mb-act="back" title="Back to the deck" aria-label="Move ${escAttr(c.name)} back to the deck">↑</button><button type="button" data-mb-act="remove" title="Remove from the deck" aria-label="Remove ${escAttr(c.name)} from the deck">✕</button></span>
+        </div>`).join("")}</div>`).join("");
+    }
+    // Lay out the Focus panel: card only, or card + maybeboard stacked in the chosen order and split.
+    function updateFocusStack() {
+      const panel = $("#detail-panel");
+      if (!panel || !mbUi) return;
+      const deck = activeDeck();
+      const onDecks = state.activeTab === "saved" && Boolean(deck);
+      const stacked = onDecks && !isPhoneNow() && !mbUi.popped && !appShell.classList.contains("detail-collapsed");
+      panel.classList.toggle("stacked", stacked);
+      panel.classList.toggle("mb-first", mbUi.order === "maybe");
+      const cardShare = mbUi.order === "card" ? mbUi.split : 1 - mbUi.split;
+      panel.style.setProperty("--card-flex", String(cardShare));
+      panel.style.setProperty("--mb-flex", String(1 - cardShare));
+      const float = $("#mb-float"), pane = $("#mb-pane");
+      const showFloat = onDecks && !isPhoneNow() && mbUi.popped;
+      if (showFloat && pane.parentNode !== $("#mb-float-body")) $("#mb-float-body").appendChild(pane);
+      if (!showFloat && pane.parentNode === $("#mb-float-body")) panel.appendChild(pane);
+      float.hidden = !showFloat;
+      if (showFloat) {
+        const w = Math.min(Math.max(240, mbUi.w), innerWidth - 16), hh = Math.min(Math.max(200, mbUi.hgt), innerHeight - 16);
+        float.style.width = w + "px"; float.style.height = hh + "px";
+        float.style.left = Math.max(8, Math.min(innerWidth - w - 8, mbUi.x ?? innerWidth - w - 380)) + "px";
+        float.style.top = Math.max(8, Math.min(innerHeight - 60, mbUi.y ?? 120)) + "px";
+      }
+      $("#mb-pop").hidden = mbUi.popped;
+      $("#mb-swap").hidden = mbUi.popped;
+    }
+    function maybeMove(card, toMaybe, { toast = true } = {}) {
+      const deck = activeDeck();
+      if (!deck) return;
+      setMaybe(deck.id, card.id, toMaybe);
+      renderSavedCards();
+      if (toast) showToast(toMaybe ? `Moved ${card.name} to the maybeboard` : `${card.name} is back in the deck`, { actionLabel: "Undo", ms: 5000, onAction: () => maybeMove(card, !toMaybe, { toast: false }) });
+    }
+
     function renderSavedCards({ filtersOnly = false } = {}) {
       renderFolderRail();
       const filter = savedFilter.value.toLowerCase();
@@ -5050,11 +5209,12 @@
       };
       if (isRealDeck && mainVisible.length) addDivider(`Main deck · ${qtySum(mainVisible)}`);
       mainVisible.forEach((card) => renderCardTile(card, deck, commanderId, false));
-      if (maybeVisible.length) {
+      if (maybeVisible.length && !maybeListShown()) {
         addDivider(`Maybeboard · ${qtySum(maybeVisible)}`);
         maybeVisible.forEach((card) => renderCardTile(card, deck, commanderId, true));
       }
       scheduleTiltInit(savedGrid);
+      renderMaybeList();
     }
 
     // Builds and appends one card tile to #saved-grid. Shared by the main-deck and
@@ -5099,6 +5259,12 @@
       el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
       el.querySelector("img").addEventListener("click", () => showDetail(card));
       el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY); });
+      if (deck && !isPhoneNow()) {
+        el.draggable = true;
+        el.dataset.cardId = card.id;
+        el.addEventListener("dragstart", (e) => { mbDrag = { id: card.id, from: isMaybeCard ? "maybe" : "deck" }; el.classList.add("dragging"); try { e.dataTransfer.setData("text/plain", card.name); e.dataTransfer.effectAllowed = "move"; } catch {} });
+        el.addEventListener("dragend", () => { mbDrag = null; el.classList.remove("dragging"); document.querySelectorAll(".mb-drop").forEach((x) => x.classList.remove("mb-drop")); });
+      }
       savedGrid.appendChild(el);
     }
 
@@ -9715,6 +9881,92 @@
       gameplanModal.classList.remove("visible");
       renderSavedCards();
     });
+    // ── Maybeboard wiring ──
+    (() => {
+      const list = $("#mb-list"), pane = $("#mb-pane"), panel = $("#detail-panel");
+      const cardById = (id) => state.savedCards.find((c) => c.id === id);
+      list.addEventListener("click", (e) => {
+        const row = e.target.closest("[data-mb-id]");
+        if (!row) return;
+        const card = cardById(row.dataset.mbId);
+        if (!card) return;
+        const act = e.target.closest("[data-mb-act]")?.dataset.mbAct;
+        if (act === "back") return maybeMove(card, false);
+        if (act === "remove") {
+          const deck = activeDeck();
+          if (!deck) return;
+          setCardFolder(card, deck.id, false);
+          renderSavedCards();
+          showToast(`Removed ${card.name} from ${deck.name}`, { actionLabel: "Undo", ms: 5000, onAction: () => { setCardFolder(card, deck.id, true); setMaybe(deck.id, card.id, true); renderSavedCards(); } });
+          return;
+        }
+        showDetail(card);
+        list.querySelectorAll(".mb-row.sel").forEach((r) => r.classList.remove("sel"));
+        row.classList.add("sel");
+      });
+      list.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-mb-id]")) { e.preventDefault(); e.target.click(); } });
+      // Drag: deck tiles onto the list (cut), list rows onto the deck grid (back).
+      list.addEventListener("dragstart", (e) => { const row = e.target.closest("[data-mb-id]"); if (!row) return; mbDrag = { id: row.dataset.mbId, from: "maybe" }; row.classList.add("dragging"); try { e.dataTransfer.setData("text/plain", row.textContent.trim()); e.dataTransfer.effectAllowed = "move"; } catch {} });
+      list.addEventListener("dragend", () => { mbDrag = null; list.querySelectorAll(".dragging").forEach((x) => x.classList.remove("dragging")); savedGrid.classList.remove("mb-drop"); });
+      const zone = (el, accepts, drop) => {
+        el.addEventListener("dragover", (e) => { if (mbDrag && accepts()) { e.preventDefault(); el.classList.add("mb-drop"); } });
+        el.addEventListener("dragleave", (e) => { if (!el.contains(e.relatedTarget)) el.classList.remove("mb-drop"); });
+        el.addEventListener("drop", (e) => { if (!mbDrag || !accepts()) return; e.preventDefault(); el.classList.remove("mb-drop"); const card = cardById(mbDrag.id); mbDrag = null; if (card) drop(card); });
+      };
+      zone(pane, () => mbDrag.from === "deck", (card) => maybeMove(card, true));
+      zone(savedGrid, () => mbDrag.from === "maybe", (card) => maybeMove(card, false));
+      // Swap order: button, or drag the maybeboard header over the card pane.
+      const swap = () => { mbUi.order = mbUi.order === "card" ? "maybe" : "card"; saveMbUi(); updateFocusStack(); };
+      $("#mb-swap").addEventListener("click", swap);
+      const head = $("#mb-head");
+      let hd = null;
+      head.addEventListener("pointerdown", (e) => { if (e.target.closest("button") || mbUi.popped || e.button !== 0) return; hd = { y: e.clientY }; head.setPointerCapture(e.pointerId); pane.classList.add("lift"); });
+      head.addEventListener("pointermove", (e) => {
+        if (!hd) return;
+        const r = $("#focus-card-pane").getBoundingClientRect();
+        $("#focus-card-pane").classList.toggle("swap-target", e.clientY > r.top && e.clientY < r.bottom);
+      });
+      head.addEventListener("pointerup", () => {
+        if (!hd) return;
+        hd = null; pane.classList.remove("lift");
+        const t = $("#focus-card-pane");
+        if (t.classList.contains("swap-target")) { t.classList.remove("swap-target"); swap(); }
+      });
+      // Resize: drag the divider, or arrow keys on it.
+      const split = $("#focus-split");
+      let sd = null;
+      const setSplit = (clientY) => {
+        const r = panel.getBoundingClientRect();
+        const head = panel.querySelector(".detail-header").getBoundingClientRect();
+        const top = head.bottom, span = r.bottom - top - 14;
+        const firstShare = Math.max(0.15, Math.min(0.85, (clientY - top) / span));
+        mbUi.split = mbUi.order === "card" ? firstShare : 1 - firstShare;
+        updateFocusStack();
+      };
+      split.addEventListener("pointerdown", (e) => { sd = true; split.setPointerCapture(e.pointerId); split.classList.add("on"); });
+      split.addEventListener("pointermove", (e) => { if (sd) setSplit(e.clientY); });
+      split.addEventListener("pointerup", () => { if (!sd) return; sd = null; split.classList.remove("on"); saveMbUi(); });
+      split.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+        e.preventDefault();
+        const dir = (e.key === "ArrowUp" ? -0.05 : 0.05) * (mbUi.order === "card" ? 1 : -1);
+        mbUi.split = Math.max(0.15, Math.min(0.85, mbUi.split + dir));
+        saveMbUi(); updateFocusStack();
+      });
+      // Pop out / dock; the window moves by its title bar and resizes from its corner.
+      $("#mb-pop").addEventListener("click", () => { mbUi.popped = true; saveMbUi(); renderSavedCards(); });
+      $("#mb-dock").addEventListener("click", () => { mbUi.popped = false; saveMbUi(); renderSavedCards(); });
+      const float = $("#mb-float"), fh = $("#mb-float-h");
+      let fm = null;
+      fh.addEventListener("pointerdown", (e) => { if (e.target.closest("button")) return; const r = float.getBoundingClientRect(); fm = { dx: e.clientX - r.left, dy: e.clientY - r.top }; fh.setPointerCapture(e.pointerId); });
+      fh.addEventListener("pointermove", (e) => { if (!fm) return; mbUi.x = e.clientX - fm.dx; mbUi.y = e.clientY - fm.dy; updateFocusStack(); });
+      fh.addEventListener("pointerup", () => { if (fm) { fm = null; saveMbUi(); } });
+      if ("ResizeObserver" in window) new ResizeObserver(() => { if (float.hidden) return; mbUi.w = float.offsetWidth; mbUi.hgt = float.offsetHeight; saveMbUi(); }).observe(float);
+      // Collapsing / expanding the Focus panel changes where the list lives.
+      new MutationObserver(() => { if (state.activeTab === "saved") renderSavedCards(); else updateFocusStack(); }).observe(appShell, { attributes: true, attributeFilter: ["class"] });
+      window.addEventListener("resize", () => updateFocusStack());
+    })();
+
     // ═══ Phone layout (≤ 760px): bottom tabs, context switcher, sheets, long-press ═══
     // Desktop is untouched: every behaviour here is gated on isPhone().
     const phoneMq = window.matchMedia("(max-width: 760px)");
@@ -9800,7 +10052,7 @@
     });
     // Keep the label current as tabs, decks and binders change.
     const _setActiveTab = setActiveTab;
-    setActiveTab = function (tab) { closeSheets(); _setActiveTab(tab); updateMobileCtx(); if (tab === "search") renderBuildTarget(); if (isPhone()) window.scrollTo(0, 0); };
+    setActiveTab = function (tab) { closeSheets(); _setActiveTab(tab); updateMobileCtx(); updateFocusStack(); if (tab === "search") renderBuildTarget(); if (isPhone()) window.scrollTo(0, 0); };
     const _renderFolderRail = renderFolderRail;
     renderFolderRail = function () { _renderFolderRail(); updateMobileCtx(); };
     const _renderBinderRail = renderBinderRail;
