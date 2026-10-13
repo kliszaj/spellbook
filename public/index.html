@@ -1718,6 +1718,7 @@
     .card-skeleton { aspect-ratio: 488 / 680; border-radius: 12px; background: linear-gradient(100deg, #ECE8DE 30%, #F5F2EA 50%, #ECE8DE 70%); background-size: 300% 100%; animation: sk-shimmer 1.4s linear infinite; }
     @keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
     @media (prefers-reduced-motion: reduce) { .card-skeleton { animation: none; } }
+    .dp-maybe { display: none; }
     .dp-grade { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: #DCFCE7; border: 1px solid #BBF7D0; color: #15803D; flex: none; }
     /* ── Analysis actions row + tabs ── */
     .da2-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -2597,6 +2598,16 @@
       .deck-progress .dp-id small { display: none; }
       .deck-progress .dp-bar { min-width: 50px; }
       .dp-steps { display: none; }
+      .dp-maybe { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 999px; border: 1.5px dashed #C8C3B8; background: #FFFEFA; color: #B45309; font: inherit; font-size: 12px; font-weight: 700; }
+      .dp-maybe b { font-variant-numeric: tabular-nums; }
+      #saved-grid .card-item { touch-action: pan-y; }
+      .card-item.swiping { transition: none !important; }
+      .card-item.swipe-back { transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) !important; }
+      .card-item[data-swipe]::after { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 6; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; color: #fff; pointer-events: none; }
+      .card-item[data-swipe="maybe"]::after { content: "→ Maybeboard"; background: #FF9F1C; color: #3B2500; }
+      .card-item[data-swipe="back"]::after { content: "→ Back to deck"; background: #15803D; }
+      .card-item[data-swipe="pin"]::after { content: "Pin"; background: #1F6FEB; }
+      .card-item[data-swipe="unpin"]::after { content: "Unpin"; background: #57524A; }
       .dp-next-step { display: block; font-size: 10.5px; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase; color: #1F6FEB; margin-bottom: 1px; }
       .dp-next { padding: 8px; }
       .add-to-deck { width: 36px; height: 36px; padding: 0; justify-content: center; font-size: 18px; }
@@ -5259,9 +5270,9 @@
       el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
       el.querySelector("img").addEventListener("click", () => showDetail(card));
       el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY); });
+      el.dataset.cardId = card.id;
       if (deck && !isPhoneNow()) {
         el.draggable = true;
-        el.dataset.cardId = card.id;
         el.addEventListener("dragstart", (e) => { mbDrag = { id: card.id, from: isMaybeCard ? "maybe" : "deck" }; el.classList.add("dragging"); try { e.dataTransfer.setData("text/plain", card.name); e.dataTransfer.effectAllowed = "move"; } catch {} });
         el.addEventListener("dragend", () => { mbDrag = null; el.classList.remove("dragging"); document.querySelectorAll(".mb-drop").forEach((x) => x.classList.remove("mb-drop")); });
       }
@@ -7826,6 +7837,7 @@
         <div class="dp-bar" title="${s.total} of 100${over ? `, ${over} over` : ""}"><i class="in" style="width:${(within / scale) * 100}%"></i><i class="over" style="width:${(over / scale) * 100}%"></i></div>
         ${pill}
         ${grade ? `<span class="dp-grade ${gradeTone(grade)}" id="deck-progress-grade">${grade}</span>` : ""}
+        <button class="dp-maybe" type="button" aria-label="Open the maybeboard">Maybe <b>${maybeCards(activeDeck()).length}</b></button>
         ${path ? deckPathHtml(path) : ""}`;
       el.querySelectorAll("[data-path-step]").forEach((b) => b.addEventListener("click", () => { pathSel = +b.dataset.pathStep; el.querySelector(".dp-path").outerHTML = deckPathHtml(lastDeckPath).replace(/^\s+/, ""); wireDeckPath(el); }));
       wireDeckPath(el);
@@ -10047,7 +10059,7 @@
     // Picking a deck / binder / recent search (or an action) closes the sheet.
     sidePanel.addEventListener("click", (e) => {
       if (!isPhone()) return;
-      if (e.target.closest(".folder-edit, .renaming")) return; // rename/delete stay in the sheet
+      if (e.target.closest(".folder-edit, .renaming, .mb-pane")) return; // rename/delete and the maybeboard stay in the sheet
       if (e.target.closest(".folder-btn, [data-binder], .history-btn, .folder-add")) setTimeout(() => { closeSheets(); updateMobileCtx(); }, 0);
     });
     // Keep the label current as tabs, decks and binders change.
@@ -10093,6 +10105,72 @@
       lpFired = false;
       if (!e.target.closest(".context-menu")) { e.preventDefault(); e.stopPropagation(); }
     }, true);
+
+    // Maybe chip → the maybeboard list in the bottom sheet (moved in while open, like the deck list).
+    function openMaybeSheet() {
+      returnSection();
+      const pane = $("#mb-pane");
+      borrowed = { sec: pane, parent: pane.parentNode, next: pane.nextSibling };
+      sidePanel.appendChild(pane);
+      renderMaybeList();
+      openSheet(sidePanel);
+    }
+    document.addEventListener("click", (e) => { if (e.target.closest(".dp-maybe")) openMaybeSheet(); });
+
+    // Swipe a deck card: left = maybeboard (or back to the deck), right = pin / unpin.
+    let sw = null, swipeFired = false;
+    savedGrid.addEventListener("pointerdown", (e) => {
+      if (!isPhone() || e.pointerType === "mouse") return;
+      const el = e.target.closest(".card-item[data-card-id]");
+      if (!el || !activeDeck()) return;
+      sw = { el, id: el.dataset.cardId, x: e.clientX, y: e.clientY, dx: 0, pid: e.pointerId, locked: false };
+    });
+    window.addEventListener("pointermove", (e) => {
+      if (!sw || e.pointerId !== sw.pid) return;
+      const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+      if (!sw.locked) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; }
+        if (Math.abs(dx) < 10) return;
+        sw.locked = true;
+        if (lp) { clearTimeout(lp.timer); lp = null; } // a swipe is not a long-press
+        sw.el.classList.add("swiping");
+      }
+      sw.dx = Math.max(-140, Math.min(140, dx));
+      sw.el.style.transform = `translateX(${sw.dx}px) rotate(${sw.dx / 40}deg)`;
+      const deck = activeDeck();
+      const far = Math.abs(sw.dx) > 70;
+      if (!far) delete sw.el.dataset.swipe;
+      else if (sw.dx < 0) sw.el.dataset.swipe = isMaybe(deck.id, sw.id) ? "back" : "maybe";
+      else sw.el.dataset.swipe = isPinned(deck.id, sw.id) ? "unpin" : "pin";
+    }, { passive: true });
+    const endSwipe = () => {
+      if (!sw) return;
+      const { el, id, dx, locked } = sw;
+      sw = null;
+      if (!locked) return;
+      swipeFired = true;
+      setTimeout(() => { swipeFired = false; }, 350);
+      el.classList.remove("swiping");
+      el.classList.add("swipe-back");
+      el.style.transform = "";
+      delete el.dataset.swipe;
+      setTimeout(() => el.classList.remove("swipe-back"), 240);
+      if (Math.abs(dx) <= 70) return;
+      const deck = activeDeck();
+      const card = state.savedCards.find((c) => c.id === id);
+      if (!deck || !card) return;
+      navigator.vibrate?.(10);
+      if (dx < 0) setTimeout(() => maybeMove(card, !isMaybe(deck.id, id)), 160);
+      else {
+        const on = !isPinned(deck.id, id);
+        setPinned(deck.id, id, on);
+        setTimeout(() => { renderSavedCards(); showToast(on ? `Pinned ${card.name}: kept when trimming` : `Unpinned ${card.name}`, { actionLabel: "Undo", ms: 4000, onAction: () => { setPinned(deck.id, id, !on); renderSavedCards(); } }); }, 160);
+      }
+    };
+    window.addEventListener("pointerup", endSwipe);
+    window.addEventListener("pointercancel", () => { if (sw && !sw.locked) sw = null; else endSwipe(); });
+    // The tap that ends a swipe must not also open the card.
+    document.addEventListener("click", (e) => { if (swipeFired && e.target.closest("#saved-grid")) { e.preventDefault(); e.stopPropagation(); } }, true);
 
     // Phone: no collapsed side panels, a shorter search placeholder; restore on desktop.
     const desktopPlaceholder = searchInput.getAttribute("placeholder");
