@@ -16,14 +16,20 @@
   <script>try { const t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}</script>
   <title>Spellbook</title>
   <style>
+    /* ── More colour tokens (later additions) ── */
+    :root { --c-line-r0-0-0-0-9: rgba(0,0,0,0.9); }
+    :root[data-theme="dark"] { color-scheme: dark; --c-line-r0-0-0-0-9: rgba(240,236,228,0.9); }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --c-line-r0-0-0-0-9: rgba(240,236,228,0.9); } }
+
+
     /* ── Colour tokens (generated from the stylesheet: light = the original colour) ── */
     :root { --c-bg-r24-23-21-0-13: rgba(24,23,21,0.13); --c-bg-f7f6f1: #F7F6F1; --c-text-181715: #181715; --c-bg-r247-246-241-0-88: rgba(247, 246, 241, 0.88); --c-line-r31-29-25-0-12: rgba(31,29,25,0.12); --c-bg-eceae2: #ECEAE2; --c-text-888: #888; --c-text-555: #555; --c-bg-fffefa: #FFFEFA; --c-line-r31-29-25-0-08: rgba(31,29,25,0.08); --c-line-ccc: #ccc; --c-bg-r255-254-250-0-78: rgba(255,254,250,0.78); --c-line-r28-24-18-0-45: rgba(28,24,18,0.45); --c-text-807b72: #807B72; --c-bg-efeee7: #EFEEE7; --c-line-r31-29-25-0-2: rgba(31,29,25,0.2); --c-text-777167: #777167; --c-text-9e9b92: #9E9B92; --c-text-5e5a51: #5E5A51; --c-text-a8a49a: #A8A49A; --c-bg-r31-29-25-0-08: rgba(31,29,25,0.08); --c-text-r255-254-250-0-74: rgba(255,254,250,0.74); --c-bg-fff: #fff; --c-line-e0e0de: #e0e0de; --c-line-bbb: #bbb; --c-line-r0-0-0-0-04: rgba(0,0,0,0.04); --c-bg-fce9b0: #FCE9B0; --c-text-1a1a1a: #1a1a1a; --c-bg-1a1a1a: #1a1a1a; --c-bg-333: #333; --c-bg-ccc: #ccc; --c-text-b6b2a8: #B6B2A8; --c-line-r31-29-25-0-22: rgba(31,29,25,0.22); --c-text-6d685f: #6D685F; --c-bg-181715: #181715; --c-line-r24-23-21-0-85: rgba(24,23,21,0.85); --c-text-999: #999; --c-bg-fdeba8: #FDEBA8; --c-bg-cfe1ff: #CFE1FF; --c-bg-d4d1de: #D4D1DE; --c-line-r80-76-70-0-75: rgba(80,76,70,0.75); --c-bg-ffcfc6: #FFCFC6; --c-bg-bbf7d0: #BBF7D0; --c-bg-d9d5cd: #D9D5CD; --c-line-a8a399: #A8A399; --c-text-5c4a12: #5C4A12; --c-text-174561: #174561; --c-text-34312b: #34312B; --c-text-552313: #552313; --c-text-214722: #214722; --c-text-3e3b35: #3E3B35; --c-text-aaa: #aaa; --c-text-57524a: #57524A; --c-bg-e5efff: #E5EFFF; --c-text-1f6feb: #1F6FEB; --c-text-15803d: #15803D; --c-text-d3202a: #D3202A; --c-text-777: #777; --c-line-r0-0-0-0-12: rgba(0,0,0,0.12); --c-bg-r0-0-0-0: rgba(0,0,0,0); --c-text-r255-255-255-0-55: rgba(255,255,255,0.55); --c-bg-r255-255-255-0-16: rgba(255,255,255,0.16); --c-bg-r255-255-255-0-34: rgba(255,255,255,0.34); --c-line-r0-0-0-0-35: rgba(0,0,0,0.35); --c-line-r34-49-38-0-28: rgba(34,49,38,0.28); --c-line-e8e8e6: #e8e8e6; --c-line-r0-0-0-0-15: rgba(0,0,0,0.15); --c-line-999: #999; --c-line-r31-29-25-0-10: rgba(31,29,25,0.10); --c-bg-fcfbf7: #FCFBF7; --c-text-2f2c26: #2F2C26; --c-text-8c867a: #8C867A; --c-text-517b58: #517B58; --c-text-b66a48: #B66A48; --c-line-r31-29-25-0-14: rgba(31,29,25,0.14); --c-bg-f2efe8: #F2EFE8; --c-line-r31-29-25-0-28: rgba(31,29,25,0.28); --c-bg-2a2721: #2A2721; --c-bg-f0f0ee: #f0f0ee; --c-bg-e8e8e6: #e8e8e6; --c-bg-r31-29-25-0-16: rgba(31,29,25,0.16); --c-bg-ffefd5: #FFEFD5; --c-text-b45309: #B45309; --c-text-7a766c: #7A766C; --c-line-r31-29-25-0-24: rgba(31,29,25,0.24); --c-text-3f3b34: #3F3B34; --c-line-r31-29-25-0-16: rgba(31,29,25,0.16); --c-text-2b2925: #2B2925; --c-line-r0-0-0-0-16: rgba(0,0,0,0.16); --c-bg-dcd8cf: #DCD8CF; --c-bg-f8f1d4: #F8F1D4; --c-bg-bdb4ae: #BDB4AE; --c-line-r28-24-18-0-5: rgba(28,24,18,0.5); --c-line-r31-29-25-0-1: rgba(31,29,25,0.1); --c-text-928e84: #928E84; --c-bg-r31-29-25-0-03: rgba(31,29,25,0.03); --c-line-r0-0-0-0-55: rgba(0,0,0,0.55); --c-bg-efeae1: #efeae1; --c-line-r0-0-0-0-8: rgba(0,0,0,0.8); --c-text-504b42: #504B42; --c-text-a19d93: #A19D93; --c-text-3f7d5c: #3F7D5C; --c-bg-f1efe8: #F1EFE8; --c-text-37342e: #37342E; --c-line-r31-29-25-0-18: rgba(31,29,25,0.18); --c-bg-f6f5f2: #f6f5f2; --c-line-ececea: #ececea; --c-text-444: #444; --c-text-2a2721: #2A2721; --c-line-r31-29-25-0-05: rgba(31,29,25,0.05); --c-line-r31-29-25-0-3: rgba(31,29,25,0.3); --c-bg-f0ebe1: #F0EBE1; --c-bg-f4f2ec: #F4F2EC; --c-text-ff9f1c: #FF9F1C; --c-line-r21-21-31-0-42: rgba(21,21,31,0.42); --c-text-dc2626: #DC2626; --c-text-78726a: #78726A; --c-bg-eeeae1: #EEEAE1; --c-text-16a34a: #16A34A; --c-text-ec4899: #EC4899; --c-bg-e7e1d3: #E7E1D3; --c-text-8c867c: #8C867C; --c-bg-fbfaf6: #FBFAF6; --c-bg-dcfce7: #DCFCE7; --c-line-bbf7d0: #BBF7D0; --c-text-5e8a5e: #5E8A5E; --c-text-7d8a78: #7D8A78; --c-bg-eef4eb: #EEF4EB; --c-line-d7e5d0: #D7E5D0; --c-text-527f4f: #527F4F; --c-text-6d8c67: #6D8C67; --c-bg-f8f0d9: #F8F0D9; --c-line-ead9a9: #EAD9A9; --c-text-a17317: #A17317; --c-text-a18543: #A18543; --c-bg-f5e7e0: #F5E7E0; --c-line-e7cbbb: #E7CBBB; --c-text-a9705c: #A9705C; --c-text-a39e93: #A39E93; --c-line-e0dacd: #E0DACD; --c-text-6e685f: #6E685F; --c-line-e5ded2: #E5DED2; --c-bg-f7f4ec: #F7F4EC; --c-text-5c564d: #5C564D; --c-line-fecaca: #FECACA; --c-line-ddd8cc: #DDD8CC; --c-text-8a6a20: #8a6a20; --c-bg-fef2f2: #FEF2F2; --c-line-fca5a5: #FCA5A5; --c-bg-r247-246-241-0-62: rgba(247,246,241,0.62); --c-line-r28-24-18-0: rgba(28,24,18,0); --c-bg-r247-246-241-0-72: rgba(247,246,241,0.72); --c-bg-ece8de: #ECE8DE; --c-bg-efebe2: #EFEBE2; --c-bg-fee2e2: #FEE2E2; --c-text-6e6a61: #6E6A61; --c-bg-r31-29-25-0-1: rgba(31,29,25,0.1); --c-bg-f5f2ea: #F5F2EA; --c-bg-f0ede5: #F0EDE5; --c-text-r255-255-255-0-7: rgba(255,255,255,0.7); --c-bg-d8d3c8: #D8D3C8; --c-line-r0-0-0-0-2: rgba(0,0,0,0.2); --c-bg-f3f0e8: #F3F0E8; --c-line-e2e2ea: #E2E2EA; --c-bg-f0f0f5: #F0F0F5; --c-line-r0-0-0-0-1: rgba(0,0,0,0.1); --c-line-r0-0-0-0-5: rgba(0,0,0,0.5); --c-bg-f2f2f7: #F2F2F7; --c-bg-ffffff: #FFFFFF; --c-text-15151f: #15151F; --c-bg-fffdf7: #FFFDF7; --c-bg-f0fdf4: #F0FDF4; --c-line-ffd08a: #FFD08A; --c-text-c79a2e: #c79a2e; --c-bg-r125-125-125-0-18: rgba(125,125,125,0.18); --c-bg-e7e4da: #E7E4DA; --c-text-1a5fd0: #1A5FD0; --c-line-r0-0-0-0-18: rgba(0,0,0,0.18); --c-text-b3b3b0: #b3b3b0; --c-text-333: #333; --c-bg-f4f4f2: #f4f4f2; --c-bg-ececea: #ececea; --c-text-b3261e: #B3261E; --c-bg-fdecea: #fdecea; --c-bg-r31-29-25-0-12: rgba(31,29,25,0.12); --c-text-9a5b13: #9A5B13; --c-text-8a8a9c: #8A8A9C; --c-bg-r255-255-255-0-85: rgba(255,255,255,0.85); --c-line-r0-0-0-0-45: rgba(0,0,0,0.45); --c-bg-d4d4dc: #D4D4DC; --c-line-c8c3b8: #C8C3B8; --c-text-3b2500: #3B2500; }
     :root[data-theme="dark"] { color-scheme: dark; --c-bg-r24-23-21-0-13: rgba(240,236,228,0.13); --c-bg-f7f6f1: #121211; --c-text-181715: #E9E8E6; --c-bg-r247-246-241-0-88: rgba(34,33,28,0.88); --c-line-r31-29-25-0-12: rgba(240,236,228,0.12); --c-bg-eceae2: #33322E; --c-text-888: #959595; --c-text-555: #BABABA; --c-bg-fffefa: #1E1D1B; --c-line-r31-29-25-0-08: rgba(240,236,228,0.08); --c-line-ccc: #525252; --c-bg-r255-254-250-0-78: rgba(29,28,24,0.78); --c-line-r28-24-18-0-45: rgba(240,236,228,0.45); --c-text-807b72: #A6A29B; --c-bg-efeee7: #302F2A; --c-line-r31-29-25-0-2: rgba(240,236,228,0.2); --c-text-777167: #AEA9A1; --c-text-9e9b92: #918D83; --c-text-5e5a51: #BEBAB3; --c-text-a8a49a: #8D877A; --c-bg-r31-29-25-0-08: rgba(240,236,228,0.08); --c-text-r255-254-250-0-74: rgba(255,254,250,0.74); --c-bg-fff: #1E1D1B; --c-line-e0e0de: #484844; --c-line-bbb: #5C5C5C; --c-line-r0-0-0-0-04: rgba(240,236,228,0.04); --c-bg-fce9b0: #4B3E16; --c-text-1a1a1a: #E5E5E5; --c-bg-1a1a1a: #393939; --c-bg-333: #525252; --c-bg-ccc: #474747; --c-text-b6b2a8: #837E70; --c-line-r31-29-25-0-22: rgba(240,236,228,0.22); --c-text-6d685f: #B3B0A8; --c-bg-181715: #393632; --c-line-r24-23-21-0-85: rgba(240,236,228,0.85); --c-text-999: #898989; --c-bg-fdeba8: #4B4016; --c-bg-cfe1ff: #162A4B; --c-bg-d4d1de: #3C3A41; --c-line-r80-76-70-0-75: rgba(240,236,228,0.75); --c-bg-ffcfc6: #4B1E16; --c-bg-bbf7d0: #19472A; --c-bg-d9d5cd: #45433E; --c-line-a8a399: #716D66; --c-text-5c4a12: #E3C66E; --c-text-174561: #73B5DE; --c-text-34312b: #D8D6D2; --c-text-552313: #DF8C71; --c-text-214722: #89C88A; --c-text-3e3b35: #D2CFCA; --c-text-aaa: #7D7D7D; --c-text-57524a: #C3BFB8; --c-bg-e5efff: #162A4B; --c-text-1f6feb: #7DABF3; --c-text-15803d: #6AE799; --c-text-d3202a: #E97077; --c-text-777: #A2A2A2; --c-line-r0-0-0-0-12: rgba(240,236,228,0.12); --c-bg-r0-0-0-0: rgba(240,236,228,0); --c-text-r255-255-255-0-55: rgba(255,255,255,0.55); --c-bg-r255-255-255-0-16: rgba(26,26,26,0.16); --c-bg-r255-255-255-0-34: rgba(26,26,26,0.34); --c-line-r0-0-0-0-35: rgba(240,236,228,0.35); --c-line-r34-49-38-0-28: rgba(240,236,228,0.28); --c-line-e8e8e6: #44443F; --c-line-r0-0-0-0-15: rgba(240,236,228,0.15); --c-line-999: #707070; --c-line-r31-29-25-0-10: rgba(240,236,228,0.1); --c-bg-fcfbf7: #23221F; --c-text-2f2c26: #DCDAD6; --c-text-8c867a: #BBB8B1; --c-text-517b58: #96BA9C; --c-text-b66a48: #D3A591; --c-line-r31-29-25-0-14: rgba(240,236,228,0.14); --c-bg-f2efe8: #2E2C29; --c-line-r31-29-25-0-28: rgba(240,236,228,0.28); --c-bg-2a2721: #4C473C; --c-bg-f0f0ee: #2C2C27; --c-bg-e8e8e6: #32322E; --c-bg-r31-29-25-0-16: rgba(240,236,228,0.16); --c-bg-ffefd5: #4B3716; --c-text-b45309: #F79E5A; --c-text-7a766c: #AAA79F; --c-line-r31-29-25-0-24: rgba(240,236,228,0.24); --c-text-3f3b34: #D2CFCA; --c-line-r31-29-25-0-16: rgba(240,236,228,0.16); --c-text-2b2925: #DDDBD8; --c-line-r0-0-0-0-16: rgba(240,236,228,0.16); --c-bg-dcd8cf: #43413C; --c-bg-f8f1d4: #453D1C; --c-bg-bdb4ae: #605955; --c-line-r28-24-18-0-5: rgba(240,236,228,0.5); --c-line-r31-29-25-0-1: rgba(240,236,228,0.1); --c-text-928e84: #9A968D; --c-bg-r31-29-25-0-03: rgba(240,236,228,0.03); --c-line-r0-0-0-0-55: rgba(240,236,228,0.55); --c-bg-efeae1: #32302D; --c-line-r0-0-0-0-8: rgba(240,236,228,0.8); --c-text-504b42: #C8C4BE; --c-text-a19d93: #918C80; --c-text-3f7d5c: #8CC5A6; --c-bg-f1efe8: #2E2D29; --c-text-37342e: #D7D4CF; --c-line-r31-29-25-0-18: rgba(240,236,228,0.18); --c-bg-f6f5f2: #282723; --c-line-ececea: #42423C; --c-text-444: #C6C6C6; --c-text-2a2721: #DFDDDA; --c-line-r31-29-25-0-05: rgba(240,236,228,0.05); --c-line-r31-29-25-0-3: rgba(240,236,228,0.3); --c-bg-f0ebe1: #32302C; --c-bg-f4f2ec: #2B2A26; --c-text-ff9f1c: #FFCA82; --c-line-r21-21-31-0-42: rgba(240,236,228,0.42); --c-text-dc2626: #EA7E7E; --c-text-78726a: #ACA7A0; --c-bg-eeeae1: #33312D; --c-text-16a34a: #66EA97; --c-text-ec4899: #F6A4CD; --c-bg-e7e1d3: #393428; --c-text-8c867c: #9F9A92; --c-bg-fbfaf6: #1B1A18; --c-bg-dcfce7: #184929; --c-line-bbf7d0: #287142; --c-text-5e8a5e: #98B998; --c-text-7d8a78: #B2B9AF; --c-bg-eef4eb: #282C27; --c-line-d7e5d0: #485A3F; --c-text-527f4f: #97BD94; --c-text-6d8c67: #A4B9A0; --c-bg-f8f0d9: #443A1C; --c-line-ead9a9: #685A31; --c-text-a17317: #E9BE67; --c-text-a18543: #CCB785; --c-bg-f5e7e0: #3F2B22; --c-line-e7cbbb: #624737; --c-text-a9705c: #CCAB9F; --c-text-a39e93: #918B7E; --c-line-e0dacd: #575042; --c-text-6e685f: #B4AFA8; --c-line-e5ded2: #595040; --c-bg-f7f4ec: #2A2925; --c-text-5c564d: #C0BCB5; --c-line-fecaca: #732626; --c-line-ddd8cc: #504E49; --c-text-8a6a20: #DEBE72; --c-bg-fef2f2: #242020; --c-line-fca5a5: #732626; --c-bg-r247-246-241-0-62: rgba(34,33,28,0.62); --c-line-r28-24-18-0: rgba(240,236,228,0); --c-bg-r247-246-241-0-72: rgba(34,33,28,0.72); --c-bg-ece8de: #35332F; --c-bg-efebe2: #32302C; --c-bg-fee2e2: #4B1616; --c-text-6e6a61: #B2AFA8; --c-bg-r31-29-25-0-1: rgba(240,236,228,0.1); --c-bg-f5f2ea: #2C2A27; --c-bg-f0ede5: #302F2B; --c-text-r255-255-255-0-7: rgba(255,255,255,0.7); --c-bg-d8d3c8: #484640; --c-line-r0-0-0-0-2: rgba(240,236,228,0.2); --c-bg-f3f0e8: #2E2C28; --c-line-e2e2ea: #3F3F45; --c-bg-f0f0f5: #242429; --c-line-r0-0-0-0-1: rgba(240,236,228,0.1); --c-line-r0-0-0-0-5: rgba(240,236,228,0.5); --c-bg-f2f2f7: #232327; --c-bg-ffffff: #1E1D1B; --c-text-15151f: #E3E3E7; --c-bg-fffdf7: #21201E; --c-bg-f0fdf4: #212522; --c-line-ffd08a: #735426; --c-text-c79a2e: #E0C27B; --c-bg-r125-125-125-0-18: rgba(240,236,228,0.18); --c-bg-e7e4da: #393833; --c-text-1a5fd0: #6598EC; --c-line-r0-0-0-0-18: rgba(240,236,228,0.18); --c-text-b3b3b0: #7A7A75; --c-text-333: #D3D3D3; --c-bg-f4f4f2: #292924; --c-bg-ececea: #2F2F2B; --c-text-b3261e: #E6716A; --c-bg-fdecea: #481D18; --c-bg-r31-29-25-0-12: rgba(240,236,228,0.12); --c-text-9a5b13: #ECAD65; --c-text-8a8a9c: #C1C1CB; --c-bg-r255-255-255-0-85: rgba(26,26,26,0.85); --c-line-r0-0-0-0-45: rgba(240,236,228,0.45); --c-bg-d4d4dc: #3A3A41; --c-line-c8c3b8: #5D5A54; --c-text-3b2500: #FFBE52; }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --c-bg-r24-23-21-0-13: rgba(240,236,228,0.13); --c-bg-f7f6f1: #121211; --c-text-181715: #E9E8E6; --c-bg-r247-246-241-0-88: rgba(34,33,28,0.88); --c-line-r31-29-25-0-12: rgba(240,236,228,0.12); --c-bg-eceae2: #33322E; --c-text-888: #959595; --c-text-555: #BABABA; --c-bg-fffefa: #1E1D1B; --c-line-r31-29-25-0-08: rgba(240,236,228,0.08); --c-line-ccc: #525252; --c-bg-r255-254-250-0-78: rgba(29,28,24,0.78); --c-line-r28-24-18-0-45: rgba(240,236,228,0.45); --c-text-807b72: #A6A29B; --c-bg-efeee7: #302F2A; --c-line-r31-29-25-0-2: rgba(240,236,228,0.2); --c-text-777167: #AEA9A1; --c-text-9e9b92: #918D83; --c-text-5e5a51: #BEBAB3; --c-text-a8a49a: #8D877A; --c-bg-r31-29-25-0-08: rgba(240,236,228,0.08); --c-text-r255-254-250-0-74: rgba(255,254,250,0.74); --c-bg-fff: #1E1D1B; --c-line-e0e0de: #484844; --c-line-bbb: #5C5C5C; --c-line-r0-0-0-0-04: rgba(240,236,228,0.04); --c-bg-fce9b0: #4B3E16; --c-text-1a1a1a: #E5E5E5; --c-bg-1a1a1a: #393939; --c-bg-333: #525252; --c-bg-ccc: #474747; --c-text-b6b2a8: #837E70; --c-line-r31-29-25-0-22: rgba(240,236,228,0.22); --c-text-6d685f: #B3B0A8; --c-bg-181715: #393632; --c-line-r24-23-21-0-85: rgba(240,236,228,0.85); --c-text-999: #898989; --c-bg-fdeba8: #4B4016; --c-bg-cfe1ff: #162A4B; --c-bg-d4d1de: #3C3A41; --c-line-r80-76-70-0-75: rgba(240,236,228,0.75); --c-bg-ffcfc6: #4B1E16; --c-bg-bbf7d0: #19472A; --c-bg-d9d5cd: #45433E; --c-line-a8a399: #716D66; --c-text-5c4a12: #E3C66E; --c-text-174561: #73B5DE; --c-text-34312b: #D8D6D2; --c-text-552313: #DF8C71; --c-text-214722: #89C88A; --c-text-3e3b35: #D2CFCA; --c-text-aaa: #7D7D7D; --c-text-57524a: #C3BFB8; --c-bg-e5efff: #162A4B; --c-text-1f6feb: #7DABF3; --c-text-15803d: #6AE799; --c-text-d3202a: #E97077; --c-text-777: #A2A2A2; --c-line-r0-0-0-0-12: rgba(240,236,228,0.12); --c-bg-r0-0-0-0: rgba(240,236,228,0); --c-text-r255-255-255-0-55: rgba(255,255,255,0.55); --c-bg-r255-255-255-0-16: rgba(26,26,26,0.16); --c-bg-r255-255-255-0-34: rgba(26,26,26,0.34); --c-line-r0-0-0-0-35: rgba(240,236,228,0.35); --c-line-r34-49-38-0-28: rgba(240,236,228,0.28); --c-line-e8e8e6: #44443F; --c-line-r0-0-0-0-15: rgba(240,236,228,0.15); --c-line-999: #707070; --c-line-r31-29-25-0-10: rgba(240,236,228,0.1); --c-bg-fcfbf7: #23221F; --c-text-2f2c26: #DCDAD6; --c-text-8c867a: #BBB8B1; --c-text-517b58: #96BA9C; --c-text-b66a48: #D3A591; --c-line-r31-29-25-0-14: rgba(240,236,228,0.14); --c-bg-f2efe8: #2E2C29; --c-line-r31-29-25-0-28: rgba(240,236,228,0.28); --c-bg-2a2721: #4C473C; --c-bg-f0f0ee: #2C2C27; --c-bg-e8e8e6: #32322E; --c-bg-r31-29-25-0-16: rgba(240,236,228,0.16); --c-bg-ffefd5: #4B3716; --c-text-b45309: #F79E5A; --c-text-7a766c: #AAA79F; --c-line-r31-29-25-0-24: rgba(240,236,228,0.24); --c-text-3f3b34: #D2CFCA; --c-line-r31-29-25-0-16: rgba(240,236,228,0.16); --c-text-2b2925: #DDDBD8; --c-line-r0-0-0-0-16: rgba(240,236,228,0.16); --c-bg-dcd8cf: #43413C; --c-bg-f8f1d4: #453D1C; --c-bg-bdb4ae: #605955; --c-line-r28-24-18-0-5: rgba(240,236,228,0.5); --c-line-r31-29-25-0-1: rgba(240,236,228,0.1); --c-text-928e84: #9A968D; --c-bg-r31-29-25-0-03: rgba(240,236,228,0.03); --c-line-r0-0-0-0-55: rgba(240,236,228,0.55); --c-bg-efeae1: #32302D; --c-line-r0-0-0-0-8: rgba(240,236,228,0.8); --c-text-504b42: #C8C4BE; --c-text-a19d93: #918C80; --c-text-3f7d5c: #8CC5A6; --c-bg-f1efe8: #2E2D29; --c-text-37342e: #D7D4CF; --c-line-r31-29-25-0-18: rgba(240,236,228,0.18); --c-bg-f6f5f2: #282723; --c-line-ececea: #42423C; --c-text-444: #C6C6C6; --c-text-2a2721: #DFDDDA; --c-line-r31-29-25-0-05: rgba(240,236,228,0.05); --c-line-r31-29-25-0-3: rgba(240,236,228,0.3); --c-bg-f0ebe1: #32302C; --c-bg-f4f2ec: #2B2A26; --c-text-ff9f1c: #FFCA82; --c-line-r21-21-31-0-42: rgba(240,236,228,0.42); --c-text-dc2626: #EA7E7E; --c-text-78726a: #ACA7A0; --c-bg-eeeae1: #33312D; --c-text-16a34a: #66EA97; --c-text-ec4899: #F6A4CD; --c-bg-e7e1d3: #393428; --c-text-8c867c: #9F9A92; --c-bg-fbfaf6: #1B1A18; --c-bg-dcfce7: #184929; --c-line-bbf7d0: #287142; --c-text-5e8a5e: #98B998; --c-text-7d8a78: #B2B9AF; --c-bg-eef4eb: #282C27; --c-line-d7e5d0: #485A3F; --c-text-527f4f: #97BD94; --c-text-6d8c67: #A4B9A0; --c-bg-f8f0d9: #443A1C; --c-line-ead9a9: #685A31; --c-text-a17317: #E9BE67; --c-text-a18543: #CCB785; --c-bg-f5e7e0: #3F2B22; --c-line-e7cbbb: #624737; --c-text-a9705c: #CCAB9F; --c-text-a39e93: #918B7E; --c-line-e0dacd: #575042; --c-text-6e685f: #B4AFA8; --c-line-e5ded2: #595040; --c-bg-f7f4ec: #2A2925; --c-text-5c564d: #C0BCB5; --c-line-fecaca: #732626; --c-line-ddd8cc: #504E49; --c-text-8a6a20: #DEBE72; --c-bg-fef2f2: #242020; --c-line-fca5a5: #732626; --c-bg-r247-246-241-0-62: rgba(34,33,28,0.62); --c-line-r28-24-18-0: rgba(240,236,228,0); --c-bg-r247-246-241-0-72: rgba(34,33,28,0.72); --c-bg-ece8de: #35332F; --c-bg-efebe2: #32302C; --c-bg-fee2e2: #4B1616; --c-text-6e6a61: #B2AFA8; --c-bg-r31-29-25-0-1: rgba(240,236,228,0.1); --c-bg-f5f2ea: #2C2A27; --c-bg-f0ede5: #302F2B; --c-text-r255-255-255-0-7: rgba(255,255,255,0.7); --c-bg-d8d3c8: #484640; --c-line-r0-0-0-0-2: rgba(240,236,228,0.2); --c-bg-f3f0e8: #2E2C28; --c-line-e2e2ea: #3F3F45; --c-bg-f0f0f5: #242429; --c-line-r0-0-0-0-1: rgba(240,236,228,0.1); --c-line-r0-0-0-0-5: rgba(240,236,228,0.5); --c-bg-f2f2f7: #232327; --c-bg-ffffff: #1E1D1B; --c-text-15151f: #E3E3E7; --c-bg-fffdf7: #21201E; --c-bg-f0fdf4: #212522; --c-line-ffd08a: #735426; --c-text-c79a2e: #E0C27B; --c-bg-r125-125-125-0-18: rgba(240,236,228,0.18); --c-bg-e7e4da: #393833; --c-text-1a5fd0: #6598EC; --c-line-r0-0-0-0-18: rgba(240,236,228,0.18); --c-text-b3b3b0: #7A7A75; --c-text-333: #D3D3D3; --c-bg-f4f4f2: #292924; --c-bg-ececea: #2F2F2B; --c-text-b3261e: #E6716A; --c-bg-fdecea: #481D18; --c-bg-r31-29-25-0-12: rgba(240,236,228,0.12); --c-text-9a5b13: #ECAD65; --c-text-8a8a9c: #C1C1CB; --c-bg-r255-255-255-0-85: rgba(26,26,26,0.85); --c-line-r0-0-0-0-45: rgba(240,236,228,0.45); --c-bg-d4d4dc: #3A3A41; --c-line-c8c3b8: #5D5A54; --c-text-3b2500: #FFBE52; } }
     /* Dark-mode touches the generator can't infer. */
     :root[data-theme="dark"] body, :root[data-theme="dark"] .content-panel, :root[data-theme="dark"] .side-menu, :root[data-theme="dark"] .detail-panel { --dm: 1; }
-    :root[data-theme="dark"] .card-item, :root[data-theme="dark"] .card-skeleton { box-shadow: 0 10px 28px -18px rgba(0,0,0,0.9); }
-    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card-item { box-shadow: 0 10px 28px -18px rgba(0,0,0,0.9); } }
+    :root[data-theme="dark"] .card-item, :root[data-theme="dark"] .card-skeleton { box-shadow: 0 10px 28px -18px var(--c-line-r0-0-0-0-9); }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card-item { box-shadow: 0 10px 28px -18px var(--c-line-r0-0-0-0-9); } }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -109,6 +115,32 @@
 
     #settings-btn:hover { border-color: var(--c-line-ccc); color: var(--c-text-555); }
 
+    .header-right { justify-self: end; display: flex; align-items: center; gap: 8px; }
+    .cmdk-btn { height: 40px; display: inline-flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; border-radius: 999px; border: 1px solid var(--c-line-r31-29-25-0-12); background: var(--c-bg-fffefa); color: var(--c-text-7a766c); font: inherit; font-size: 13px; cursor: pointer; }
+    .cmdk-btn:hover { color: var(--c-text-181715); border-color: var(--c-line-r31-29-25-0-22); }
+    .cmdk-btn svg { width: 16px; height: 16px; }
+    .cmdk-btn kbd, .cmdk-foot kbd { font: 600 11px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--c-line-r31-29-25-0-14); border-bottom-width: 2px; background: var(--c-bg-f7f6f1); color: var(--c-text-57524a); }
+    .cmdk-scrim { position: fixed; inset: 0; z-index: 600; background: rgba(15,15,25,0.38); display: grid; justify-items: center; align-content: start; padding: 12vh 16px 16px; }
+    .cmdk-scrim[hidden] { display: none; }
+    .cmdk { width: min(560px, 100%); background: var(--c-bg-fffefa); border: 1px solid var(--c-line-r31-29-25-0-14); border-radius: 16px; box-shadow: 0 30px 80px -24px var(--c-line-r0-0-0-0-55); overflow: hidden; display: flex; flex-direction: column; max-height: 70vh; }
+    .cmdk input { border: 0; border-bottom: 1px solid var(--c-line-r31-29-25-0-1); background: none; padding: 16px 18px; font: inherit; font-size: 16px; color: var(--c-text-181715); outline: none; }
+    .cmdk-list { overflow: auto; padding: 6px; display: grid; align-content: start; }
+    .cmdk-sec { padding: 10px 10px 4px; font-size: 11px; font-weight: 750; letter-spacing: 0.075em; text-transform: uppercase; color: var(--c-text-9e9b92); }
+    .cmdk-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 9px; background: none; font: inherit; font-size: 14px; color: var(--c-text-181715); text-align: left; cursor: pointer; }
+    .cmdk-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cmdk-item small { color: var(--c-text-9e9b92); font-size: 12px; white-space: nowrap; }
+    .cmdk-item.on, .cmdk-item:hover { background: var(--c-bg-e5efff); }
+    .cmdk-empty { padding: 18px; text-align: center; color: var(--c-text-9e9b92); font-size: 13px; }
+    .cmdk-foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--c-line-r31-29-25-0-1); font-size: 11.5px; color: var(--c-text-9e9b92); }
+    .cmdk-foot kbd { padding: 2px 5px; margin-right: 2px; }
+    .ac-list { position: fixed; z-index: 350; display: grid; padding: 6px; background: var(--c-bg-fffefa); border: 1px solid var(--c-line-r31-29-25-0-14); border-radius: 12px; box-shadow: 0 20px 44px -18px var(--c-line-r28-24-18-0-45); }
+    .ac-list[hidden] { display: none; }
+    .ac-item { border: 0; background: none; text-align: left; padding: 8px 10px; border-radius: 8px; font: inherit; font-size: 14px; color: var(--c-text-181715); cursor: pointer; }
+    .ac-item mark { background: none; color: var(--c-text-1f6feb); font-weight: 700; }
+    .ac-item.on, .ac-item:hover { background: var(--c-bg-e5efff); }
+    /* Keyboard focus is always visible. */
+    :where(button, [role="button"], a, select, input, textarea, summary, [tabindex]):focus-visible { outline: 2px solid #1F6FEB; outline-offset: 2px; }
+    .card-item { cursor: pointer; }
     /* ── Main ── */
     main {
       width: calc(100% - 32px);
@@ -2512,6 +2544,10 @@
       header { grid-template-columns: 1fr auto; height: calc(56px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) 14px 0; gap: 10px; }
       header h1 { font-size: 21px; }
       header .nav-pills { display: none; }
+      .cmdk-btn { width: 40px; padding: 0; justify-content: center; }
+      .cmdk-btn .cmdk-hint, .cmdk-btn kbd, .cmdk-foot { display: none; }
+      .cmdk-scrim { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+      .card-tools .icon-btn { min-width: 36px; min-height: 36px; }
       .content-panel { padding: 12px; border-radius: 18px; }
       #nav-collapse-btn, #detail-collapse-btn { display: none; }
 
@@ -2643,7 +2679,10 @@
         <button class="tab-btn" data-tab="saved">Decks</button>
         <button class="tab-btn" data-tab="collection">Collection</button>
       </div>
+      <div class="header-right">
+      <button class="cmdk-btn" id="cmdk-btn" type="button" title="Jump to a deck, card or action (Ctrl+K)" aria-label="Open the command palette"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="cmdk-hint">Jump to…</span><kbd id="cmdk-kbd">Ctrl K</kbd></button>
       <button id="settings-btn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.36a1.7 1.7 0 0 0-1 .92l-.03.09a2 2 0 0 1-3.86 0l-.03-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-.92-1l-.09-.03a2 2 0 0 1 0-3.86l.09-.03A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1-.92l.03-.09a2 2 0 0 1 3.86 0l.03.09a1.7 1.7 0 0 0 1 .92 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9c.12.4.45.74.92 1l.09.03a2 2 0 0 1 0 3.86l-.09.03a1.7 1.7 0 0 0-.88 1.08Z"/></svg></button>
+      </div>
     </div>
   </header>
 
@@ -2654,6 +2693,14 @@
   </nav>
   <div class="m-scrim" id="m-scrim"></div>
   <div class="m-sheet" id="m-sheet" role="dialog" aria-label="Choose"></div>
+  <div class="cmdk-scrim" id="cmdk" hidden>
+    <div class="cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
+      <input id="cmdk-input" type="text" placeholder="Jump to a deck, find a card, run an action…" autocomplete="off" spellcheck="false" aria-controls="cmdk-list">
+      <div class="cmdk-list" id="cmdk-list" role="listbox"></div>
+      <div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+    </div>
+  </div>
+  <div class="ac-list" id="ac-list" role="listbox" hidden></div>
   <div class="mb-float" id="mb-float" hidden role="dialog" aria-label="Maybeboard window">
     <div class="mb-float-h" id="mb-float-h"><span>Maybeboard</span><button class="mb-icon" type="button" id="mb-dock" title="Dock in the Focus panel" aria-label="Dock the maybeboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></button></div>
     <div class="mb-float-body" id="mb-float-body"></div>
@@ -4755,7 +4802,7 @@
           openSavePopover(card, e.currentTarget);
         });
         el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
-        el.querySelector("img").addEventListener("click", () => showDetail(card));
+        el.addEventListener("click", (e) => { if (!e.target.closest("button, input, a, select")) showDetail(card); });
         el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
         resultsEl.appendChild(el);
       });
@@ -5287,7 +5334,7 @@
       el.querySelector(".count-badge")?.addEventListener("click", (e) => { e.stopPropagation(); startQtyEdit(e.currentTarget, card.id); });
       el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
       el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
-      el.querySelector("img").addEventListener("click", () => showDetail(card));
+      el.addEventListener("click", (e) => { if (!e.target.closest("button, input, a, select")) showDetail(card); });
       el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY); });
       el.dataset.cardId = card.id;
       if (deck && !isPhoneNow()) {
@@ -9384,7 +9431,7 @@
       wireFlipBtn(el, card);
       el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
       el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
-      el.querySelector("img").addEventListener("click", () => showDetail(card));
+      el.addEventListener("click", (e) => { if (!e.target.closest("button, input, a, select")) showDetail(card); });
       el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
       return el;
     }
@@ -9808,7 +9855,7 @@
         </div>`;
       el.querySelector(".save-btn").addEventListener("click", (e) => { e.stopPropagation(); openSavePopover(card, e.currentTarget); });
       el.querySelector(".detail-btn").addEventListener("click", (e) => { e.stopPropagation(); showDetail(card); });
-      el.querySelector("img").addEventListener("click", () => showDetail(card));
+      el.addEventListener("click", (e) => { if (!e.target.closest("button, input, a, select")) showDetail(card); });
       el.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); openCardContextMenu(card, e.clientX, e.clientY, { deckActions: false }); });
       return el;
     }
@@ -9912,6 +9959,121 @@
       gameplanModal.classList.remove("visible");
       renderSavedCards();
     });
+    // ── Command palette (Ctrl/⌘+K) ──
+    (() => {
+      const scrim = $("#cmdk"), input = $("#cmdk-input"), list = $("#cmdk-list");
+      const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+      $("#cmdk-kbd").textContent = mac ? "⌘K" : "Ctrl K";
+      let items = [], sel = 0, lastFocus = null;
+      const go = (tab) => { setActiveTab(tab); window.scrollTo(0, 0); };
+      function build(q) {
+        const deck = activeDeck();
+        const out = [];
+        state.folders.filter((d) => d.id !== pendingDeckDelete?.id).forEach((d) => out.push({ sec: "Decks", label: d.name, hint: `${folderCount(d.id)} cards`, run: () => { state.activeFolder = d.id; go("saved"); renderSavedCards(); } }));
+        const act = (label, run, hint = "") => out.push({ sec: "Actions", label, hint, run });
+        act("Go to Search", () => go("search"));
+        act("Go to Decks", () => go("saved"));
+        act("Go to Collection", () => go("collection"));
+        act("New deck", () => openNewDeck());
+        if (deck) {
+          const cmd = deck.commanderId ? state.savedCards.find((c) => c.id === deck.commanderId) : null;
+          act(`Autofill ${deck.name}`, () => { go("saved"); openAutofill(deck, cmd); });
+          act(`Analyze ${deck.name}`, () => { go("saved"); renderSavedCards(); setTimeout(() => $("#da-review-btn")?.click(), 60); });
+          act(`Export ${deck.name}`, () => { go("saved"); renderSavedCards(); setTimeout(() => savedExportBtn?.click(), 60); });
+          const path = lastDeckPath && lastDeckPath.deckId === deck.id ? lastDeckPath : null;
+          const st = path?.steps[path.current];
+          if (st?.action && !st.done) act(`Next step: ${st.title}`, () => st.action.run(), st.action.label);
+        }
+        act("Settings", () => showSettings());
+        const theme = document.documentElement.dataset.theme;
+        act(theme === "dark" ? "Switch to light mode" : "Switch to dark mode", () => { const v = theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = v; lsSet("theme", v); const s = $("#theme-select"); if (s) s.value = v; });
+        if (deck && q) getFolderCards(deck.id).forEach((c) => out.push({ sec: `In ${deck.name}`, label: c.name, hint: isMaybe(deck.id, c.id) ? "maybeboard" : "", run: () => { go("saved"); showDetail(c); } }));
+        const ql = q.toLowerCase();
+        let hits = !ql ? out.filter((x) => x.sec !== `In ${deck?.name}`) : out.filter((x) => x.label.toLowerCase().includes(ql))
+          .sort((a, b) => (b.label.toLowerCase().startsWith(ql) - a.label.toLowerCase().startsWith(ql)));
+        hits = hits.slice(0, 40);
+        if (q) hits.push({ sec: "Search", label: `Search cards for "${q}"`, hint: "↵", run: () => { go("search"); searchInput.value = q; doSearch(); } });
+        return hits;
+      }
+      function render() {
+        items = build(input.value.trim());
+        sel = Math.max(0, Math.min(sel, items.length - 1));
+        let sec = "", html = "";
+        items.forEach((it, i) => {
+          if (it.sec !== sec) { html += `<div class="cmdk-sec">${esc(it.sec)}</div>`; sec = it.sec; }
+          html += `<button type="button" class="cmdk-item${i === sel ? " on" : ""}" role="option" aria-selected="${i === sel}" data-i="${i}"><span>${esc(it.label)}</span><small>${esc(it.hint || "")}</small></button>`;
+        });
+        list.innerHTML = html || `<div class="cmdk-empty">Nothing matches.</div>`;
+        list.querySelector(".cmdk-item.on")?.scrollIntoView({ block: "nearest" });
+      }
+      function open() { lastFocus = document.activeElement; scrim.hidden = false; input.value = ""; sel = 0; render(); input.focus(); }
+      function close() { scrim.hidden = true; lastFocus?.focus?.(); }
+      function runSel() { const it = items[sel]; close(); it?.run(); }
+      $("#cmdk-btn").addEventListener("click", open);
+      scrim.addEventListener("click", (e) => { if (e.target === scrim) close(); });
+      list.addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b) { sel = +b.dataset.i; runSel(); } });
+      input.addEventListener("input", () => { sel = 0; render(); });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown") { e.preventDefault(); sel = (sel + 1) % Math.max(1, items.length); render(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); sel = (sel - 1 + items.length) % Math.max(1, items.length); render(); }
+        else if (e.key === "Enter") { e.preventDefault(); runSel(); }
+        else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); }
+      });
+      document.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "k") { e.preventDefault(); scrim.hidden ? open() : close(); }
+      });
+    })();
+
+    // ── Card-name suggestions under the search field (Scryfall autocomplete; plain names only) ──
+    (() => {
+      const box = $("#ac-list");
+      let timer = null, ctrl = null, names = [], sel = -1;
+      const bar = () => searchInput.closest(".search-bar");
+      const hide = () => { box.hidden = true; sel = -1; names = []; };
+      function place() {
+        const r = bar().getBoundingClientRect();
+        box.style.left = r.left + "px"; box.style.top = r.bottom + 6 + "px"; box.style.width = r.width + "px";
+      }
+      function render(q) {
+        if (!names.length) return hide();
+        const re = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "i");
+        box.innerHTML = names.map((n, i) => `<button type="button" class="ac-item${i === sel ? " on" : ""}" role="option" data-i="${i}">${esc(n).replace(re, "<mark>$1</mark>")}</button>`).join("");
+        place();
+        box.hidden = false;
+      }
+      searchInput.addEventListener("input", () => {
+        clearTimeout(timer);
+        const q = searchInput.value.trim();
+        if (q.length < 2 || !isBareNameQuery(q) || q.includes("\n")) return hide();
+        timer = setTimeout(async () => {
+          ctrl?.abort(); ctrl = new AbortController();
+          try {
+            const r = await fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
+            const d = await r.json();
+            if (searchInput.value.trim() !== q) return;
+            names = (d.data || []).slice(0, 8); sel = -1; render(q);
+          } catch { /* offline or superseded */ }
+        }, 160);
+      });
+      // Capture phase: runs before the field's own Enter-to-search handler.
+      searchInput.addEventListener("keydown", (e) => {
+        if (box.hidden) return;
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          sel = e.key === "ArrowDown" ? Math.min(names.length - 1, sel + 1) : Math.max(-1, sel - 1);
+          render(searchInput.value.trim());
+        } else if (e.key === "Enter" && !e.shiftKey) {
+          if (sel >= 0) searchInput.value = names[sel];
+          hide();
+        } else if (e.key === "Escape") { e.preventDefault(); hide(); }
+      }, true);
+      box.addEventListener("mousedown", (e) => e.preventDefault()); // keep focus in the field
+      box.addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (!b) return; searchInput.value = names[+b.dataset.i]; hide(); doSearch(); });
+      searchInput.addEventListener("blur", () => setTimeout(hide, 120));
+      window.addEventListener("resize", () => { if (!box.hidden) place(); });
+      window.addEventListener("scroll", () => { if (!box.hidden) place(); }, { passive: true });
+    })();
+
     // ── Appearance: device / light / dark ──
     (() => {
       const sel = $("#theme-select");
