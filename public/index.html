@@ -2094,7 +2094,11 @@
       padding: 0;
     }
 
-    .folder-btn:hover .folder-edit { visibility: visible; }
+    .folder-btn:hover .folder-edit, .folder-btn:focus-within .folder-edit { visibility: visible; }
+    .folder-btn.renaming { background: #FFFFFF; box-shadow: inset 0 0 0 2px #1F6FEB; color: #181715; cursor: text; }
+    .folder-btn.renaming .folder-count { color: #9E9B92; }
+    .folder-rename { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-weight: 600; color: #181715; padding: 0; }
+    .binder-name-go { flex: none; border: 0; border-radius: 7px; background: #1F6FEB; color: #fff; font: inherit; font-size: 12px; font-weight: 700; padding: 5px 9px; cursor: pointer; }
     .folder-btn .folder-edit:hover { opacity: 1; background: rgba(125,125,125,0.18); }
 
     .folder-rail .rail-divider { height: 1px; background: #E7E4DA; margin: 8px 6px; }
@@ -2494,6 +2498,7 @@
       .m-sheet .history-row { padding: 0; }
       .m-sheet .history-meta, .m-sheet .folder-count { font-size: 12px; font-weight: 600; }
       .m-sheet .rail-empty { font-size: 14px; padding: 11px 10px; }
+      .m-sheet .folder-edit { visibility: visible !important; width: 32px; height: 32px; }
       .m-sheet .history-remove { width: 32px; height: 32px; font-size: 18px; }
       .deck-progress .dp-id small { display: none; }
       .deck-progress .dp-bar { min-width: 50px; }
@@ -8045,7 +8050,8 @@
     // "All" and "Unsorted" are gone (the Collection tab covers "everything I have"); the
     // Decks tab always shows a real deck, or an empty state when there are none.
     function ensureActiveDeck() {
-      if (!state.folders.some((f) => f.id === state.activeFolder)) state.activeFolder = state.folders[0]?.id || null;
+      const live = state.folders.filter((f) => f.id !== pendingDeckDelete?.id);
+      if (!live.some((f) => f.id === state.activeFolder)) state.activeFolder = live[0]?.id || null;
       return state.activeFolder;
     }
     // One-time cleanup after server data loads: drop the old Unsorted membership. Cards that
@@ -8209,9 +8215,68 @@
     }
 
     // ── Folder sidebar ──
+    // A deleted deck is hidden at once and only really deleted when its Undo toast expires
+    // (or another deck is deleted, or the page is hidden), so Undo needs no restore logic.
+    var pendingDeckDelete = null; // { id, timer } — var: ensureActiveDeck can run before this line
+    function commitPendingDeckDelete() {
+      if (!pendingDeckDelete) return;
+      const { id, timer } = pendingDeckDelete;
+      clearTimeout(timer);
+      pendingDeckDelete = null;
+      deleteFolder(id);
+      if (state.activeTab === "saved") renderSavedCards(); else renderFolderRail();
+    }
+    function requestDeckDelete(fid) {
+      commitPendingDeckDelete();
+      const f = state.folders.find((x) => x.id === fid);
+      if (!f) return;
+      const only = getFolderCards(fid).filter((c) => cardFolders(c.id).length === 1).length;
+      pendingDeckDelete = { id: fid, timer: setTimeout(commitPendingDeckDelete, 7000) };
+      if (state.activeFolder === fid) state.activeFolder = state.folders.find((x) => x.id !== fid)?.id || null;
+      renderSavedCards();
+      showToast(`Deleted "${f.name}"${only ? ` and ${only} card${only === 1 ? "" : "s"} only in it` : ""}`, {
+        actionLabel: "Undo",
+        onAction: () => {
+          if (pendingDeckDelete?.id !== fid) return;
+          clearTimeout(pendingDeckDelete.timer);
+          pendingDeckDelete = null;
+          state.activeFolder = fid;
+          renderSavedCards();
+        },
+      });
+    }
+    document.addEventListener("visibilitychange", () => { if (document.hidden) commitPendingDeckDelete(); });
+    window.addEventListener("pagehide", commitPendingDeckDelete);
+    // Rename in place: the row becomes a text field. Enter or leaving the field saves, Esc cancels.
+    function startDeckRename(fid) {
+      const btn = folderRail.querySelector(`.folder-btn[data-folder="${fid}"]`);
+      const f = state.folders.find((x) => x.id === fid);
+      if (!btn || !f) return;
+      const row = document.createElement("div");
+      row.className = "folder-btn renaming" + (btn.classList.contains("active") ? " active" : "");
+      row.innerHTML = `<input class="folder-rename" type="text" aria-label="Deck name" maxlength="80"><span class="folder-count">${folderCount(fid)}</span>`;
+      const input = row.querySelector("input");
+      input.value = f.name;
+      btn.replaceWith(row);
+      input.focus();
+      input.select();
+      let done = false;
+      const finish = (save) => {
+        if (done) return;
+        done = true;
+        if (save && input.value.trim() && input.value.trim() !== f.name) renameFolder(fid, input.value);
+        if (state.activeTab === "saved") renderSavedCards(); else renderFolderRail();
+      };
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); finish(true); }
+        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finish(false); }
+      });
+      input.addEventListener("blur", () => finish(true));
+    }
+
     function renderFolderRail() {
       ensureActiveDeck();
-      const items = state.folders;
+      const items = state.folders.filter((f) => f.id !== pendingDeckDelete?.id);
       let html = `<div class="rail-label">Decks</div>${items.length ? "" : `<div class="rail-empty">No decks yet</div>`}`;
       items.forEach((f) => {
         const custom = true;
@@ -8220,7 +8285,7 @@
         html += `<button class="folder-btn ${state.activeFolder === f.id ? "active" : ""}" data-folder="${f.id}">
             <span class="folder-name">${esc(f.name)}</span>
             <span class="folder-count">${countLabel}</span>
-            <span class="folder-edit-group">${custom ? `<span class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename">&#9998;</span><span class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete">&#10005;</span>` : ""}</span>
+            <span class="folder-edit-group">${custom ? `<span class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename" role="button" aria-label="Rename ${escAttr(f.name)}">&#9998;</span><span class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete" role="button" aria-label="Delete ${escAttr(f.name)}">&#10005;</span>` : ""}</span>
           </button>`;
       });
       html += `<div class="rail-divider"></div><button class="folder-add" id="folder-add-btn" type="button"><span class="add-ico">${ICON_ADD_PLUS}</span>New deck</button>`;
@@ -8232,19 +8297,12 @@
       if (act) {
         e.stopPropagation();
         const fid = act.dataset.folder;
-        const f = state.folders.find((x) => x.id === fid);
-        if (act.dataset.act === "rename") {
-          const name = prompt("Rename deck:", f ? f.name : "");
-          if (name && name.trim()) { renameFolder(fid, name); renderSavedCards(); }
-        } else {
-          const only = getFolderCards(fid).filter((c) => cardFolders(c.id).length === 1).length;
-          if (confirm(`Delete deck "${f ? f.name : ""}"?${only ? ` ${only} card${only === 1 ? "" : "s"} that aren't in another deck will be removed from your saved cards.` : ""}`)) {
-            deleteFolder(fid); renderSavedCards();
-          }
-        }
+        if (act.dataset.act === "rename") startDeckRename(fid);
+        else requestDeckDelete(fid);
         return;
       }
       if (e.target.closest("#folder-add-btn")) { openNewDeck(); return; }
+      if (e.target.closest(".renaming")) return;
       const btn = e.target.closest(".folder-btn");
       if (btn) { state.activeFolder = btn.dataset.folder; renderSavedCards(); }
     });
@@ -8771,7 +8829,7 @@
         // tabs, the Swaps view, or behind the detail panel — so fall back to alert()
         // there; only Search with no Swaps view open can show it inline.
         if (state.activeTab === "search" && !swapsContext) showStatus(err.message, true);
-        else alert(err.message);
+        else showToast(err.message);
       } finally {
         ownedToggleInFlight.delete(key);
         if (disablingDetailBtn) ownedToggleBtn.disabled = false;
@@ -9055,10 +9113,27 @@
       if (b) { collectionUi.binder = b.dataset.binder; renderCollection(true); return; }
       if (e.target.closest("#binder-upload-btn")) { pendingUploadBinder = null; $("#collection-file").click(); return; }
       if (e.target.closest("#binder-new-btn")) {
-        const name = prompt("Name for the new binder (every card in the CSV goes into it):");
-        if (!name || !name.trim()) return;
-        pendingUploadBinder = name.trim();
-        $("#collection-file").click();
+        // Name the binder in place, then pick the CSV (every card in it goes into the binder).
+        const btn = $("#binder-new-btn");
+        const row = document.createElement("div");
+        row.className = "folder-btn renaming binder-name-row";
+        row.innerHTML = `<input class="folder-rename" type="text" placeholder="Binder name" aria-label="New binder name" maxlength="60"><button type="button" class="binder-name-go">Choose CSV</button>`;
+        btn.replaceWith(row);
+        const input = row.querySelector("input");
+        input.focus();
+        const go = () => {
+          const name = input.value.trim();
+          if (!name) { input.focus(); return; }
+          pendingUploadBinder = name;
+          $("#collection-file").click();
+          renderBinderRail();
+        };
+        row.querySelector(".binder-name-go").addEventListener("click", (ev) => { ev.stopPropagation(); go(); });
+        input.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter") { ev.preventDefault(); go(); }
+          if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); renderBinderRail(); }
+        });
+        input.addEventListener("blur", () => setTimeout(() => { if (!row.contains(document.activeElement) && row.isConnected && !input.value.trim()) renderBinderRail(); }, 150));
       }
     });
     $("#collection-file").addEventListener("change", async (e) => {
@@ -9469,7 +9544,7 @@
     // Picking a deck / binder / recent search (or an action) closes the sheet.
     sidePanel.addEventListener("click", (e) => {
       if (!isPhone()) return;
-      if (e.target.closest(".folder-edit")) return; // rename/delete stay in the sheet
+      if (e.target.closest(".folder-edit, .renaming")) return; // rename/delete stay in the sheet
       if (e.target.closest(".folder-btn, [data-binder], .history-btn, .folder-add")) setTimeout(() => { closeSheets(); updateMobileCtx(); }, 0);
     });
     // Keep the label current as tabs, decks and binders change.
