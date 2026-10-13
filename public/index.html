@@ -1842,10 +1842,24 @@
     .add-to-deck.in { background: #15803D; box-shadow: none; }
     .card-item.off-deck img { filter: grayscale(1); opacity: 0.5; }
     .off-deck-tag { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 5; text-align: center; padding: 4px 6px; border-radius: 7px; background: rgba(24,23,21,0.82); color: #fff; font-size: 11px; font-weight: 700; pointer-events: none; }
+    .build-target.cutting { background: var(--c-bg-ffefd5); border-color: rgba(255,159,28,0.35); }
+    .cut-btn { background: #FF9F1C; color: var(--c-text-3b2500); box-shadow: 0 6px 14px -6px rgba(255,159,28,0.9); }
+    .cut-btn:hover { background: #F08C00; }
+    .cut-btn.in { background: #15803D; color: #fff; box-shadow: none; }
+    .cut-tile.is-cut img { filter: grayscale(0.85); opacity: 0.45; }
+    .cut-rank { position: absolute; top: 8px; left: 8px; z-index: 5; min-width: 26px; height: 26px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: rgba(24,23,21,0.8); color: #fff; font-size: 12px; font-weight: 800; }
+    .cut-tile .cut-info { opacity: 1 !important; transform: none !important; }
+    .cut-why { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #FFC46B !important; }
     .card-skeleton { aspect-ratio: 488 / 680; border-radius: 12px; background: linear-gradient(100deg, var(--c-bg-ece8de) 30%, var(--c-bg-f5f2ea) 50%, var(--c-bg-ece8de) 70%); background-size: 300% 100%; animation: sk-shimmer 1.4s linear infinite; }
     @keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
     @media (prefers-reduced-motion: reduce) { .card-skeleton { animation: none; } }
     .dp-maybe { display: none; }
+    .da2-trim-suggest { margin-top: 10px; }
+    .da2-trim-suggest .da2-trim-list-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .da2-cut-all { margin-left: auto; border: 0; border-radius: 8px; padding: 6px 11px; background: #1F6FEB; color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .da2-cut-all:hover { background: #1A5FD0; }
+    .da2-flash { animation: da2-flash 1.2s ease; }
+    @keyframes da2-flash { 0%, 40% { box-shadow: 0 0 0 3px rgba(31,111,235,0.45); } 100% { box-shadow: 0 0 0 3px rgba(31,111,235,0); } }
     .dp-grade { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: var(--c-bg-dcfce7); border: 1px solid var(--c-line-bbf7d0); color: var(--c-text-15803d); flex: none; }
     /* ── Analysis actions row + tabs ── */
     .da2-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -4243,6 +4257,7 @@
       // controller and every await below re-checks isActiveSearch before touching UI.
       const searchRun = startSearchRun();
       state.buildTarget = null;
+      state.cutView = null;
       searchBtn.textContent = "Searching...";
       startLoadingAnimation();
       queryDisplay.classList.remove("visible");
@@ -4910,6 +4925,7 @@
 
     // Render the current search results honoring the active type/subtype chips.
     function renderSearchView() {
+      if (state.mode === "cuts" && state.cutView) return renderCutView();
       renderBuildTarget();
       renderTypeFilterChips(typeFilterEl, state.results, searchTypeFilter, renderSearchView);
       renderResults(state.results.filter((c) => matchesTypeFilter(c, searchTypeFilter)), false);
@@ -6950,7 +6966,8 @@
     function trimCandidates(key, ctx) {
       const { cards, folderId, commander, roleDetails, edhrecByName } = ctx;
       let inCat;
-      if (key === "lands") inCat = cards.filter((c) => isLandCard(c) && !isBasicLand(c));
+      if (key === "__all") inCat = cards.filter((c) => !isLandCard(c) || (ctx.landsOver && !isBasicLand(c)));
+      else if (key === "lands") inCat = cards.filter((c) => isLandCard(c) && !isBasicLand(c));
       else if (ROLE_KEYS.includes(key)) {
         const names = new Set((roleDetails[key]?.cards || []).map((c) => c.name));
         inCat = cards.filter((c) => names.has(c.name));
@@ -6974,6 +6991,24 @@
         })
         .sort((a, b) => a.score - b.score);
     }
+    function trimInRow(key, c, ctx) {
+      if (key === "lands") return isLandCard(c) && !isBasicLand(c);
+      if (ROLE_KEYS.includes(key)) return (ctx.roleDetails[key]?.cards || []).some((x) => x.name === c.name);
+      const t = cardTypes(c);
+      if (key === "spells") return t.has("instant") || t.has("sorcery");
+      return t.has(key) && !isLandCard(c);
+    }
+    function trimSuggested(budget, ctx) {
+      const short = budget.rows.filter((r) => r.action === "add");
+      const over = budget.rows.filter((r) => r.action === "cut");
+      const all = trimCandidates("__all", { ...ctx, landsOver: over.some((r) => r.key === "lands") });
+      return all.map((x) => {
+        const s = short.filter((r) => trimInRow(r.key, x.card, ctx));
+        const o = over.filter((r) => trimInRow(r.key, x.card, ctx));
+        const why = [o.length ? `${o.map((r) => r.label.toLowerCase()).join(", ")} over target` : null, x.why, s.length ? `you're short on ${s.map((r) => r.label.toLowerCase()).join(", ")}` : null].filter(Boolean).join(" · ");
+        return { ...x, score: x.score + s.length * 14 - o.length * 8, why };
+      }).sort((a, b) => a.score - b.score);
+    }
     function trimPanelHtml(budget, ctx) {
       const pinnedCount = ctx.cards.filter((c) => isPinned(ctx.folderId, c.id)).length;
       const rows = budget.rows.map((r) => {
@@ -6984,6 +7019,24 @@
           <span class="da2-trim-label">${esc(r.label)}</span><span class="da2-trim-have">${r.have}</span><span class="da2-trim-range">${range}</span><span class="da2-trim-act">${act}</span></button>`;
       }).join("");
       let list = "";
+      let suggested = "";
+      if (!trimOpenKey && budget.toCut > 0) {
+        const sug = trimSuggested(budget, ctx);
+        const shown = sug.slice(0, trimShowAll ? Math.max(budget.toCut, 30) : budget.toCut);
+        trimSuggestedIds = sug.slice(0, budget.toCut).map((x) => x.card.id);
+        suggested = `<div class="da2-trim-list da2-trim-suggest">
+          <div class="da2-trim-list-head"><b>Suggested cuts</b> · the ${budget.toCut} weakest, protecting roles you're short on${ctx.edhrecByName ? "" : " (EDHREC data not loaded yet)"}
+            <button type="button" class="da2-cut-all" id="da2-cut-all">Cut these ${Math.min(budget.toCut, sug.length)}</button></div>
+          ${shown.map((x) => `<div class="da2-trim-cand">
+            <button type="button" class="da2-edhrec-thumb" data-open-card="${esc(x.card.id)}" title="Show ${escAttr(x.card.name)}"><img src="${getCardImage(x.card)}" alt="" loading="lazy" style="width:100%;border-radius:5px;display:block"></button>
+            <div class="da2-trim-meta"><div class="da2-edhrec-name">${esc(x.card.name)}</div><div class="da2-edhrec-stats">${esc(x.why)}</div></div>
+            <button type="button" class="da2-hand-btn" data-pin-card="${esc(x.card.id)}" title="Keep this card — never suggest it">Pin</button>
+            <button type="button" class="da2-hand-btn da2-cut-btn" data-cut-card="${esc(x.card.id)}" title="Move to the Maybeboard">Cut</button>
+          </div>`).join("")}
+          ${!trimShowAll && sug.length > shown.length ? `<button type="button" class="da2-hand-btn" id="da2-trim-more">Show more options</button>` : ""}
+        </div>
+        <div class="da2-vsub" style="margin-top:10px">Or pick a category to see its weakest cards:</div>`;
+      }
       if (trimOpenKey) {
         const cands = trimCandidates(trimOpenKey, ctx);
         const shown = trimShowAll ? cands : cands.slice(0, 12);
@@ -7001,8 +7054,9 @@
       }
       return `<div class="da-h">Trimming to 100 · <span class="da2-trim-total">${budget.toCut} to cut</span></div>
         <div class="da2-vsub">Targets are for the final deck. Categories overlap, so one cut can count twice. Cuts go to the Maybeboard${pinnedCount ? ` · ${pinnedCount} pinned` : ""}.</div>
-        <div class="da2-trim-grid">${rows}</div>${list}`;
+        ${suggested}<div class="da2-trim-grid">${rows}</div>${list}`;
     }
+    let trimSuggestedIds = [];
     function renderTrimPanel() {
       const el = $("#da2-trim");
       if (!el || !trimCtx) return;
@@ -7017,6 +7071,12 @@
       el.querySelectorAll("[data-open-card]").forEach((b) => b.addEventListener("click", () => { const c = byId(b.dataset.openCard); if (c) showDetail(c); }));
       el.querySelectorAll("[data-cut-card]").forEach((b) => b.addEventListener("click", () => { setMaybe(trimCtx.folderId, b.dataset.cutCard, true); renderSavedCards(); }));
       el.querySelectorAll("[data-pin-card]").forEach((b) => b.addEventListener("click", () => { setPinned(trimCtx.folderId, b.dataset.pinCard, true); renderSavedCards(); }));
+      $("#da2-cut-all")?.addEventListener("click", () => {
+        const folderId = trimCtx.folderId, ids = trimSuggestedIds.slice();
+        ids.forEach((id) => setMaybe(folderId, id, true));
+        renderSavedCards();
+        showToast(`Moved ${ids.length} card${ids.length === 1 ? "" : "s"} to the maybeboard`, { actionLabel: "Undo", ms: 7000, onAction: () => { ids.forEach((id) => setMaybe(folderId, id, false)); renderSavedCards(); } });
+      });
     }
     const TYPE_GUIDE_ROWS = [
       ["creature", "Creatures"], ["spells", "Instants + sorceries"], ["artifact", "Artifacts"],
@@ -7910,9 +7970,19 @@
         : { key: "mana", label: "Mana", sub: `${s.lands} lands · ok`, done: true, title: "Mana base on target", note: `${s.lands} lands, colour sources covered, avg MV ${s.avgMv.toFixed(1)}.` });
 
       const over = s.total - 100;
-      const openCuts = () => { daTab = "build"; try { lsSet("deck_analysis_tab", daTab); } catch {} renderSavedCards(); dA.scrollIntoView({ behavior: "smooth", block: "start" }); };
+      const openCuts = () => {
+        daTab = "build"; trimOpenKey = null; trimShowAll = false;
+        try { lsSet("deck_analysis_tab", daTab); } catch {}
+        renderSavedCards();
+        requestAnimationFrame(() => {
+          const target = $("#da2-trim") || dA;
+          const covered = ($("header")?.offsetHeight || 0) + ($("#deck-progress")?.offsetHeight || 0) + 20;
+          window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - covered, behavior: "smooth" });
+          target.classList.remove("da2-flash"); void target.offsetWidth; target.classList.add("da2-flash");
+        });
+      };
       steps.push(over > 0
-        ? { key: "cut", label: "Cut to 100", sub: `${over} over`, done: false, title: `Cut ${over} card${over === 1 ? "" : "s"}`, note: "Cuts go to the maybeboard, so nothing is lost.", action: { label: "Show cut suggestions", run: openCuts } }
+        ? { key: "cut", label: "Cut to 100", sub: `${over} over`, done: false, title: `Cut ${over} card${over === 1 ? "" : "s"}`, note: "Cuts go to the maybeboard, so nothing is lost.", action: { label: "Show cut suggestions", run: () => openCutView(deck, openCuts) } }
         : { key: "cut", label: "Cut to 100", sub: s.total === 100 ? "100 ✓" : `${s.total} now`, done: s.total === 100, title: s.total === 100 ? "Exactly 100" : `${100 - s.total} to go`, note: s.total === 100 ? "Deck is complete." : "Add cards first; cut once you're over 100." });
 
       // Over 100, cutting comes first; otherwise the first unfinished step in order.
@@ -7939,10 +8009,62 @@
       btn.addEventListener("click", () => { pathSel = null; lastDeckPath.steps[sel].action?.run(); });
     }
 
+    // Cut view: the remove twin of the Add view. Suggested cuts as full cards with a Cut button,
+    // a "Cutting from" bar counting down to 100, and Back to deck.
+    function openCutView(deck, fallback) {
+      if (!trimCtx || trimCtx.folderId !== deck.id || !trimCtx.budget) { fallback?.(); return; }
+      const sug = trimSuggested(trimCtx.budget, trimCtx);
+      state.cutView = { folderId: deck.id, items: sug.slice(0, Math.max(24, trimCtx.budget.toCut * 3)), cut: new Set() };
+      state.buildTarget = null;
+      setActiveTab("search");
+      startSearchRun(); // supersede any search still loading
+      state.mode = "cuts";
+      queryDisplay.classList.remove("visible");
+      aiSummary.style.display = "none";
+      comboHeader.style.display = "none";
+      paginationEl.style.display = "none";
+      sortBar.style.display = "none";
+      typeFilterEl.style.display = "none";
+      hideStatus();
+      renderCutView();
+      window.scrollTo(0, 0);
+    }
+    function deckMainTotal(folderId) { return getFolderCards(folderId).filter((c) => !isMaybe(folderId, c.id)).reduce((n, c) => n + cardQty(folderId, c.id), 0); }
+    function renderCutView() {
+      const cv = state.cutView;
+      if (!cv) return;
+      renderBuildTarget();
+      resultsEl.innerHTML = "";
+      cv.items.forEach((x, i) => {
+        const card = x.card;
+        const isCut = isMaybe(cv.folderId, card.id);
+        const el = document.createElement("div");
+        el.className = "card-item cut-tile" + (isCut ? " is-cut" : "");
+        const reason = x.why.split(" · ")[0] || "";
+        el.innerHTML = `
+          <img src="${getCardImage(card)}" alt="${escAttr(card.name)}" loading="lazy">
+          <span class="cut-rank" title="Suggestion #${i + 1}">${i + 1}</span>
+          <button class="add-to-deck cut-btn${isCut ? " in" : ""}" type="button" aria-label="${isCut ? `Put ${escAttr(card.name)} back in the deck` : `Cut ${escAttr(card.name)} to the maybeboard`}">${isCut ? '<span aria-hidden="true">✓</span><span class="atd-l">Cut</span>' : '<span aria-hidden="true">−</span><span class="atd-l">Cut</span>'}</button>
+          <div class="card-info cut-info"><div class="card-text"><div class="card-name" title="${escAttr(card.name)}">${esc(card.name)}</div><div class="card-price cut-why" title="${escAttr(x.why)}">${esc(reason)}</div></div></div>`;
+        el.querySelector(".cut-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          const now = !isMaybe(cv.folderId, card.id);
+          setMaybe(cv.folderId, card.id, now);
+          renderCutView();
+          renderFolderRail();
+          if (now) showToast(`Cut ${card.name} to the maybeboard`, { actionLabel: "Undo", ms: 4000, onAction: () => { setMaybe(cv.folderId, card.id, false); renderCutView(); renderFolderRail(); } });
+        });
+        el.addEventListener("click", (e) => { if (!e.target.closest("button")) showDetail(card); });
+        el.addEventListener("contextmenu", (e) => { e.preventDefault(); openCardContextMenu(card, e.clientX, e.clientY); });
+        resultsEl.appendChild(el);
+      });
+    }
+
     // Open Search for one job ("removal for this deck"): a direct Scryfall query, no AI.
     // The "Adding to" bar then tracks that job's progress as cards are added.
     async function guidedSearch(deck, { role, label, want, query }) {
       state.buildTarget = { folderId: deck.id, role, label, want };
+      state.cutView = null;
       setActiveTab("search");
       const searchRun = startSearchRun();
       queryDisplay.classList.remove("visible");
@@ -7995,6 +8117,24 @@
     function renderBuildTarget() {
       const el = $("#build-target");
       if (!el) return;
+      if (state.mode === "cuts" && state.cutView) {
+        const cv = state.cutView;
+        const d = state.folders.find((x) => x.id === cv.folderId);
+        if (!d) { el.hidden = true; return; }
+        const total = deckMainTotal(d.id), over = total - 100;
+        const ident = deckIdentity(d);
+        const start = Math.max(total, 100 + (trimCtx?.folderId === d.id ? trimCtx.budget.toCut : 0));
+        const done = Math.max(0, start - total), need = Math.max(1, start - 100);
+        el.innerHTML = `<span class="bt-lbl">Cutting from</span>
+          <span class="bt-deck">${ident ? manaPipsHtml([...ident]) : ""}<b>${esc(d.name)}</b></span>
+          <span class="bt-goal">${over > 0 ? `${over} to cut` : over === 0 ? "100 ✓" : `${-over} under 100`} <span class="bt-bar"><i class="${over <= 0 ? "ok" : ""}" style="width:${Math.min(100, (done / need) * 100)}%"></i></span>${total}/100</span>
+          <button class="bt-back" type="button" id="bt-back">← Back to deck</button>`;
+        el.classList.add("cutting");
+        el.hidden = false;
+        $("#bt-back").addEventListener("click", () => { state.cutView = null; state.mode = "search"; el.classList.remove("cutting"); resultsEl.innerHTML = ""; setActiveTab("saved"); window.scrollTo(0, 0); });
+        return;
+      }
+      el.classList.remove("cutting");
       const deck = activeDeck();
       if (!deck || state.mode === "combos") { el.hidden = true; return; }
       const t = state.buildTarget && state.buildTarget.folderId === deck.id ? state.buildTarget : null;
