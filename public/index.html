@@ -17,6 +17,12 @@
   <title>Spellbook</title>
   <style>
     /* ── More colour tokens (later additions) ── */
+    :root { --c-bg-r255-254-250-0-82: rgba(255,254,250,0.82); --c-bg-eef2ea: #EEF2EA; --c-line-r0-0-0-0-6: rgba(0,0,0,0.6); --c-bg-r255-255-255-0-94: rgba(255,255,255,0.94); }
+    :root[data-theme="dark"] { color-scheme: dark; --c-bg-r255-254-250-0-82: rgba(29,28,24,0.82); --c-bg-eef2ea: #2B2D28; --c-line-r0-0-0-0-6: rgba(240,236,228,0.6); --c-bg-r255-255-255-0-94: rgba(26,26,26,0.94); }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --c-bg-r255-254-250-0-82: rgba(29,28,24,0.82); --c-bg-eef2ea: #2B2D28; --c-line-r0-0-0-0-6: rgba(240,236,228,0.6); --c-bg-r255-255-255-0-94: rgba(26,26,26,0.94); } }
+
+
+    /* ── More colour tokens (later additions) ── */
     :root { --c-line-r0-0-0-0-9: rgba(0,0,0,0.9); }
     :root[data-theme="dark"] { color-scheme: dark; --c-line-r0-0-0-0-9: rgba(240,236,228,0.9); }
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --c-line-r0-0-0-0-9: rgba(240,236,228,0.9); } }
@@ -141,6 +147,84 @@
     /* Keyboard focus is always visible. */
     :where(button, [role="button"], a, select, input, textarea, summary, [tabindex]):focus-visible { outline: 2px solid #1F6FEB; outline-offset: 2px; }
     .card-item { cursor: pointer; }
+    .gf-entry { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .gf-entry > div { flex: 1 1 260px; min-width: 0; }
+    .gf-entry p { margin: 4px 0 0; font-size: 13px; color: var(--c-text-6e6a61); line-height: 1.45; }
+    .gf-open-btn { border: 0; border-radius: 10px; padding: 10px 16px; background: #1F6FEB; color: #fff; font: inherit; font-size: 13.5px; font-weight: 750; cursor: pointer; }
+    .gf-open-btn:hover { background: #1A5FD0; }
+    body.gf-open { overflow: hidden; }
+    .gf { position: fixed; inset: 0; z-index: 520; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: radial-gradient(circle, var(--c-bg-r24-23-21-0-13) 0 1px, transparent 1.35px), var(--c-bg-f7f6f1); background-size: 22px 22px; color: var(--c-text-181715); padding-top: env(safe-area-inset-top, 0px); }
+    .gf[hidden] { display: none; }
+    .gf-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; background: var(--c-bg-r247-246-241-0-62); border-bottom: 1px solid var(--c-line-r31-29-25-0-12); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gf-back { border: 0; background: none; color: var(--c-text-1f6feb); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; padding: 6px 2px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gf-title { font-size: 17px; font-weight: 850; letter-spacing: -0.03em; }
+    .gf-sub { font-size: 13px; color: var(--c-text-7a766c); }
+    .gf-spacer { flex: 1; }
+    .gf-life-m { display: none; }
+    .gf-btn { border: 0; border-radius: 9px; padding: 8px 13px; background: #1F6FEB; color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .gf-btn:hover:not(:disabled) { background: #1A5FD0; }
+    .gf-btn.ghost { background: var(--c-bg-fffefa); color: var(--c-text-181715); border: 1px solid var(--c-line-r31-29-25-0-14); }
+    .gf-btn.ghost:hover:not(:disabled) { border-color: #1F6FEB; background: var(--c-bg-e5efff); }
+    .gf-btn:disabled { opacity: 0.45; cursor: default; }
+    .gf-mini { padding: 4px 8px; font-size: 11px; letter-spacing: 0; text-transform: none; }
+    .gf-table { min-height: 0; display: grid; grid-template-columns: 200px minmax(0, 1fr) 240px; gap: 12px; padding: 12px 16px; overflow: hidden; }
+    .gf-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; scrollbar-width: thin; }
+    .gf-box { background: var(--c-bg-r255-254-250-0-82); border: 1px solid var(--c-line-r31-29-25-0-12); border-radius: 14px; padding: 10px; display: grid; gap: 8px; }
+    .gf-box h3 { margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 750; letter-spacing: 0.075em; text-transform: uppercase; color: var(--c-text-9e9b92); }
+    .gf-box h3 b { color: var(--c-text-181715); font-variant-numeric: tabular-nums; letter-spacing: 0; font-size: 13px; }
+    .gf-logbox { min-height: 0; flex: 1 1 auto; }
+    .gf-log { display: grid; gap: 4px; align-content: start; overflow: auto; max-height: 260px; font-size: 12px; color: var(--c-text-6e6a61); }
+    .gf-log b { color: var(--c-text-181715); font-weight: 650; }
+    .gf-tn { font-size: 10.5px; font-weight: 750; letter-spacing: 0.06em; color: var(--c-text-a8a49a); margin-top: 4px; }
+    .gf-felt { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 18px; background: var(--c-bg-eef2ea); border: 1px solid rgba(21,128,61,0.18); }
+    .gf-zl { display: flex; justify-content: space-between; gap: 10px; font-size: 10.5px; font-weight: 750; letter-spacing: 0.075em; text-transform: uppercase; color: var(--c-text-7a766c); }
+    .gf-zl b { color: var(--c-text-181715); letter-spacing: 0; }
+    .gf-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; min-height: 120px; }
+    .gf-row:last-child { flex: 1; }
+    .gf-muted { font-size: 12px; color: var(--c-text-9e9b92); text-transform: none; letter-spacing: 0; font-weight: 500; }
+    .gf-c { position: relative; flex: none; width: 92px; aspect-ratio: 488 / 680; padding: 0; border: 0; border-radius: 5% / 3.6%; background: var(--c-bg-dcd8cf); overflow: visible; cursor: pointer; transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.15s, opacity 0.15s; box-shadow: 0 8px 18px -12px var(--c-line-r0-0-0-0-6); }
+    .gf-c img { width: 100%; height: 100%; display: block; border-radius: inherit; object-fit: cover; }
+    .gf-c.tapped { transform: rotate(90deg) scale(0.84); margin-inline: 14px; }
+    .gf-c.sick::after { content: "zZ"; position: absolute; left: 5px; bottom: 5px; padding: 1px 5px; border-radius: 5px; background: rgba(24,23,21,0.78); color: #fff; font: 800 10px/1.4 ui-monospace, monospace; }
+    .gf-pt { position: absolute; right: 5px; bottom: 5px; padding: 1px 5px; border-radius: 5px; background: var(--c-bg-r255-255-255-0-94); color: var(--c-text-181715); font: 800 10.5px/1.4 ui-monospace, monospace; }
+    .gf-handbar { display: grid; gap: 6px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--c-bg-r247-246-241-0-62); border-top: 1px solid var(--c-line-r31-29-25-0-12); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gf-hand { display: flex; gap: 10px; overflow-x: auto; padding: 10px 2px 4px; scrollbar-width: thin; min-height: 160px; }
+    .gf-hand .gf-c { width: 112px; }
+    .gf-hand .gf-c:hover { transform: translateY(-8px); }
+    .gf-c.can { box-shadow: 0 0 0 2.5px #1F6FEB, 0 10px 22px -12px rgba(31,111,235,0.8); }
+    .gf-c.cant { opacity: 0.6; }
+    .gf-c.cmd::before { content: "Commander"; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); z-index: 2; padding: 1px 6px; border-radius: 999px; background: var(--c-bg-181715); color: #fff; font-size: 9px; font-weight: 750; white-space: nowrap; }
+    .gf-life { font-size: 40px; font-weight: 850; letter-spacing: -0.04em; text-align: center; line-height: 1; padding: 4px 0 2px; font-variant-numeric: tabular-nums; }
+    .gf-life.low { color: var(--c-text-dc2626); }
+    .gf-lifebar { height: 6px; border-radius: 999px; background: var(--c-bg-ece8de); overflow: hidden; }
+    .gf-lifebar i { display: block; height: 100%; background: #DC2626; transition: width 0.3s; }
+    .gf-killmsg { border-radius: 10px; padding: 8px; background: var(--c-bg-dcfce7); color: var(--c-text-15803d); font-weight: 750; font-size: 13px; text-align: center; }
+    .gf-stat { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--c-text-7a766c); }
+    .gf-stat b { color: var(--c-text-181715); font-size: 15px; font-variant-numeric: tabular-nums; }
+    .gf-chips { display: flex; flex-wrap: wrap; gap: 5px; max-height: 160px; overflow: auto; }
+    .gf-chip { padding: 3px 8px; border-radius: 999px; border: 1px solid var(--c-line-r31-29-25-0-12); background: var(--c-bg-fffefa); font-size: 11.5px; color: var(--c-text-57524a); }
+    .gf-hist { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; align-items: end; height: 84px; }
+    .gf-hist div { display: grid; gap: 3px; justify-items: center; align-content: end; height: 100%; }
+    .gf-hist i { display: block; width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: #1F6FEB; }
+    .gf-hist i.best { background: #15803D; }
+    .gf-hist span { font-size: 9.5px; color: var(--c-text-a8a49a); font-variant-numeric: tabular-nums; }
+    .gf-hist + .gf-muted { margin: 2px 0 0; }
+    .gf-mull { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 16px; background: rgba(15,15,25,0.42); }
+    .gf-mull[hidden] { display: none; }
+    .gf-mull-card { width: min(860px, 100%); max-height: 100%; overflow: auto; display: grid; gap: 12px; padding: 18px; border-radius: 18px; background: var(--c-bg-fffefa); border: 1px solid var(--c-line-r31-29-25-0-12); box-shadow: 0 30px 80px -24px var(--c-line-r0-0-0-0-55); }
+    .gf-mull-card h3 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
+    .gf-mull-card p { margin: 0; font-size: 13px; color: var(--c-text-7a766c); }
+    .gf-mhand { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .gf-mhand .gf-c { width: 104px; }
+    .gf-mhand .gf-c.bottom { opacity: 0.35; transform: translateY(10px); }
+    .gf-macts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+    .gf-verdict { margin-right: auto; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 650; }
+    .gf-verdict.ok { background: var(--c-bg-dcfce7); color: var(--c-text-15803d); }
+    .gf-verdict.meh { background: var(--c-bg-ffefd5); color: var(--c-text-b45309); }
+    .gf-sheet-scrim, .gf-sheet { display: none; }
+    .gf-phone-acts { display: none; grid-template-columns: 1fr 1fr 1.3fr; gap: 6px; }
+    .gf-phone-acts .gf-btn { padding: 11px 6px; font-size: 13.5px; }
+    @media (max-width: 1000px) { .gf-table { grid-template-columns: 180px minmax(0, 1fr); } .gf-table > .gf-side:last-child { grid-column: 1 / -1; flex-direction: row; overflow-x: auto; } .gf-table > .gf-side:last-child .gf-box { min-width: 220px; } }
     /* ── Main ── */
     main {
       width: calc(100% - 32px);
@@ -2544,6 +2628,34 @@
       header { grid-template-columns: 1fr auto; height: calc(56px + env(safe-area-inset-top, 0px)); padding: env(safe-area-inset-top, 0px) 14px 0; gap: 10px; }
       header h1 { font-size: 21px; }
       header .nav-pills { display: none; }
+      .gf-top { padding: 8px 12px; gap: 6px; }
+      .gf-top .gf-title, .gf-top [data-gf="attack"], .gf-top [data-gf="auto"], .gf-top [data-gf="next"] { display: none; }
+      .gf-life-m { display: inline; font-size: 18px; font-weight: 850; font-variant-numeric: tabular-nums; }
+      .gf-new { padding: 6px 10px; font-size: 12px; }
+      .gf-table { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); padding: 8px 10px; gap: 8px; overflow: auto; }
+      .gf-table > .gf-side:first-child { flex-direction: row; overflow-x: auto; }
+      .gf-table > .gf-side:first-child .gf-box { min-width: 130px; }
+      .gf-table > .gf-side:first-child #gf-cmd { display: none; }
+      .gf-table > .gf-side:last-child { display: none; }
+      .gf-felt { padding: 8px; }
+      .gf-row { min-height: 70px; gap: 6px; }
+      .gf-felt .gf-c { width: 56px; }
+      .gf-c.tapped { margin-inline: 8px; }
+      .gf-handbar { padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px)); }
+      .gf-handbar .gf-zl .gf-muted { display: none; }
+      .gf-hand { min-height: 0; padding-top: 10px; }
+      .gf-hand .gf-c { width: 76px; }
+      .gf-hand .gf-c:hover { transform: none; }
+      .gf-handbar::after { content: ""; }
+      .gf-mhand .gf-c { width: 72px; }
+      .gf-sheet-scrim { display: block; position: fixed; inset: 0; z-index: 4; background: rgba(15,15,25,0.38); }
+      .gf-sheet { display: grid; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; justify-items: center; gap: 12px; padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px)); border-radius: 22px 22px 0 0; background: var(--c-bg-fffefa); box-shadow: 0 -14px 44px -18px var(--c-line-r0-0-0-0-45); }
+      .gf-sheet-scrim[hidden], .gf-sheet[hidden] { display: none; }
+      .gf-grab { width: 40px; height: 5px; border-radius: 999px; background: var(--c-bg-d4d4dc); }
+      .gf-sheet .gf-c { width: 62%; max-width: 230px; }
+      .gf-sheet-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+      .gf-sheet-acts .gf-btn { padding: 12px; font-size: 14px; }
+      .gf-phone-acts { display: grid; }
       .cmdk-btn { width: 40px; padding: 0; justify-content: center; }
       .cmdk-btn .cmdk-hint, .cmdk-btn kbd, .cmdk-foot { display: none; }
       .cmdk-scrim { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
@@ -2701,6 +2813,47 @@
     </div>
   </div>
   <div class="ac-list" id="ac-list" role="listbox" hidden></div>
+  <div class="gf" id="gf" hidden role="dialog" aria-modal="true" aria-label="Goldfish">
+    <div class="gf-top">
+      <button class="gf-back" type="button" id="gf-close">← <span id="gf-deckname">Deck</span></button>
+      <strong class="gf-title">Goldfish</strong><span class="gf-sub" id="gf-sub"></span>
+      <span class="gf-spacer"></span>
+      <span class="gf-life-m" id="gf-life-m"></span>
+      <button class="gf-btn ghost" type="button" data-gf="auto" title="Play this turn with a simple pilot">Play it for me</button>
+      <button class="gf-btn ghost" type="button" data-gf="attack">Attack</button>
+      <button class="gf-btn" type="button" data-gf="next">Next turn</button>
+      <button class="gf-btn ghost gf-new" type="button" data-gf="new">New game</button>
+    </div>
+    <div class="gf-table">
+      <aside class="gf-side">
+        <div class="gf-box"><h3>Command zone <span id="gf-tax"></span></h3><div id="gf-cmd"></div></div>
+        <div class="gf-box"><h3>Library <b id="gf-lib"></b></h3></div>
+        <div class="gf-box"><h3>Graveyard <b id="gf-gyn"></b></h3><div class="gf-chips" id="gf-gy"></div></div>
+      </aside>
+      <section class="gf-felt">
+        <div class="gf-zl"><span>Creatures &amp; other permanents</span><span id="gf-power"></span></div>
+        <div class="gf-row" id="gf-perm"></div>
+        <div class="gf-zl"><span>Lands &amp; mana</span><span id="gf-landn"></span></div>
+        <div class="gf-row" id="gf-lands"></div>
+      </section>
+      <aside class="gf-side">
+        <div class="gf-box"><h3>Goldfish life</h3><div class="gf-life" id="gf-life"></div><div class="gf-lifebar"><i id="gf-lifebar"></i></div><div id="gf-kill"></div></div>
+        <div class="gf-box"><div class="gf-stat"><span>Mana available</span><b id="gf-mana"></b></div><div class="gf-stat"><span>Land drop</span><b id="gf-drop"></b></div></div>
+        <div class="gf-box gf-logbox"><h3>Turn log</h3><div class="gf-log" id="gf-log"></div></div>
+        <div class="gf-box"><h3>Many games <button class="gf-btn ghost gf-mini" type="button" data-gf="sim">Run 500 games</button></h3><div id="gf-sim"><span class="gf-muted">Kill-turn spread and averages appear here.</span></div></div>
+      </aside>
+    </div>
+    <div class="gf-handbar"><div class="gf-zl"><span>Hand <b id="gf-handn"></b></span><span class="gf-muted">Click a lit card to play it · click a land or rock to tap it for mana</span></div><div class="gf-hand" id="gf-hand"></div><div class="gf-phone-acts"><button class="gf-btn ghost" type="button" data-gf="auto">Auto</button><button class="gf-btn ghost" type="button" data-gf="attack">Attack</button><button class="gf-btn" type="button" data-gf="next">Next turn</button></div></div>
+    <div class="gf-mull" id="gf-mull" hidden>
+      <div class="gf-mull-card">
+        <h3 id="gf-mtitle"></h3><p id="gf-mnote"></p>
+        <div class="gf-mhand" id="gf-mhand"></div>
+        <div class="gf-macts"><span class="gf-verdict" id="gf-verdict"></span><button class="gf-btn ghost" type="button" data-gf="mull">Mulligan</button><button class="gf-btn" type="button" data-gf="keep">Keep</button></div>
+      </div>
+    </div>
+    <div class="gf-sheet-scrim" id="gf-sheet-scrim" hidden></div>
+    <div class="gf-sheet" id="gf-sheet" hidden><span class="gf-grab"></span><div id="gf-sheet-card"></div><div class="gf-sheet-acts"><button class="gf-btn ghost" type="button" id="gf-sheet-close">Keep in hand</button><button class="gf-btn" type="button" id="gf-sheet-play">Play</button></div></div>
+  </div>
   <div class="mb-float" id="mb-float" hidden role="dialog" aria-label="Maybeboard window">
     <div class="mb-float-h" id="mb-float-h"><span>Maybeboard</span><button class="mb-icon" type="button" id="mb-dock" title="Dock in the Focus panel" aria-label="Dock the maybeboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></button></div>
     <div class="mb-float-body" id="mb-float-body"></div>
@@ -8173,6 +8326,7 @@
             </div>
           </div>`)}
         ${pane("playtest", `
+          <section class="da2-card gf-entry"><div><div class="da-h">Goldfish</div><p>Play the deck turn by turn against an empty table: mulligan, lands, spells, attacks, and the turn it would win. Or run 500 games.</p></div><button class="gf-open-btn" type="button" id="gf-open-btn">Goldfish this deck</button></section>
           <section class="da2-card" id="da2-opening-hand" hidden></section>
           <section class="da2-card" id="da2-sim"></section>`)}
         ${pane("ideas", `
@@ -8187,6 +8341,7 @@
       wireDeckTabs();
       $("#da2-staples-btn")?.addEventListener("click", () => { if (deck) addStaplesToDeck(deck, commander); });
       $("#da2-autofill-btn")?.addEventListener("click", () => { if (deck) openAutofill(deck, commander); });
+      $("#gf-open-btn")?.addEventListener("click", () => { if (deck) openGoldfish(deck); });
       const fixWrapEl = $("#da2-fix-wrap");
       fixWrapEl?.addEventListener("click", (e) => {
         const chip = e.target.closest(".da2-card-chip");
@@ -9959,6 +10114,252 @@
       gameplanModal.classList.remove("visible");
       renderSavedCards();
     });
+    // ── Goldfish: play the deck against an empty table ──
+    // Generic mana (colours aren't checked), London mulligan, on the play, summoning sickness,
+    // commander tax, enters-tapped lands, mana rocks/dorks, draw spells and land-fetch ramp.
+    const GF_NUM = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
+    function gfFront(c) { return c.card_faces?.[0] ? { ...c, ...c.card_faces[0], cmc: c.cmc } : c; }
+    function gfProfile(card) {
+      const fc = gfFront(card);
+      const tl = (fc.type_line || "").toLowerCase();
+      const ot = getOracleText(card).toLowerCase();
+      const kw = (card.keywords || []).map((k) => k.toLowerCase());
+      const p = { card, name: card.name, cmc: Number(card.cmc || 0), img: getCardImage(card) };
+      const addClause = /\{t\}[^.:]*:\s*add ([^.]*)/.exec(ot);
+      const makes = addClause ? Math.max(1, (addClause[1].match(/\{[wubrgc]\}/g) || []).length || (/one mana|mana of any/.test(addClause[1]) ? 1 : 1)) : 0;
+      if (tl.includes("land")) { p.kind = "land"; p.makes = 1; p.etbTapped = /enters (the battlefield )?tapped/.test(ot) && !/unless|you may pay/.test(ot); return p; }
+      if (tl.includes("creature")) {
+        p.kind = "creature";
+        p.pow = parseInt(fc.power, 10) || 0; p.tou = parseInt(fc.toughness, 10) || 0;
+        p.haste = kw.includes("haste"); p.vigilance = kw.includes("vigilance");
+        p.dork = makes; // mana creature
+      } else if (tl.includes("artifact") && makes) { p.kind = "rock"; p.makes = makes; }
+      else if (tl.includes("instant") || tl.includes("sorcery")) p.kind = "spell";
+      else p.kind = "perm"; // enchantments, planeswalkers, other artifacts, battles
+      const d = /draw (a|an|one|two|three|four|five|six|seven|x|\d+) cards?/.exec(ot);
+      if (d && !/whenever|at the beginning/.test(ot.slice(0, d.index))) p.draws = GF_NUM[d[1]] || parseInt(d[1], 10) || 0;
+      if (/search your library for [^.]*\bland/.test(ot) && /onto the battlefield/.test(ot)) { p.fetchLand = 1; if (/into your hand/.test(ot)) p.fetchHand = 1; }
+      return p;
+    }
+    let gf = null; // the current game
+    let gfDeck = null, gfCards = null, gfCmd = null, gfUid = 0;
+    const gfShuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    function gfNew(silent = false) {
+      const g = { lib: gfShuffle(gfCards.map((p) => ({ ...p, id: ++gfUid }))), hand: [], bf: [], gy: [], cmdIn: Boolean(gfCmd), tax: 0, turn: 0, life: 40, landPlayed: false, pool: 0, log: [], mulls: 0, phase: "mull", kill: null, pending: [] };
+      gfDraw(g, 7);
+      if (!silent) g.log.push({ t: 0, msg: "Shuffled and drew 7." });
+      return g;
+    }
+    const gfDraw = (g, n = 1) => { for (let i = 0; i < n && g.lib.length; i++) g.hand.push(g.lib.shift()); };
+    const gfSource = (p) => !p.tapped && (p.kind === "land" || p.kind === "rock" || (p.kind === "creature" && p.dork && !p.sick));
+    const gfAvail = (g) => g.bf.filter(gfSource).reduce((n, p) => n + (p.makes || p.dork || 1), 0) + g.pool;
+    function gfPay(g, n) {
+      const fromPool = Math.min(g.pool, n); g.pool -= fromPool; n -= fromPool;
+      const srcs = g.bf.filter(gfSource).sort((a, b) => (a.kind === "creature") - (b.kind === "creature") || (b.makes || 1) - (a.makes || 1));
+      for (const p of srcs) { if (n <= 0) break; p.tapped = true; const m = p.makes || p.dork || 1; if (m > n) g.pool += m - n; n -= m; }
+    }
+    const gfCanPlay = (g, c) => g.phase === "main" && !g.kill && (c.kind === "land" ? !g.landPlayed : gfAvail(g) >= c.cmc);
+    const gfCanCmd = (g) => g.cmdIn && g.phase === "main" && !g.kill && gfAvail(g) >= gfCmd.cmc + g.tax;
+    function gfPlay(g, c, fromCmd = false) {
+      if (c.kind === "land") {
+        g.landPlayed = true; g.hand = g.hand.filter((x) => x !== c); g.bf.push({ ...c, tapped: Boolean(c.etbTapped) });
+        g.log.push({ t: g.turn, msg: `Played <b>${esc(c.name)}</b>${c.etbTapped ? " (tapped)" : ""}.` });
+        return;
+      }
+      const cost = c.cmc + (fromCmd ? g.tax : 0);
+      if (gfAvail(g) < cost) return;
+      gfPay(g, cost);
+      if (fromCmd) { g.cmdIn = false; c = { ...gfCmd, id: "cmd" }; } else g.hand = g.hand.filter((x) => x !== c);
+      const notes = [];
+      if (c.draws) { gfDraw(g, c.draws); notes.push(`drew ${c.draws}`); }
+      if (c.fetchLand) {
+        const basics = g.lib.filter((x) => x.kind === "land" && isBasicLand(x.card));
+        const pick = basics[0]; if (pick) { g.lib = g.lib.filter((x) => x !== pick); g.bf.push({ ...pick, tapped: true }); notes.push(`${pick.name} onto the battlefield`); }
+        if (c.fetchHand) { const p2 = g.lib.find((x) => x.kind === "land" && isBasicLand(x.card)); if (p2) { g.lib = g.lib.filter((x) => x !== p2); g.hand.push(p2); notes.push(`${p2.name} to hand`); } }
+        gfShuffle(g.lib);
+      }
+      if (c.kind === "spell") g.gy.push(c);
+      else g.bf.push({ ...c, tapped: false, sick: c.kind === "creature" && !c.haste, attacked: false, fromCmd });
+      g.log.push({ t: g.turn, msg: `Cast <b>${esc(c.name)}</b>${fromCmd ? ` from the command zone (tax ${g.tax})` : ""}${notes.length ? ` (${notes.join(", ")})` : ""}.` });
+    }
+    const gfAttackers = (g) => g.bf.filter((p) => p.kind === "creature" && !p.sick && !p.tapped && !p.attacked && p.pow > 0);
+    function gfAttack(g) {
+      const a = gfAttackers(g);
+      if (!a.length || g.kill) return;
+      const dmg = a.reduce((n, p) => n + p.pow, 0);
+      a.forEach((p) => { p.attacked = true; if (!p.vigilance) p.tapped = true; });
+      g.life = Math.max(0, g.life - dmg);
+      g.log.push({ t: g.turn, msg: `Attacked with ${a.length} for <b>${dmg}</b>.` });
+      if (g.life <= 0) { g.kill = g.turn; g.log.push({ t: g.turn, msg: `<b>Goldfish dead on turn ${g.turn}.</b>` }); }
+    }
+    function gfNextTurn(g) {
+      if (g.kill) return;
+      g.turn++;
+      g.bf.forEach((p) => { p.tapped = false; p.sick = false; p.attacked = false; });
+      g.pool = 0; g.landPlayed = false; g.phase = "main";
+      if (g.turn > 1) gfDraw(g, 1);
+      g.log.push({ t: g.turn, msg: g.turn > 1 ? "Untap, draw." : "On the play: no draw." });
+    }
+    function gfKeep(g) {
+      if (g.mulls > 0) {
+        const bottom = g.pending.length === Math.min(g.mulls, 7) ? g.pending : g.hand.slice().sort((a, b) => (a.kind === "land" ? -1 : -a.cmc) - (b.kind === "land" ? -1 : -b.cmc)).slice(0, g.mulls);
+        g.hand = g.hand.filter((c) => !bottom.includes(c)); g.lib.push(...bottom);
+        g.log.push({ t: 0, msg: `Kept ${g.hand.length}; ${bottom.length} to the bottom.` });
+      } else g.log.push({ t: 0, msg: "Kept 7." });
+      g.pending = [];
+      gfNextTurn(g);
+    }
+    function gfMulligan(g) { g.lib.push(...g.hand); g.hand = []; gfShuffle(g.lib); gfDraw(g, 7); g.mulls++; g.pending = []; g.log.push({ t: 0, msg: `Mulligan ${g.mulls}: drew a new 7.` }); }
+    // The simple pilot: best land, ramp, commander, the biggest useful spells, then attack.
+    function gfAutoTurn(g) {
+      if (g.phase === "mull") gfKeep(g);
+      if (g.kill) return;
+      if (!g.landPlayed) {
+        const ls = g.hand.filter((c) => c.kind === "land");
+        const land = ls.find((c) => !c.etbTapped && !isBasicLand(c.card)) || ls.find((c) => !c.etbTapped) || ls[0];
+        if (land) gfPlay(g, land);
+      }
+      for (let guard = 0; guard < 25; guard++) {
+        const ramp = g.hand.filter((c) => (c.kind === "rock" || c.dork || c.fetchLand) && gfAvail(g) >= c.cmc).sort((a, b) => a.cmc - b.cmc)[0];
+        if (ramp) { gfPlay(g, ramp); continue; }
+        if (gfCanCmd(g)) { gfPlay(g, gfCmd, true); continue; }
+        const spell = g.hand.filter((c) => c.kind !== "land" && (c.kind !== "spell" || c.draws) && gfAvail(g) >= c.cmc).sort((a, b) => b.cmc - a.cmc)[0];
+        if (spell) { gfPlay(g, spell); continue; }
+        break;
+      }
+      gfAttack(g);
+    }
+    const gfVerdict = (hand) => { const l = hand.filter((c) => c.kind === "land").length, r = hand.filter((c) => c.kind === "rock" || c.dork).length; return l >= 3 && l <= 5 ? ["ok", `${l} lands${r ? ` + ${r} ramp` : ""} · keepable`] : l === 2 && r ? ["ok", `2 lands + ${r} ramp · risky but fine`] : ["meh", `${l} land${l === 1 ? "" : "s"} · consider a mulligan`]; };
+    function gfCardHtml(c, cls = "") {
+      const pt = c.kind === "creature" ? `<span class="gf-pt">${c.pow}/${c.tou}</span>` : "";
+      return `<button type="button" class="gf-c ${cls}" data-gfid="${c.id}" title="${escAttr(c.name)}"><img src="${escAttr(c.img)}" alt="${escAttr(c.name)}" loading="lazy" draggable="false">${pt}</button>`;
+    }
+    function gfRender() {
+      const g = gf, el = (id) => document.getElementById(id);
+      const a = gfAvail(g);
+      const perms = g.bf.filter((p) => p.kind === "creature" || p.kind === "perm");
+      const mana = g.bf.filter((p) => p.kind === "land" || p.kind === "rock");
+      const pow = g.bf.filter((p) => p.kind === "creature").reduce((n, p) => n + p.pow, 0);
+      const lands = g.bf.filter((p) => p.kind === "land").length;
+      el("gf-sub").textContent = g.phase === "mull" ? "Opening hand" : `Turn ${g.turn}${g.kill ? " · goldfish dead" : ""}`;
+      el("gf-life-m").textContent = `${g.life} life`;
+      el("gf-tax").innerHTML = gfCmd ? `tax <b>${g.tax}</b>` : "";
+      el("gf-cmd").innerHTML = !gfCmd ? `<span class="gf-muted">No commander set</span>` : g.cmdIn ? gfCardHtml({ ...gfCmd, id: "cmd" }, gfCanCmd(g) ? "can" : "cant") : `<span class="gf-muted">On the battlefield</span>`;
+      el("gf-lib").textContent = g.lib.length;
+      el("gf-gyn").textContent = g.gy.length;
+      el("gf-gy").innerHTML = g.gy.map((c) => `<span class="gf-chip">${esc(c.name)}</span>`).join("") || `<span class="gf-muted">Empty</span>`;
+      el("gf-perm").innerHTML = perms.map((p) => gfCardHtml(p, `${p.tapped ? "tapped" : ""} ${p.sick ? "sick" : ""}`)).join("") || `<span class="gf-muted">Nothing yet.</span>`;
+      el("gf-lands").innerHTML = mana.map((p) => gfCardHtml(p, p.tapped ? "tapped" : "")).join("") || `<span class="gf-muted">Play a land from your hand.</span>`;
+      el("gf-power").textContent = pow ? `${pow} power on board` : "";
+      el("gf-landn").textContent = `${lands} land${lands === 1 ? "" : "s"}`;
+      el("gf-handn").textContent = g.hand.length;
+      const cmdInHand = isPhone() && gfCmd && g.cmdIn && g.phase === "main" ? gfCardHtml({ ...gfCmd, id: "cmd" }, gfCanCmd(g) ? "can cmd" : "cant cmd") : "";
+      el("gf-hand").innerHTML = cmdInHand + g.hand.map((c) => gfCardHtml(c, gfCanPlay(g, c) ? "can" : "cant")).join("");
+      el("gf-life").textContent = g.life;
+      el("gf-life").classList.toggle("low", g.life <= 10);
+      el("gf-lifebar").style.width = (g.life / 40) * 100 + "%";
+      el("gf-kill").innerHTML = g.kill ? `<div class="gf-killmsg">Dead on turn ${g.kill}</div>` : "";
+      el("gf-mana").textContent = a;
+      el("gf-drop").textContent = g.landPlayed ? "used" : "ready";
+      let lt = -1;
+      el("gf-log").innerHTML = g.log.slice(-60).map((l) => { const head = l.t !== lt ? `<div class="gf-tn">${l.t ? `TURN ${l.t}` : "SETUP"}</div>` : ""; lt = l.t; return head + `<div>${l.msg}</div>`; }).join("");
+      el("gf-log").scrollTop = 1e6;
+      document.querySelectorAll('[data-gf="attack"]').forEach((b) => (b.disabled = !gfAttackers(g).length || !!g.kill));
+      document.querySelectorAll('[data-gf="next"]').forEach((b) => (b.disabled = g.phase === "mull" || !!g.kill));
+      el("gf-mull").hidden = g.phase !== "mull";
+      if (g.phase === "mull") {
+        el("gf-mtitle").textContent = g.mulls ? `Mulligan ${g.mulls}: put ${g.mulls} on the bottom` : "Opening hand";
+        el("gf-mnote").textContent = g.mulls ? `Click ${g.mulls} card${g.mulls === 1 ? "" : "s"} to put on the bottom (London mulligan), then Keep.` : "You're on the play. Keep, or mulligan for a new 7.";
+        el("gf-mhand").innerHTML = g.hand.map((c) => gfCardHtml(c, g.pending.includes(c) ? "bottom" : "")).join("");
+        const [cls, txt] = gfVerdict(g.hand.filter((c) => !g.pending.includes(c)));
+        el("gf-verdict").className = "gf-verdict " + cls; el("gf-verdict").textContent = txt;
+        document.querySelector('[data-gf="keep"]').disabled = g.mulls > 0 && g.pending.length !== Math.min(g.mulls, 7);
+      }
+    }
+    function gfRunSim() {
+      const N = 500, kills = [], stuck = [];
+      for (let i = 0; i < N; i++) {
+        const s = gfNew(true);
+        const l = s.hand.filter((c) => c.kind === "land").length;
+        if (l < 2 || l > 5) gfMulligan(s);
+        gfKeep(s);
+        let miss = false;
+        for (let t = 0; t < 14 && !s.kill; t++) { if (t > 0) gfNextTurn(s); gfAutoTurn(s); if (s.turn <= 4 && !s.landPlayed) miss = true; }
+        kills.push(s.kill || 15); stuck.push(miss);
+      }
+      const avg = kills.reduce((x, y) => x + y, 0) / N, med = kills.slice().sort((x, y) => x - y)[N >> 1];
+      const buckets = Array.from({ length: 10 }, (_, i) => i + 5);
+      const counts = buckets.map((t) => kills.filter((k) => (t === 14 ? k >= 14 : t === 5 ? k <= 5 : k === t)).length);
+      const max = Math.max(...counts, 1), best = counts.indexOf(max);
+      document.getElementById("gf-sim").innerHTML = `
+        <div class="gf-stat"><span>Average kill turn</span><b>${avg.toFixed(1)}</b></div>
+        <div class="gf-stat"><span>Median</span><b>${med}</b></div>
+        <div class="gf-stat"><span>Missed a land drop by turn 4</span><b>${Math.round(stuck.filter(Boolean).length / N * 100)}%</b></div>
+        <div class="gf-hist">${counts.map((c, i) => `<div title="Turn ${buckets[i]}${i === 9 ? "+" : i === 0 ? " or earlier" : ""}: ${c} games"><i class="${i === best ? "best" : ""}" style="height:${(c / max) * 64}px"></i><span>${i === 0 ? "≤5" : buckets[i] + (i === 9 ? "+" : "")}</span></div>`).join("")}</div>
+        <p class="gf-muted">The same simple pilot as "Play it for me". Colours aren't checked.</p>`;
+    }
+    function openGoldfish(deck) {
+      const cards = getFolderCards(deck.id).filter((c) => !isMaybe(deck.id, c.id));
+      const cmdCard = deck.commanderId ? cards.find((c) => c.id === deck.commanderId) : null;
+      gfDeck = deck;
+      gfCmd = cmdCard ? { ...gfProfile(cmdCard), id: "cmd" } : null;
+      gfCards = [];
+      cards.forEach((c) => { if (c.id === deck.commanderId) return; const q = cardQty(deck.id, c.id); const p = gfProfile(c); for (let i = 0; i < q; i++) gfCards.push(p); });
+      if (gfCards.length < 20) { showToast("Add more cards before goldfishing — the deck needs at least 20."); return; }
+      gf = gfNew();
+      document.getElementById("gf-deckname").textContent = deck.name;
+      document.getElementById("gf-sim").innerHTML = `<span class="gf-muted">Kill-turn spread and averages appear here.</span>`;
+      document.getElementById("gf").hidden = false;
+      document.body.classList.add("gf-open");
+      gfRender();
+      document.getElementById("gf-close").focus();
+    }
+    function closeGoldfish() { document.getElementById("gf").hidden = true; document.body.classList.remove("gf-open"); gfCloseSheet(); }
+    let gfSheetId = null;
+    function gfOpenSheet(id) {
+      const c = id === "cmd" ? { ...gfCmd, id: "cmd" } : gf.hand.find((x) => String(x.id) === id);
+      if (!c) return;
+      gfSheetId = id;
+      document.getElementById("gf-sheet-card").innerHTML = gfCardHtml(c, "big");
+      const ok = id === "cmd" ? gfCanCmd(gf) : gfCanPlay(gf, c);
+      const b = document.getElementById("gf-sheet-play");
+      b.disabled = !ok;
+      b.textContent = c.kind === "land" ? (ok ? "Play land" : "Land already played") : ok ? `Cast (${c.cmc + (id === "cmd" ? gf.tax : 0)} mana)` : "Not enough mana";
+      document.getElementById("gf-sheet").hidden = false; document.getElementById("gf-sheet-scrim").hidden = false;
+    }
+    function gfCloseSheet() { document.getElementById("gf-sheet").hidden = true; document.getElementById("gf-sheet-scrim").hidden = true; }
+    (() => {
+      const root = document.getElementById("gf");
+      document.getElementById("gf-close").addEventListener("click", closeGoldfish);
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !root.hidden) { if (!document.getElementById("gf-sheet").hidden) gfCloseSheet(); else closeGoldfish(); } });
+      document.getElementById("gf-sheet-scrim").addEventListener("click", gfCloseSheet);
+      document.getElementById("gf-sheet-close").addEventListener("click", gfCloseSheet);
+      document.getElementById("gf-sheet-play").addEventListener("click", () => { if (gfSheetId === "cmd") gfPlay(gf, gfCmd, true); else { const c = gf.hand.find((x) => String(x.id) === gfSheetId); if (c) gfPlay(gf, c); } gfCloseSheet(); gfRender(); });
+      root.addEventListener("click", (e) => {
+        if (!gf) return;
+        const act = e.target.closest("[data-gf]")?.dataset.gf;
+        if (act === "new") { gf = gfNew(); return gfRender(); }
+        if (act === "keep") { gfKeep(gf); return gfRender(); }
+        if (act === "mull") { gfMulligan(gf); return gfRender(); }
+        if (act === "attack") { gfAttack(gf); return gfRender(); }
+        if (act === "next") { gfNextTurn(gf); return gfRender(); }
+        if (act === "auto") { if (gf.phase === "main" && (gf.landPlayed || gf.bf.some((p) => p.attacked))) gfNextTurn(gf); gfAutoTurn(gf); return gfRender(); }
+        if (act === "sim") { const b = e.target.closest("[data-gf]"); b.disabled = true; b.textContent = "Running…"; setTimeout(() => { gfRunSim(); b.disabled = false; b.textContent = "Run again"; }, 20); return; }
+        const cardEl = e.target.closest(".gf-c");
+        if (!cardEl) return;
+        const id = cardEl.dataset.gfid;
+        if (cardEl.closest("#gf-mhand")) { const c = gf.hand.find((x) => String(x.id) === id); if (!c || !gf.mulls) return; gf.pending.includes(c) ? (gf.pending = gf.pending.filter((x) => x !== c)) : gf.pending.length < Math.min(gf.mulls, 7) && gf.pending.push(c); return gfRender(); }
+        if (cardEl.closest("#gf-hand") && isPhone()) return gfOpenSheet(id);
+        if (cardEl.closest("#gf-hand, #gf-cmd")) {
+          if (id === "cmd") { if (gfCanCmd(gf)) gfPlay(gf, gfCmd, true); }
+          else { const c = gf.hand.find((x) => String(x.id) === id); if (c && gfCanPlay(gf, c)) gfPlay(gf, c); }
+          return gfRender();
+        }
+        const p = gf.bf.find((x) => String(x.id) === id);
+        if (p && gfSource(p) && gf.phase === "main") { p.tapped = true; gf.pool += p.makes || p.dork || 1; gfRender(); }
+      });
+    })();
+
     // ── Command palette (Ctrl/⌘+K) ──
     (() => {
       const scrim = $("#cmdk"), input = $("#cmdk-input"), list = $("#cmdk-list");
@@ -9978,6 +10379,7 @@
         if (deck) {
           const cmd = deck.commanderId ? state.savedCards.find((c) => c.id === deck.commanderId) : null;
           act(`Autofill ${deck.name}`, () => { go("saved"); openAutofill(deck, cmd); });
+          act(`Goldfish ${deck.name}`, () => openGoldfish(deck));
           act(`Analyze ${deck.name}`, () => { go("saved"); renderSavedCards(); setTimeout(() => $("#da-review-btn")?.click(), 60); });
           act(`Export ${deck.name}`, () => { go("saved"); renderSavedCards(); setTimeout(() => savedExportBtn?.click(), 60); });
           const path = lastDeckPath && lastDeckPath.deckId === deck.id ? lastDeckPath : null;
