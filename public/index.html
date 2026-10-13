@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#F7F6F1" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)">
-  <script>try { const t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}</script>
+  <script>/* Light unless the user chose otherwise; "system" follows the device. */ (() => { let t = "light"; try { t = localStorage.getItem("theme") || "light"; } catch {} if (t !== "system") document.documentElement.dataset.theme = t === "dark" ? "dark" : "light"; })();</script>
   <title>Spellbook</title>
   <style>
     /* ── More colour tokens (later additions) ── */
@@ -3143,9 +3143,9 @@
         <div>
           <label for="theme-select">Appearance</label>
           <select id="theme-select">
-            <option value="system">Match the device</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
+            <option value="system">Match the device</option>
           </select>
         </div>
         <div>
@@ -10480,8 +10480,8 @@
     (() => {
       const sel = $("#theme-select");
       if (!sel) return;
-      let t = "system";
-      try { t = localStorage.getItem("theme") || "system"; } catch {}
+      let t = "light";
+      try { t = localStorage.getItem("theme") || "light"; } catch {}
       sel.value = t;
       sel.addEventListener("change", () => {
         const v = sel.value;
