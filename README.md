@@ -5,8 +5,9 @@ Commander/EDH. Describe a card in plain English and Spellbook turns it into a
 [Scryfall](https://scryfall.com) query — then save the results into decks and get an
 honest, deckbuilding-focused analysis of what each deck is missing.
 
-Single-page app: Node/Express backend (`server.js`), all UI + client state in
-`public/index.html`, no build step.
+Single-page app: Node/Express backend (`server.js`), UI in `public/` (`index.html`,
+`styles.css`, and the client script split across `public/js/`, which the server joins
+into `/app.js`), no build step.
 
 ## Features
 
@@ -151,7 +152,7 @@ container requires an image rebuild (`docker compose up -d --build`).
 
 ## Tech stack
 
-- **Frontend** — one HTML file, vanilla JS, no build step
+- **Frontend** — vanilla JS in numbered files under `public/js/` (served joined as `/app.js`), no build step
 - **Backend** — Node.js + Express (proxies the LLM/Scryfall/Spellbook APIs, owns state)
 - **Data** — [Scryfall](https://scryfall.com/docs/api) (cards, `is:gamechanger`),
   [Commander Spellbook](https://commanderspellbook.com/) (combos), EDHREC (links only),

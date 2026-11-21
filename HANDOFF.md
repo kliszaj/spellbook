@@ -1,8 +1,9 @@
 # Handoff
 
 Spellbook is a Node/Express single-page Magic: The Gathering search and deck
-manager. The backend lives in `server.js`; most UI and client state logic lives in
-`public/index.html`. Normal local URL is `http://localhost:3000`.
+manager. The backend lives in `server.js` (plus `lib/`); the web client is
+`public/index.html` (markup), `public/styles.css` and the numbered scripts in
+`public/js/` (see Code Layout). Normal local URL is `http://localhost:3000`.
 
 ## Current Status
 
@@ -11,21 +12,31 @@ Branch: `main`
 The user prefers keeping Spellbook work directly on `main` rather than using
 feature branches unless they explicitly ask for one.
 
-This branch contains the current Spellbook work:
+Most recent work (newest first):
+
+- AI search: the server checks the AI's Scryfall query before answering and has the AI
+  repair it once on a syntax error, ignored terms or zero results
+  (`lib/search-repair.js`); the query shows as plain-English chips you can switch off
+  or add presets to, without another AI call.
+- Sync: one-time upload per device, per-item ops, unsent changes kept and sent on
+  page close, a "Not synced" badge (see Sync).
+- Security and robustness: `esc()` escapes quotes, Settings saves take the state
+  lock, an unreadable `state.json` falls back to the newest backup, input caps,
+  EDHREC cache hardening, keyboard-reachable deck actions and proper dialogs.
+- `index.html` split into `styles.css` and `public/js/*.js`, joined by the server
+  into `/app.js`.
+- Play in Playmat: a Play button on a deck opens it in a Playmat server's import
+  screen (Settings → Playmat address).
+- A GitHub Action tests every push and publishes `kliszaj/spellbook:latest`.
+
+Earlier work:
 
 - Basic-land quantities for decks.
 - Deck Analysis 2.0 with deck profiles/tags, health lens, grade drawer, radar,
   mana curve, color-source checks, bracket collapse, and AI-assisted trim/verdict.
 - Search UI refinements, provider-aware AI settings, and safer search cache behavior.
 
-Recent verification:
-
-- `node --check server.js`
-- Settings endpoint smoke test on a temp `DATA_DIR`.
-- Settings save/read smoke test on a temp `DATA_DIR`.
-
-There is a local `.claude/settings.local.json` edit in the working tree that only
-adds a Claude permission for `git fetch`; it is not part of the app feature work.
+Verification: `npm test` runs every check (see Tests). It needs `npm ci` first.
 
 ## AI Settings
 
@@ -36,11 +47,11 @@ Settings now supports both providers:
 - Preferred provider selector.
 
 The model fields are **dropdowns** (`<select>`), not free text — Anthropic:
-`claude-opus-4-8` / `claude-sonnet-5` / `claude-sonnet-4-6` / `claude-haiku-4-5` /
-`claude-fable-5`; OpenAI: `gpt-4.1` / `gpt-4.1-mini` / `gpt-4o` / `gpt-4o-mini`.
+`claude-sonnet-5-5` / `claude-opus-5-5` / `claude-fable-5-1` / `claude-haiku-4-5` /
+`claude-sonnet-5`; OpenAI: `gpt-6.1-sol` / `gpt-6-astra` / `gpt-6-luna`.
 `setModelSelect()` injects a saved value that isn't a listed option as a `· custom`
-entry so older/custom models still show and persist. (Model IDs verified against the
-claude-api skill — the `claude-sonnet-4-6` default is a valid, active ID.)
+entry so older/custom models still show and persist. Prices for cost tracking are in
+`AI_PRICES` in `lib/ai-client.js`.
 
 Stored keys are kept in the appdata-backed `state.json` and are never returned by
 public state endpoints. Key inputs in the modal are write-only and blank on open.
@@ -52,10 +63,10 @@ Environment variables override stored values:
 - `ANTHROPIC_MODEL`
 - `OPENAI_MODEL`
 
-Defaults:
+Defaults (`DEFAULT_ANTHROPIC_MODEL` / `DEFAULT_OPENAI_MODEL` in `server.js`):
 
-- Anthropic: `claude-sonnet-4-6`
-- OpenAI: `gpt-4.1`
+- Anthropic: `claude-sonnet-5-5`
+- OpenAI: `gpt-6.1-sol`
 
 Both `/api/translate` and `/api/deck-review` use the preferred provider. OpenAI is
 called through Chat Completions JSON mode without adding an SDK dependency.
@@ -89,6 +100,9 @@ Important data structures in `state.json`:
 - `membership`: card-to-deck membership.
 - `quantities`: per-deck basic-land counts:
   `{ [folderId]: { [cardId]: count } }`.
+- `maybeboard`, `pins`: per-deck flags, `{ [folderId]: { [cardId]: true } }`.
+- `deckNotes`: per-deck game plans, `{ [folderId]: text }`.
+- `playmatUrl`: the Playmat server's address (an origin), for "Play in Playmat".
 - `translateCache` and `searchHistory`: shared across browsers/devices.
 - `apiKey`: legacy Anthropic key field.
 - `openaiApiKey`: OpenAI key field.
@@ -96,6 +110,37 @@ Important data structures in `state.json`:
 
 Only basic lands are allowed to show and store count values greater than 1.
 Deck size, land count, export, and price calculations are quantity-weighted.
+
+## Code Layout
+
+- `public/index.html`: markup only. `public/styles.css`: all styles (colour tokens at
+  the top, light and dark).
+- `public/js/01-core.js` … `12-app.js`: the client script, split at its section
+  headers. It was written as one script — top-level code calls functions defined
+  further down — so the server joins the files in name order and serves them as
+  **`/app.js`** (re-joined whenever a file changes; no build step). Don't load the files
+  one by one. Keep the two-digit prefixes when adding a file.
+- Pure helpers the checks test sit between `// @testable <name> begin/end` markers;
+  `scripts/lib/app-source.mjs` gives the checks the whole client source.
+
+## Sync
+
+The server owns `state.json`; each device's localStorage is a cache.
+
+- On a device's first visit since sync existed, its local copy is merged with the
+  server's and uploaded once (`sync_migrated_v1` in localStorage). After that the
+  server copy is adopted as-is. (Uploading on every load used to bring deleted decks
+  back.)
+- Changes go up as per-item ops (`upsertFolder`, `deleteFolder`, `setCardInFolder`,
+  `setQuantity`, `setFlag`, `setDeckNote`, plus `setSettings`/`setCaches`), so two
+  devices editing different things don't overwrite each other. The older whole-list
+  ops still work for tabs running an older page. The server checks the shape of every
+  op and of `state.json`.
+- Unsent ops are kept in localStorage (`pending_ops`), sent with `keepalive` when the
+  page is hidden or closed, and retried with back-off. A "Not synced" badge shows while
+  the server can't be reached. Every op is safe to apply twice.
+- An unreadable `state.json` is copied to `state.corrupt-<date>.json` and the newest
+  `backups/state-*.json` is served instead.
 
 ## Search And Color Identity
 
@@ -112,6 +157,17 @@ queries:
 
 The client also filters AI-recommended card-name results against the selected
 identity after resolving cards through Scryfall.
+
+Before answering, `/api/translate` runs the AI's query on Scryfall
+(`lib/search-repair.js`). On a syntax error, terms Scryfall ignored (its `warnings`)
+or zero results, the AI gets Scryfall's answer and one chance to fix or widen the
+query; the response then carries `repaired: { from, note, reason }` and the client
+shows the note with "Use my exact wording". Searches that work cost nothing extra.
+
+Under the search bar the query is shown as chips (`queryChips` / `describeQueryTerm`
+in `04-search.js`). Switching a chip off or adding a preset re-runs Scryfall only; the
+colour identity and Commander legality are locked chips kept from the original query.
+Searches are capped at 1,000 characters.
 
 ## Deck Analysis
 
@@ -206,11 +262,26 @@ docker compose up -d --build
 
 - Use terminal checks by default; the user often verifies UI visually themselves.
 - Do not print or inspect plaintext API keys.
-- Be careful with `public/index.html`; it is a large single-file UI, so use `rg -n`
-  anchors before editing.
+- The client script is split across `public/js/`; use `rg -n` to find a function
+  before editing, and remember it all runs as one joined script (see Code Layout).
 - The appdata `state.json` is runtime data and should not be committed.
 - Do not include `.claude/settings.local.json` unless the user explicitly wants
   local Claude permission changes committed.
+
+## Tests
+
+`npm test` runs every check: collection, swaps, deck analysis, Play in Playmat, the
+joined client script, the server over HTTP (`scripts/check-server.mjs` starts it on a
+free port with a throwaway `DATA_DIR`, no AI keys) and AI search (repair logic with a
+fake Scryfall and AI, and the query chips). None of them spend AI money.
+
+## Automatic Image Builds
+
+`.github/workflows/docker.yml` runs `npm test` on every push and pull request. On
+`main` it then builds the image and pushes `kliszaj/spellbook:latest` and
+`kliszaj/spellbook:sha-<commit>` to Docker Hub, which needs the repository secrets
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (without them the push is skipped with a
+notice). Unraid's Compose Manager can then show the update.
 
 ## Deck-Analysis Calibration Corpus
 

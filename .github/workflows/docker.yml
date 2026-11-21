@@ -1,0 +1,71 @@
+# Tests every push and pull request; on main, builds the Docker image and pushes kliszaj/spellbook:latest (and a
+# :sha-<commit> tag) to Docker Hub, so Compose Manager on Unraid can offer the update.
+#
+# One-time setup (repository Settings → Secrets and variables → Actions):
+#   DOCKERHUB_USERNAME  your Docker Hub user name (kliszaj)
+#   DOCKERHUB_TOKEN     a Docker Hub access token with Read & Write access (hub.docker.com → Account settings →
+#                       Personal access tokens). Without it the tests still run and the push is skipped.
+name: Test and publish image
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  image:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Docker Hub credentials
+        id: creds
+        env:
+          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          if [ -n "$TOKEN" ] && [ -n "$USERNAME" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::DOCKERHUB_USERNAME / DOCKERHUB_TOKEN aren't set, so the image wasn't pushed. See the top of .github/workflows/docker.yml."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.creds.outputs.ok == 'true'
+      - uses: docker/setup-buildx-action@v3
+        if: steps.creds.outputs.ok == 'true'
+      - uses: docker/login-action@v3
+        if: steps.creds.outputs.ok == 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        if: steps.creds.outputs.ok == 'true'
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            kliszaj/spellbook:latest
+            kliszaj/spellbook:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
