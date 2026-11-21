@@ -13,7 +13,8 @@
     "test:collection": "node scripts/check-collection.mjs && node scripts/check-collection-store.mjs && node scripts/check-collection-ui.mjs && node scripts/check-scryfall.mjs && node scripts/check-type-filters.mjs",
     "test:swaps": "node scripts/check-ai-client.mjs && node scripts/check-profiles.mjs && node scripts/check-embeddings.mjs && node scripts/check-swaps.mjs && node scripts/check-swaps-service.mjs && node scripts/check-deck-notes.mjs && node scripts/check-deck-profiles.mjs && node scripts/check-edhrec.mjs",
     "test:swaps:model": "node scripts/check-swaps-model.mjs",
-    "test": "npm run test:collection && npm run test:swaps && npm run test:deck-analysis",
+    "test:playmat": "node scripts/check-playmat.mjs",
+    "test": "npm run test:collection && npm run test:swaps && npm run test:deck-analysis && npm run test:playmat",
     "pilot:swaps": "node scripts/pilot-swaps.mjs"
   },
   "dependencies": {

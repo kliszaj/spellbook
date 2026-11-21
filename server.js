@@ -48,6 +48,7 @@ const DEFAULT_APP_STATE = {
   anthropicModel: DEFAULT_ANTHROPIC_MODEL,
   openaiModel: DEFAULT_OPENAI_MODEL,
   forceAiSearch: false,
+  playmatUrl: "", // address of the user's Playmat server, for "Play in Playmat"
 };
 const COLOR_IDS = new Set(["w", "u", "b", "r", "g", "c"]);
 
@@ -74,7 +75,21 @@ function normalizeAppState(value = {}) {
     anthropicModel: typeof input.anthropicModel === "string" && input.anthropicModel.trim() ? input.anthropicModel.trim() : DEFAULT_ANTHROPIC_MODEL,
     openaiModel: typeof input.openaiModel === "string" && input.openaiModel.trim() ? input.openaiModel.trim() : DEFAULT_OPENAI_MODEL,
     forceAiSearch: Boolean(input.forceAiSearch),
+    playmatUrl: normalizePlaymatUrl(input.playmatUrl),
   };
+}
+
+// Playmat (a web client for XMage) imports a deck from a link to its own /import page.
+// Stored as a bare origin, e.g. https://10.0.0.240:8443; anything that isn't http(s) is dropped.
+function normalizePlaymatUrl(value) {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return "";
+  try {
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.origin : "";
+  } catch {
+    return "";
+  }
 }
 
 function publicAppState(state) {
@@ -220,6 +235,7 @@ function mergeStates(base, incoming) {
     preferredAiProvider: base.preferredAiProvider,
     anthropicModel: base.anthropicModel,
     openaiModel: base.openaiModel,
+    playmatUrl: base.playmatUrl,
   });
 }
 
@@ -592,6 +608,7 @@ app.post("/api/app-state/ops", async (req, res) => {
         preferredAiProvider: current.preferredAiProvider,
         anthropicModel: current.anthropicModel,
         openaiModel: current.openaiModel,
+        playmatUrl: current.playmatUrl,
       });
     });
     res.json(publicAppState(nextState));
@@ -630,6 +647,7 @@ function settingsSummary(state) {
     providers,
     hasApiKey: Boolean(preferred?.hasApiKey),
     source: preferred?.source || "none",
+    playmatUrl: state.playmatUrl || "",
   };
 }
 
@@ -666,6 +684,11 @@ app.put("/api/settings", async (req, res) => {
     }
     if (typeof body.anthropicModel === "string" && body.anthropicModel.trim()) next.anthropicModel = body.anthropicModel.trim();
     if (typeof body.openaiModel === "string" && body.openaiModel.trim()) next.openaiModel = body.openaiModel.trim();
+    if (typeof body.playmatUrl === "string") {
+      const playmatUrl = normalizePlaymatUrl(body.playmatUrl);
+      if (body.playmatUrl.trim() && !playmatUrl) return res.status(400).json({ error: "That Playmat address isn't a web address" });
+      next.playmatUrl = playmatUrl;
+    }
 
     const legacyAnthropicKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
     const anthropicApiKey = typeof body.anthropicApiKey === "string" ? body.anthropicApiKey.trim() : legacyAnthropicKey;

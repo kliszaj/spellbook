@@ -1159,6 +1159,7 @@
     .mv-chip:hover { border-color: var(--c-line-r31-29-25-0-28); background: var(--c-bg-f2efe8); }
     .mv-chip.active { background: var(--c-bg-2a2721); border-color: #2A2721; color: #FFFEFA; }
     .deck-io .export-btn { margin-left: 0; }
+    .deck-io .export-btn[hidden] { display: none; }
 
     .modal-actions {
       display: flex;
@@ -3004,6 +3005,10 @@
             <div class="mv-chips" id="saved-mv-chips" aria-label="Filter by mana value" hidden></div>
             <div class="land-chips" id="saved-land-chips" aria-label="Filter lands by the colours they make" hidden></div>
             <div class="deck-io">
+              <button class="export-btn" id="saved-playmat-btn" title="Play in Playmat: opens this deck there, ready to import" aria-label="Play in Playmat" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                <span>Play</span>
+              </button>
               <button class="export-btn" id="saved-import-btn" title="Import a card list into this deck" aria-label="Import card list">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                 <span>Import</span>
@@ -3194,6 +3199,11 @@
             <option value="gpt-6-astra">GPT-6 Astra · flagship ($10 / $50)</option>
             <option value="gpt-6-luna">GPT-6 Luna · cheapest ($0.10 / $0.50)</option>
           </select>
+        </div>
+        <div>
+          <label for="playmat-url-input">Playmat address</label>
+          <input type="url" id="playmat-url-input" placeholder="https://10.0.0.240:8443" autocomplete="off" spellcheck="false">
+          <small class="settings-help">Your Playmat server. "Play in Playmat" on a deck opens it there, ready to import. Leave blank to turn it off.</small>
         </div>
       </div>
       <div class="modal-actions">
@@ -3505,6 +3515,7 @@
         openaiApiKey: $("#openai-api-key-input").value.trim(),
         anthropicModel: $("#anthropic-model-input").value.trim(),
         openaiModel: $("#openai-model-input").value.trim(),
+        playmatUrl: $("#playmat-url-input").value.trim(),
       });
     });
 
@@ -3553,6 +3564,7 @@
       if (payload.openaiApiKey) body.openaiApiKey = payload.openaiApiKey;
       if (payload.anthropicModel) body.anthropicModel = payload.anthropicModel;
       if (payload.openaiModel) body.openaiModel = payload.openaiModel;
+      if (typeof payload.playmatUrl === "string") body.playmatUrl = payload.playmatUrl;
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -3589,6 +3601,7 @@
       $("#preferred-ai-provider").value = settings.preferredAiProvider || "anthropic";
       $("#anthropic-api-key-input").value = "";
       $("#openai-api-key-input").value = "";
+      $("#playmat-url-input").value = settings.playmatUrl || "";
       setModelSelect("#anthropic-model-input", providers.anthropic?.model, "claude-sonnet-5-5");
       setModelSelect("#openai-model-input", providers.openai?.model, "gpt-6.1-sol");
       paintProviderStatus("#anthropic-key-status", providers.anthropic);
@@ -4627,6 +4640,64 @@
     document.addEventListener("click", (e) => { if (!exportMenu.hidden && !e.target.closest(".export-wrap")) closeExportMenu(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !exportMenu.hidden) { closeExportMenu(); savedExportBtn.focus(); } });
 
+    // ── Play in Playmat ──
+    // Playmat (a web client for XMage) opens /import#deck=<payload> with the deck in its import sheet; the
+    // player confirms there. The payload is base64url JSON {site, url, text, name}, the shape Playmat's own
+    // "Send to Playmat" bookmarklet uses (Mage.Web.Client/src/core/deckImport/payload.ts). It rides in the
+    // URL fragment, which the browser never sends to any server.
+    // @testable playmat-helpers begin
+    const PLAYMAT_MAX_PAYLOAD_BYTES = 200 * 1024; // Playmat refuses larger payloads
+    function playmatDeckList(deck) {
+      const line = (c) => `${Math.max(1, Math.floor(c.qty) || 1)} ${String(c.name || "").trim()}`;
+      const commanders = (deck.commanders || []).filter((c) => c && c.name);
+      const main = (deck.main || []).filter((c) => c && c.name);
+      const parts = [];
+      if (commanders.length) parts.push("Commander", ...commanders.map(line), "");
+      parts.push("Deck", ...main.map(line));
+      return parts.join("\n");
+    }
+    function encodePlaymatPayload(payload) {
+      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      let binary = "";
+      for (const b of bytes) binary += String.fromCharCode(b);
+      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+    function playmatImportUrl(base, payload) {
+      const encoded = encodePlaymatPayload(payload);
+      if (encoded.length > Math.ceil((PLAYMAT_MAX_PAYLOAD_BYTES * 4) / 3)) return null;
+      return `${String(base).replace(/\/+$/, "")}/import#deck=${encoded}`;
+    }
+    // @testable playmat-helpers end
+
+    function playmatDeckFor(deck) {
+      const cards = getFolderCards(deck.id).filter((c) => !isMaybe(deck.id, c.id));
+      const entry = (c) => ({ name: c.name, qty: cardQty(deck.id, c.id) });
+      return {
+        commanders: cards.filter((c) => c.id === deck.commanderId).map(entry),
+        main: cards.filter((c) => c.id !== deck.commanderId).map(entry),
+      };
+    }
+    $("#saved-playmat-btn").addEventListener("click", () => {
+      const deck = state.folders.find((f) => f.id === state.activeFolder && f.id !== DEFAULT_FOLDER);
+      if (!deck) return;
+      const base = state.aiSettings?.playmatUrl || "";
+      if (!base) {
+        showSettings();
+        const input = $("#playmat-url-input");
+        input.focus();
+        showStatus("Add your Playmat address in Settings first", true);
+        return;
+      }
+      const url = playmatImportUrl(base, {
+        site: "spellbook",
+        url: location.origin + "/",
+        text: playmatDeckList(playmatDeckFor(deck)),
+        name: deck.name,
+      });
+      if (!url) { showStatus("This deck is too big to send to Playmat", true); return; }
+      window.open(url, "_blank", "noopener");
+    });
+
     // ── Import a pasted card list into the current deck ──
     const importModal = $("#import-modal");
     const importInput = $("#import-input");
@@ -5423,6 +5494,13 @@
       $("#saved-sort-bar").style.display = showStart ? "none" : "";
       state.savedVisible = mainVisible; // exact on-screen main-deck set, used by the export button
       if (savedExportBtn) savedExportBtn.disabled = mainVisible.length === 0;
+      const playmatBtn = $("#saved-playmat-btn");
+      if (playmatBtn) {
+        // the whole deck goes to Playmat, so it's offered whenever the deck has cards, whatever the filters show
+        const deckHasCards = isRealDeck && getFolderCards(state.activeFolder).some((c) => !isMaybe(state.activeFolder, c.id));
+        playmatBtn.hidden = !isRealDeck;
+        playmatBtn.disabled = !deckHasCards;
+      }
 
       // A designated commander (only real decks have one) sorts to the front.
       const deck = state.folders.find((f) => f.id === state.activeFolder) || null;
