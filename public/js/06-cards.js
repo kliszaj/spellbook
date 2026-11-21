@@ -198,14 +198,16 @@
 
     function renderResults(cards, append) {
       if (!append) resultsEl.innerHTML = "";
+      // looked up once per render, not once per tile
+      const savedIds = new Set(state.savedCards.map((s) => s.id));
+      const deck = activeDeck();
+      const ident = deck ? deckIdentity(deck) : null;
       cards.forEach((card) => {
         const el = document.createElement("div");
         el.className = "card-item";
         const imgUrl = getCardImage(card);
         const price = getPrice(card);
-        const isSaved = state.savedCards.some((s) => s.id === card.id);
-        const deck = activeDeck();
-        const ident = deck ? deckIdentity(deck) : null;
+        const isSaved = savedIds.has(card.id);
         const offColor = ident && (card.color_identity || []).some((c) => !ident.has(c));
         if (offColor) el.classList.add("off-deck");
 

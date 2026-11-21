@@ -421,3 +421,62 @@
     }
     phoneMq.addEventListener?.("change", applyPhoneMode);
     applyPhoneMode();
+
+    // ── Dialogs (Settings, Import, Upload collection, Game plan) ──
+    // They open by adding .visible to a .modal-overlay. This gives all four what a dialog needs, without
+    // touching how each opens: focus moves in (unless the opener already focused a field), Tab stays inside,
+    // Escape presses the dialog's Cancel ([data-modal-close]), and focus goes back to where it was on close.
+    (() => {
+      const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      const openModal = () => [...document.querySelectorAll(".modal-overlay.visible")].pop() || null;
+      const focusables = (modal) => [...modal.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+      const returnTo = new WeakMap();
+      document.querySelectorAll(".modal-overlay").forEach((modal) => {
+        let wasOpen = modal.classList.contains("visible");
+        new MutationObserver(() => {
+          const open = modal.classList.contains("visible");
+          if (open === wasOpen) return;
+          wasOpen = open;
+          if (open) {
+            returnTo.set(modal, document.activeElement);
+            requestAnimationFrame(() => {
+              if (!modal.contains(document.activeElement)) (focusables(modal)[0] || modal).focus?.();
+            });
+          } else {
+            const back = returnTo.get(modal);
+            if (back && document.contains(back) && !openModal()) back.focus?.();
+          }
+        }).observe(modal, { attributes: true, attributeFilter: ["class"] });
+      });
+      document.addEventListener("keydown", (e) => {
+        const modal = openModal();
+        if (!modal) return;
+        if (e.key === "Escape") {
+          const close = modal.querySelector("[data-modal-close]");
+          if (close) { e.preventDefault(); close.click(); }
+          return;
+        }
+        if (e.key !== "Tab") return;
+        const items = focusables(modal);
+        if (!items.length) return;
+        const first = items[0], last = items[items.length - 1];
+        if (!modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+        else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      });
+    })();
+
+    // ── Sideways-scrolling toolbars on phones: mark which edges have more buttons past them (styles.css fades them) ──
+    (() => {
+      const mark = (bar) => {
+        const max = bar.scrollWidth - bar.clientWidth;
+        bar.classList.toggle("more-left", max > 2 && bar.scrollLeft > 2);
+        bar.classList.toggle("more-right", max > 2 && bar.scrollLeft < max - 2);
+      };
+      document.querySelectorAll(".sort-bar").forEach((bar) => {
+        bar.addEventListener("scroll", () => mark(bar), { passive: true });
+        new ResizeObserver(() => mark(bar)).observe(bar);
+        new MutationObserver(() => mark(bar)).observe(bar, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "style"] });
+        mark(bar);
+      });
+    })();

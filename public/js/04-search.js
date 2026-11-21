@@ -283,7 +283,13 @@
         state.results.push(...legalCards);
         state.nextPage = data.has_more ? data.next_page : null;
         hideStatus();
-        renderSearchView();
+        if (pageUrl && state.mode !== "cuts") {
+          // Load more: add only the new page's tiles instead of rebuilding every card already shown
+          renderTypeFilterChips(typeFilterEl, state.results, searchTypeFilter, renderSearchView);
+          renderResults(legalCards.filter((c) => matchesTypeFilter(c, searchTypeFilter)), true);
+        } else {
+          renderSearchView();
+        }
         paginationEl.style.display = state.nextPage ? "flex" : "none";
         sortBar.style.display = state.results.length ? "flex" : "none";
         return legalCards.length;
@@ -303,7 +309,9 @@
       state.nextPage = null;
       paginationEl.style.display = "none";
       showStatus("Sorting...");
-      searchScryfall(state.currentQuery);
+      // a new run: an older sort or Load more still in flight can't add its cards to these results
+      const { run, signal } = startSearchRun();
+      searchScryfall(state.currentQuery, null, run, signal);
     }
 
     // Add/remove the "Recommended" (AI order) option depending on the active mode.

@@ -1259,11 +1259,14 @@
         <div class="da2-fix" id="da2-trim-row"><span class="da2-fixlbl trim">Trim</span>${trimChips}</div>
         <div class="da2-vsub" style="margin-top:8px">Re-analyze for the full analysis with reasons.</div>`;
     }
-    // Normalized name -> owned, built lazily from the collection (for "Owned" on suggestions).
+    // Normalized names you own, built once per collection index (for "Owned" on suggestions).
+    let ownedNames = { index: null, names: new Set() };
     function ownsCardNamed(name) {
       if (!collectionIndex) return false;
-      const key = edhrecNameKey(name);
-      return collectionIndex.list.some((it) => edhrecNameKey(it.card.name) === key);
+      if (ownedNames.index !== collectionIndex) {
+        ownedNames = { index: collectionIndex, names: new Set(collectionIndex.list.map((it) => edhrecNameKey(it.card.name))) };
+      }
+      return ownedNames.names.has(edhrecNameKey(name));
     }
     function swapRowsHtml(swaps) {
       const rows = swaps.map((s) => `<div class="da2-swap">

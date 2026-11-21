@@ -375,9 +375,9 @@
   </main>
 
   <!-- Settings Modal -->
-  <div class="modal-overlay" id="settings-modal">
+  <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
     <div class="modal">
-      <h2>Settings</h2>
+      <h2 id="settings-title">Settings</h2>
       <div class="settings-grid">
         <div>
           <label for="theme-select">Appearance</label>
@@ -427,15 +427,15 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button class="btn-cancel" id="settings-cancel">Cancel</button>
+        <button class="btn-cancel" id="settings-cancel" data-modal-close>Cancel</button>
         <button class="btn-save" id="settings-save">Save</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="import-modal">
+  <div class="modal-overlay" id="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
     <div class="modal">
-      <h2>Import cards</h2>
+      <h2 id="import-title">Import cards</h2>
       <label for="import-input">Paste a card list</label>
       <textarea id="import-input" rows="10" placeholder="1 Sol Ring&#10;1 Counterspell&#10;Krenko, Mob Boss&#10;..."></textarea>
       <small style="color: #aaa; display: block; margin-bottom: 12px; font-size: 12px;">
@@ -443,15 +443,15 @@
       </small>
       <div class="import-status" id="import-status"></div>
       <div class="modal-actions">
-        <button class="btn-cancel" id="import-cancel">Cancel</button>
+        <button class="btn-cancel" id="import-cancel" data-modal-close>Cancel</button>
         <button class="btn-save" id="import-run">Import</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="collection-upload-modal">
+  <div class="modal-overlay" id="collection-upload-modal" role="dialog" aria-modal="true" aria-labelledby="upload-title">
     <div class="modal">
-      <h2>Upload collection</h2>
+      <h2 id="upload-title">Upload collection</h2>
       <div class="upload-mode" role="radiogroup" aria-label="Upload mode">
         <label><input type="radio" name="upload-mode" value="sync"> <strong>Full collection</strong> <small>Match the file exactly: adds, updates, and removes cards.</small></label>
         <label><input type="radio" name="upload-mode" value="add"> <strong>New cards</strong> <small>Add this file's cards on top; never removes anything.</small></label>
@@ -461,20 +461,20 @@
       <div class="upload-details" id="upload-details"></div>
       <div class="import-status" id="upload-status"></div>
       <div class="modal-actions">
-        <button class="btn-cancel" id="upload-cancel" type="button">Cancel</button>
+        <button class="btn-cancel" id="upload-cancel" data-modal-close type="button">Cancel</button>
         <button class="btn-save" id="upload-confirm" type="button">Confirm</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="gameplan-modal">
+  <div class="modal-overlay" id="gameplan-modal" role="dialog" aria-modal="true" aria-labelledby="gameplan-title">
     <div class="modal">
       <h2 id="gameplan-title">Game plan</h2>
       <label for="gameplan-input">Paste the deck's primer or describe how it wins</label>
       <textarea id="gameplan-input" rows="14"></textarea>
       <small class="settings-help"><span id="gameplan-count">0</span> / 20,000 characters · View Swaps uses this to judge replacements for this deck.</small>
       <div class="modal-actions">
-        <button class="btn-cancel" id="gameplan-cancel" type="button">Cancel</button>
+        <button class="btn-cancel" id="gameplan-cancel" data-modal-close type="button">Cancel</button>
         <button class="btn-save" id="gameplan-save" type="button">Save</button>
       </div>
     </div>

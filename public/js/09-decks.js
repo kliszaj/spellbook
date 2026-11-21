@@ -260,11 +260,13 @@
         const custom = true;
         const maybeCount = folderMaybeCount(f.id);
         const countLabel = `${folderCount(f.id)}${maybeCount ? ` <span class="folder-count-maybe">(${maybeCount})</span>` : ""}`;
-        html += `<button class="folder-btn ${state.activeFolder === f.id ? "active" : ""}" data-folder="${f.id}">
-            <span class="folder-name">${esc(f.name)}</span>
-            <span class="folder-count">${countLabel}</span>
-            <span class="folder-edit-group">${custom ? `<span class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename" role="button" aria-label="Rename ${escAttr(f.name)}">&#9998;</span><span class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete" role="button" aria-label="Delete ${escAttr(f.name)}">&#10005;</span>` : ""}</span>
-          </button>`;
+        // A row holding three real buttons (open, rename, delete): buttons can't be nested, and nested
+        // role="button" spans weren't reachable from the keyboard.
+        const active = state.activeFolder === f.id;
+        html += `<div class="folder-btn folder-row ${active ? "active" : ""}" data-folder="${f.id}">
+            <button type="button" class="folder-open"${active ? ` aria-current="true"` : ""}><span class="folder-name">${esc(f.name)}</span><span class="folder-count">${countLabel}</span></button>
+            <span class="folder-edit-group">${custom ? `<button type="button" class="folder-edit" data-act="rename" data-folder="${f.id}" title="Rename" aria-label="Rename ${escAttr(f.name)}">&#9998;</button><button type="button" class="folder-edit" data-act="delete" data-folder="${f.id}" title="Delete" aria-label="Delete ${escAttr(f.name)}">&#10005;</button>` : ""}</span>
+          </div>`;
       });
       html += `<div class="rail-divider"></div><button class="folder-add" id="folder-add-btn" type="button"><span class="add-ico">${ICON_ADD_PLUS}</span>New deck</button>`;
       folderRail.innerHTML = html;
@@ -374,9 +376,10 @@
     // ── Card right-click context menu ──
     let contextMenuCard = null;
 
+    // The deck being worked on: a real deck (not "all" or Unsorted), and not one waiting to be deleted.
     function activeDeck() {
       return (state.activeFolder !== "all" && state.activeFolder !== DEFAULT_FOLDER)
-        ? state.folders.find((f) => f.id === state.activeFolder) || null
+        ? state.folders.find((f) => f.id === state.activeFolder && f.id !== pendingDeckDelete?.id) || null
         : null;
     }
 
@@ -550,7 +553,11 @@
       return null;
     }
 
-    function esc(str) { const d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
+    // Escapes text for HTML, attributes included (quotes too): it's used inside attribute values like
+    // data-card="${esc(name)}", where an unescaped quote would end the attribute.
+    function esc(str) {
+      return String(str ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
     function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
 
     function showStatus(msg, isError) {

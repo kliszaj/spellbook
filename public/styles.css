@@ -2308,6 +2308,9 @@
     }
 
     .folder-btn:hover .folder-edit, .folder-btn:focus-within .folder-edit { visibility: visible; }
+    /* A deck row is a div with an open button (name + count) and the edit buttons beside it. */
+    .folder-row .folder-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+    .folder-row .folder-open:focus-visible, .folder-btn .folder-edit:focus-visible { outline: 2px solid #1F6FEB; outline-offset: 2px; border-radius: 5px; }
     .folder-btn.renaming { background: var(--c-bg-ffffff); box-shadow: inset 0 0 0 2px #1F6FEB; color: var(--c-text-181715); cursor: text; }
     .folder-btn.renaming .folder-count { color: var(--c-text-9e9b92); }
     .folder-rename { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-weight: 600; color: var(--c-text-181715); padding: 0; }
@@ -2725,7 +2728,12 @@
       /* Filters: compact colours; sort + chips in one swipeable row. */
       .color-toggle { width: 30px; height: 30px; }
       .sort-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+      .sort-bar > * { flex-shrink: 0; } /* scrolls instead: nothing (the sort dropdown) gets squeezed */
       .sort-bar::-webkit-scrollbar { display: none; }
+      /* On phones the row scrolls sideways; fade whichever edge has more buttons past it (12-app.js sets these). */
+      .sort-bar.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+      .sort-bar.more-left { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); }
+      .sort-bar.more-left.more-right { -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
       .sort-bar .sort-label { display: none; }
       .mv-chips, .land-chips { flex-wrap: nowrap; }
       .deck-io { margin-left: 8px; }

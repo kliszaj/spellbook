@@ -198,12 +198,25 @@
       importStatus.textContent = `Looking up ${names.length} cards…`;
       try {
         const found = [];
+        const notFound = [];
+        const unreached = []; // names in a batch Scryfall couldn't answer (rate limit, outage), even after retries
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         for (let i = 0; i < names.length; i += 75) {
-          const res = await fetch("https://api.scryfall.com/cards/collection", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifiers: names.slice(i, i + 75).map((n) => ({ name: n })) }),
-          });
-          if (res.ok) { const d = await res.json(); found.push(...(d.data || [])); }
+          const batch = names.slice(i, i + 75);
+          if (i) await wait(100); // Scryfall asks for ~10 requests a second at most
+          let data = null;
+          for (let attempt = 0; attempt < 3 && !data; attempt++) {
+            if (attempt) await wait(1000 * attempt);
+            const res = await fetch("https://api.scryfall.com/cards/collection", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ identifiers: batch.map((n) => ({ name: n })) }),
+            }).catch(() => null);
+            if (res?.ok) data = await res.json();
+            else if (res && res.status < 500 && res.status !== 429) break; // a real refusal: retrying won't help
+          }
+          if (!data) { unreached.push(...batch); continue; }
+          found.push(...(data.data || []));
+          notFound.push(...(data.not_found || []).map((id) => id.name).filter(Boolean));
         }
         let added = 0;
         found.forEach((card) => {
@@ -216,9 +229,13 @@
         });
         renderFolderRail();
         renderSavedCards();
-        const missing = names.length - found.length;
-        importStatus.textContent = `Added ${added} card${added === 1 ? "" : "s"}${missing > 0 ? `, ${missing} not found` : ""}.`;
-        if (added) setTimeout(hideImport, 1400);
+        const list = (arr) => arr.slice(0, 5).join(", ") + (arr.length > 5 ? ` and ${arr.length - 5} more` : "");
+        const parts = [`Added ${added} card${added === 1 ? "" : "s"}.`];
+        if (notFound.length) parts.push(`Not found: ${list(notFound)}.`);
+        if (unreached.length) parts.push(`Scryfall didn't answer for ${unreached.length} card${unreached.length === 1 ? "" : "s"}; import again to add them.`);
+        importStatus.textContent = parts.join(" ");
+        // stay open when something needs the player's attention
+        if (added && !notFound.length && !unreached.length) setTimeout(hideImport, 1400);
       } catch (err) {
         importStatus.textContent = "Import failed — please try again.";
       } finally {
@@ -226,7 +243,12 @@
       }
     }
 
-    loadMoreBtn.addEventListener("click", () => { if (state.nextPage) searchScryfall(null, state.nextPage); });
+    // One page at a time: a double click would otherwise fetch and add the same page twice.
+    loadMoreBtn.addEventListener("click", async () => {
+      if (!state.nextPage || loadMoreBtn.disabled) return;
+      loadMoreBtn.disabled = true;
+      try { await searchScryfall(null, state.nextPage); } finally { loadMoreBtn.disabled = false; }
+    });
 
     $("#copy-query-btn").addEventListener("click", async () => {
       const btn = $("#copy-query-btn");

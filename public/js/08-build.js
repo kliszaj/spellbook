@@ -195,7 +195,6 @@
       }
       return countsFromRoleDetails(detectRoleDetails(cards, deck.id, profilesFromCache(cards)))[t.role] || 0;
     }
-    function activeDeck() { return state.folders.find((x) => x.id === state.activeFolder && x.id !== pendingDeckDelete?.id) || null; }
     function deckIdentity(deck) {
       if (!deck?.commanderId) return null;
       const cmd = state.savedCards.find((c) => c.id === deck.commanderId);
