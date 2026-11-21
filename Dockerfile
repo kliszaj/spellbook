@@ -8,6 +8,8 @@ ENV PORT=3000
 ENV DATA_DIR=/app/data
 
 COPY package*.json ./
+# Spellbook only uses onnxruntime's CPU provider; without this its install tries to download a CUDA build (404s).
+ENV ONNXRUNTIME_NODE_INSTALL_CUDA=skip
 # This container is Linux-only and only ever uses onnxruntime's default CPU
 # provider, so drop the GPU providers, other-OS binaries, and the web/wasm
 # build (transformers.js only stubs it in Node) that npm ci pulls in.

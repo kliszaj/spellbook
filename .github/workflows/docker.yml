@@ -16,6 +16,11 @@ on:
 permissions:
   contents: read
 
+env:
+  # onnxruntime-node (Swaps' local embeddings) otherwise tries to download a CUDA build on Linux, which 404s;
+  # Spellbook only uses the CPU provider.
+  ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
