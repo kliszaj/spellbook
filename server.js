@@ -90,8 +90,8 @@ function normalizeAppState(value = {}) {
     pins: plainObject(input.pins) || {},
     deckNotes: normalizeDeckNotes(input.deckNotes),
     colorIdentity: Array.isArray(input.colorIdentity) ? input.colorIdentity.filter((c) => COLOR_IDS.has(c)) : [],
-    translateCache: plainObject(input.translateCache) || {},
-    searchHistory: Array.isArray(input.searchHistory) ? input.searchHistory : [],
+    translateCache: capTranslateCache(plainObject(input.translateCache) || {}),
+    searchHistory: Array.isArray(input.searchHistory) ? input.searchHistory.slice(0, SEARCH_HISTORY_MAX) : [],
     apiKey: typeof input.apiKey === "string" ? input.apiKey : "",
     openaiApiKey: typeof input.openaiApiKey === "string" ? input.openaiApiKey : "",
     preferredAiProvider: AI_PROVIDERS.has(input.preferredAiProvider) ? input.preferredAiProvider : "anthropic",
@@ -115,6 +115,17 @@ function normalizePlaymatUrl(value) {
   }
 }
 
+// The client keeps the newest 60 cached translations and 10 recent searches; the server holds to the same
+// caps so a merge or an old device can't grow state.json without limit.
+const TRANSLATE_CACHE_MAX = 60;
+const SEARCH_HISTORY_MAX = 10;
+function capTranslateCache(cache) {
+  const keys = Object.keys(cache);
+  if (keys.length <= TRANSLATE_CACHE_MAX) return cache;
+  const keep = keys.sort((a, b) => (cache[b]?.ts || 0) - (cache[a]?.ts || 0)).slice(0, TRANSLATE_CACHE_MAX);
+  return Object.fromEntries(keep.map((k) => [k, cache[k]]));
+}
+
 function publicAppState(state) {
   const { apiKey, openaiApiKey, ...rest } = state;
   return rest;
@@ -126,8 +137,25 @@ async function readAppState() {
     return normalizeAppState({ ...DEFAULT_APP_STATE, ...JSON.parse(raw) });
   } catch (err) {
     if (err.code === "ENOENT") return { ...DEFAULT_APP_STATE };
+    if (err instanceof SyntaxError) return readNewestBackup(err);
     throw err;
   }
+}
+
+// state.json that doesn't parse (a disk problem, a hand edit) would otherwise fail every request. Keep a copy of
+// it for inspection and serve the newest daily backup instead; the next save writes a good state.json again.
+async function readNewestBackup(parseError) {
+  const stamp = new Date().toISOString().slice(0, 10);
+  await copyFile(STATE_FILE, join(DATA_DIR, `state.corrupt-${stamp}.json`), fsConstants.COPYFILE_EXCL).catch(() => {});
+  const backups = (await readdir(BACKUP_DIR).catch(() => [])).filter((f) => /^state-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse();
+  for (const file of backups) {
+    try {
+      const state = normalizeAppState({ ...DEFAULT_APP_STATE, ...JSON.parse(await readFile(join(BACKUP_DIR, file), "utf8")) });
+      console.warn(`state.json is unreadable (${parseError.message}); using backups/${file}`);
+      return state;
+    } catch { /* try the next older one */ }
+  }
+  throw parseError;
 }
 
 // state.json holds every deck, so it's written atomically (temp file + rename — a crash
@@ -139,13 +167,13 @@ let lastBackupDay = null;
 async function backupStateOncePerDay() {
   const day = new Date().toISOString().slice(0, 10);
   if (lastBackupDay === day) return;
-  lastBackupDay = day;
   try {
     await mkdir(BACKUP_DIR, { recursive: true });
     const target = join(BACKUP_DIR, `state-${day}.json`);
     await copyFile(STATE_FILE, target, fsConstants.COPYFILE_EXCL).catch((err) => {
       if (err.code !== "EEXIST" && err.code !== "ENOENT") throw err;
     });
+    lastBackupDay = day; // only once it worked, so a failed backup is tried again on the next save
     const old = (await readdir(BACKUP_DIR)).filter((f) => /^state-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().slice(0, -BACKUP_KEEP);
     await Promise.all(old.map((f) => unlink(join(BACKUP_DIR, f)).catch(() => {})));
   } catch (err) {
@@ -157,7 +185,7 @@ async function writeAppState(nextState) {
   await mkdir(DATA_DIR, { recursive: true });
   const state = normalizeAppState({ ...DEFAULT_APP_STATE, ...nextState });
   await backupStateOncePerDay();
-  const tmp = `${STATE_FILE}.tmp`;
+  const tmp = `${STATE_FILE}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
   await writeFile(tmp, `${JSON.stringify(state, null, 2)}\n`, "utf8");
   await rename(tmp, STATE_FILE);
   return state;
@@ -699,6 +727,11 @@ app.get("/api/settings", async (req, res) => {
 app.put("/api/settings", async (req, res) => {
   try {
     const body = req.body || {};
+    if (typeof body.playmatUrl === "string" && body.playmatUrl.trim() && !normalizePlaymatUrl(body.playmatUrl)) {
+      return res.status(400).json({ error: "That Playmat address isn't a web address" });
+    }
+    // under the state lock, like every other write: a deck change arriving at the same moment isn't lost
+    const saved = await withStateLock(async () => {
     const state = await readAppState();
     const next = { ...state };
 
@@ -707,11 +740,7 @@ app.put("/api/settings", async (req, res) => {
     }
     if (typeof body.anthropicModel === "string" && body.anthropicModel.trim()) next.anthropicModel = body.anthropicModel.trim();
     if (typeof body.openaiModel === "string" && body.openaiModel.trim()) next.openaiModel = body.openaiModel.trim();
-    if (typeof body.playmatUrl === "string") {
-      const playmatUrl = normalizePlaymatUrl(body.playmatUrl);
-      if (body.playmatUrl.trim() && !playmatUrl) return res.status(400).json({ error: "That Playmat address isn't a web address" });
-      next.playmatUrl = playmatUrl;
-    }
+    if (typeof body.playmatUrl === "string") next.playmatUrl = normalizePlaymatUrl(body.playmatUrl);
 
     const legacyAnthropicKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
     const anthropicApiKey = typeof body.anthropicApiKey === "string" ? body.anthropicApiKey.trim() : legacyAnthropicKey;
@@ -719,7 +748,8 @@ app.put("/api/settings", async (req, res) => {
     if (anthropicApiKey) next.apiKey = anthropicApiKey;
     if (openaiApiKey) next.openaiApiKey = openaiApiKey;
 
-    const saved = await writeAppState(next);
+    return writeAppState(next);
+    });
     res.json(settingsSummary(saved));
   } catch (err) {
     res.status(500).json({ error: err.message || "Failed to save settings" });
@@ -828,10 +858,22 @@ function aiErrorMessage(err, provider, fallback = "AI request failed") {
   return err.message || fallback;
 }
 
+const MAX_QUERY_CHARS = 1000;
+
 app.post("/api/translate", async (req, res) => {
-  const { query, colorIdentity, forceAiSearch } = req.body;
-  const appState = await readAppState();
-  const ai = activeAiConfig(appState);
+  const body = req.body || {};
+  const query = typeof body.query === "string" ? body.query.trim() : "";
+  const colorIdentity = typeof body.colorIdentity === "string" && /^[wubrgc]{1,6}$/.test(body.colorIdentity) ? body.colorIdentity : null;
+  const forceAiSearch = Boolean(body.forceAiSearch);
+  if (query.length > MAX_QUERY_CHARS) {
+    return res.status(413).json({ error: `Keep searches under ${MAX_QUERY_CHARS} characters.` });
+  }
+  let ai;
+  try {
+    ai = activeAiConfig(await readAppState());
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Couldn't read settings" });
+  }
   if (!query || !ai.apiKey) {
     return res.status(400).json({
       error: `Missing ${ai.provider === "openai" ? "OpenAI" : "Anthropic"} API key. Add it in Settings or switch providers.`,
@@ -982,7 +1024,7 @@ async function reviewDeck({ ai, list }) {
       effort: "low", // it gets profiles, counts and the game plan — little left to work out
       schema: openai ? undefined : deckReviewSchema(),
     });
-    await usageLog.record({ feature: "deck-review", provider: ai.provider, model: ai.model, ...r.usage, usd: r.usd });
+    await usageLog.record({ feature: "deck-review", provider: ai.provider, model: ai.model, ...r.usage, usd: r.usd }).catch(() => {}); // a log failure mustn't throw away a paid review
     return normalizeDeckReview(r.data);
   } catch (err) {
     if (err.usage) await usageLog.record({ feature: "deck-review", provider: ai.provider, model: ai.model, ...err.usage, usd: err.usd }).catch(() => {});
@@ -994,9 +1036,13 @@ const oneLine = (v, max) => String(v || "").replace(/\s+/g, " ").trim().slice(0,
 const BRACKET_LABELS = { 1: "Exhibition", 2: "Core", 3: "Upgraded", 4: "Optimized", 5: "cEDH" };
 
 app.post("/api/deck-review", async (req, res) => {
-  const appState = await readAppState();
-  const ai = activeAiConfig(appState);
-  const cards = Array.isArray(req.body?.cards) ? req.body.cards.slice(0, 250) : [];
+  let ai;
+  try {
+    ai = activeAiConfig(await readAppState());
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Couldn't read settings" });
+  }
+  const cards = Array.isArray(req.body?.cards) ? req.body.cards.filter((c) => c && typeof c === "object").slice(0, 250) : [];
   if (!cards.length || !ai.apiKey) {
     return res.status(400).json({
       error: !cards.length
@@ -1006,7 +1052,7 @@ app.post("/api/deck-review", async (req, res) => {
   }
   try {
     const list = cards
-      .map((c) => `- ${c.name} [${c.type_line || ""}] (MV ${c.cmc ?? 0}) :: ${c.summary ? `≈ ${oneLine(c.summary, 220)}` : oneLine(c.oracle_text, 240)}`)
+      .map((c) => `- ${oneLine(c?.name, 120)} [${oneLine(c?.type_line, 120)}] (MV ${Number(c?.cmc) || 0}) :: ${c.summary ? `≈ ${oneLine(c.summary, 220)}` : oneLine(c.oracle_text, 240)}`)
       .join("\n");
     const b = req.body || {};
     const commander = oneLine(b.commander, 120);

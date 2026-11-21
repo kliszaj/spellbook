@@ -248,4 +248,26 @@ test("getCommander({ page }): fetches the sub-page URL and caches it separately"
   await assert.rejects(client.getCommander("Hei Bai, Forest Guardian", { page: "../x" }), EdhrecError);
 });
 
+test("createEdhrecClient: an unparseable disk cache is treated as empty, not as an EDHREC failure", async () => {
+  const dataDir = await tempDir();
+  await writeFile(join(dataDir, "edhrec-cache.json"), "{ not json", "utf8");
+  const { fetchImpl, calls } = fakeFetch(FIXTURE);
+  const client = createEdhrecClient({ dataDir, fetchImpl });
+  const data = await client.getCommander("Hei Bai, Forest Guardian");
+  assert.equal(data.numDecks, 7174);
+  assert.equal(calls.length, 1);
+  // and the next save writes a good file again
+  const disk = JSON.parse(await readFile(join(dataDir, "edhrec-cache.json"), "utf8"));
+  assert.ok(Object.keys(disk).length >= 1);
+});
+
+test("createEdhrecClient: two pages saved at once both end up in the disk cache", async () => {
+  const dataDir = await tempDir();
+  const { fetchImpl } = fakeFetch(FIXTURE);
+  const client = createEdhrecClient({ dataDir, fetchImpl });
+  await Promise.all([client.getCommander("Hei Bai, Forest Guardian"), client.getCommander("Hei Bai, Forest Guardian", { page: "budget" })]);
+  const disk = JSON.parse(await readFile(join(dataDir, "edhrec-cache.json"), "utf8"));
+  assert.equal(Object.keys(disk).length, 2, Object.keys(disk).join(", "));
+});
+
 await run("EDHREC client");
