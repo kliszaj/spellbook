@@ -16,7 +16,8 @@
     "test:playmat": "node scripts/check-playmat.mjs",
     "test:client": "node scripts/check-client-script.mjs",
     "test:server": "node scripts/check-server.mjs",
-    "test": "npm run test:collection && npm run test:swaps && npm run test:deck-analysis && npm run test:playmat && npm run test:client && npm run test:server",
+    "test:search": "node scripts/check-search-repair.mjs && node scripts/check-query-chips.mjs",
+    "test": "npm run test:collection && npm run test:swaps && npm run test:deck-analysis && npm run test:playmat && npm run test:client && npm run test:server && npm run test:search",
     "pilot:swaps": "node scripts/pilot-swaps.mjs"
   },
   "dependencies": {

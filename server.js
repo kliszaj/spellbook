@@ -7,6 +7,7 @@ import { constants as fsConstants } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { mergeDeckNotes, normalizeDeckNotes } from "./lib/deck-notes.js";
+import { withSearchRepair, REPAIR_SCHEMA } from "./lib/search-repair.js";
 import { BinderModeError, createCollectionStore, PreviewExpiredError, PreviewStaleError, ScryfallError } from "./lib/collection-store.js";
 import { CollectionFormatError } from "./lib/collection.js";
 import { createUsageLog } from "./lib/ai-usage.js";
@@ -999,15 +1000,46 @@ ${userMessage}`;
   }
 
   try {
-    const result = ai.provider === "openai"
+    const first = ai.provider === "openai"
       ? await translateWithOpenAI({ apiKey: ai.apiKey, model: ai.model, userMessage, colorIdentity })
       : await translateWithAnthropic({ apiKey: ai.apiKey, model: ai.model, userMessage, colorIdentity, forceAiSearch: Boolean(forceAiSearch) });
+    // Run the query on Scryfall before answering; a syntax error or zero results gets one AI repair.
+    const result = await withSearchRepair({
+      result: first,
+      request: query,
+      enforce: (q) => enforceCommanderFilters(extractQuery(q), colorIdentity),
+      ai: ({ user }) => repairSearchQuery({ ai, user }),
+    });
     res.json({ ...result, provider: ai.provider, model: ai.model });
   } catch (err) {
     const status = err.status || 500;
     res.status(status).json({ error: aiErrorMessage(err, ai.provider, "Failed to translate query") });
   }
 });
+
+// The one repair call withSearchRepair makes (lib/search-repair.js), through the shared AI client so its cost is
+// recorded with the rest of the AI spend.
+async function repairSearchQuery({ ai, user }) {
+  const client = createAiClient({ provider: ai.provider, apiKey: ai.apiKey, model: ai.model });
+  const openai = ai.provider === "openai";
+  try {
+    const r = await client.json({
+      system: openai
+        ? `${SCRYFALL_SYSTEM_PROMPT}\n\nYou are repairing a Scryfall query that didn't work. Return only JSON: {"query": "...", "note": "..."}.`
+        : "You repair Scryfall queries that didn't work.",
+      cachedContext: openai ? "" : SCRYFALL_SYSTEM_PROMPT,
+      user,
+      maxTokens: 4000,
+      effort: "low",
+      schema: openai ? undefined : REPAIR_SCHEMA,
+    });
+    await usageLog.record({ feature: "search-repair", provider: ai.provider, model: ai.model, ...r.usage, usd: r.usd }).catch(() => {});
+    return r.data;
+  } catch (err) {
+    if (err.usage) await usageLog.record({ feature: "search-repair", provider: ai.provider, model: ai.model, ...err.usage, usd: err.usd }).catch(() => {});
+    throw err;
+  }
+}
 
 const DECK_IDENTITY_TAGS = [
   "+1/+1 Counters", "-1/-1 Counters", "Affinity", "Aggro", "Aikido", "Aristocrats", "Artifacts", "Attractions", "Auras", "Battlecruiser", "Birthing Pod / Pod", "Blink / Flicker", "Blue Moon", "Budget", "Burn", "Cascade", "Casual", "cEDH", "Chaos", "Clones", "Coin Flips", "Combo", "Control", "Cycling", "Death & Taxes", "Defender", "Delver", "Devotion", "Discard", "Discover", "Donation", "Dredge", "Dungeons", "Eggs", "Enchantments", "Energy", "Equipment", "Extra Combats", "Extra Turns", "Farm", "Flying", "Formula X-1", "Goad", "Goodstuff", "Group Hug", "Group Slug", "Hatebears", "Help Wanted", "Historic", "Infect", "Jank", "Kindred", "Land Destruction", "Lands Matter", "Legends Matter", "Life Bargain", "Life Gain", "Maverick", "Midrange", "Mill", "Miracles", "Modified", "Modular", "Monarch", "Morph", "Mutate", "Pillowfort", "Poison", "Primer", "Prison", "Ramp", "Reanimator", "Rock", "Rule Zero", "Snow", "Spellslinger", "Stax", "Stoneblade", "Storm", "Super Friends", "Tempo", "Thieves", "Tokens", "Toolbox", "Tron", "Turbo", "Unmaintained", "Vehicles", "Voltron", "Vorthos", "Webcam Friendly", "Wheels", "X Spells", "Zoo",

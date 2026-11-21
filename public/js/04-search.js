@@ -18,6 +18,7 @@
       return !/[:<>=]/.test(q || "");
     }
 
+    // @testable query-chips begin
     function hasTopLevelOr(query) {
       let inQuote = false;
       let depth = 0;
@@ -68,6 +69,68 @@
       return tokens;
     }
 
+    // ── Query chips: the AI's Scryfall query as plain-English conditions you can switch off or add to ──
+    const CHIP_OPS = { "<=": "≤ ", ">=": "≥ ", "<": "< ", ">": "> ", "!=": "≠ ", "=": "", ":": "" };
+    const CHIP_COLOURS = { w: "White", u: "Blue", b: "Black", r: "Red", g: "Green", c: "Colourless", m: "Multicolour" };
+    const CHIP_KEYS = {
+      t: "Type", type: "Type", o: "Text", oracle: "Text", fo: "Text", fulloracle: "Text", kw: "Keyword", keyword: "Keyword",
+      c: "Colour", color: "Colour", colour: "Colour", mv: "Mana value", cmc: "Mana value", manavalue: "Mana value",
+      pow: "Power", power: "Power", tou: "Toughness", toughness: "Toughness", loy: "Loyalty", loyalty: "Loyalty",
+      eur: "Price", usd: "Price", r: "Rarity", rarity: "Rarity", is: "Is", has: "Has", not: "Is not",
+      s: "Set", e: "Set", set: "Set", edition: "Set", f: "Legal in", format: "Legal in", legal: "Legal in",
+      function: "Role", otag: "Role", oracletag: "Role", art: "Art", atag: "Art", a: "Artist", artist: "Artist",
+      year: "Year", date: "Date", m: "Mana cost", mana: "Mana cost", produces: "Makes mana", id: "Identity", identity: "Identity",
+    };
+    const chipUnquote = (v) => String(v).replace(/^"(.*)"$/, "$1");
+    const chipTitleCase = (v) => v.replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+
+    // One query term → { key, label } for its chip; null for terms that aren't conditions (sort order).
+    function describeQueryTerm(term) {
+      const neg = term.startsWith("-");
+      const t = neg ? term.slice(1) : term;
+      const not = (key) => (neg ? `Not ${key.toLowerCase()}` : key);
+      if (t.startsWith("(")) return { key: neg ? "None of" : "Any of", label: t.slice(1, -1).replace(/\s+or\s+/gi, " / ") };
+      const m = /^([a-z]+)(<=|>=|!=|:|=|<|>)(.+)$/i.exec(t);
+      if (!m) return { key: not("Name"), label: chipUnquote(t) };
+      const [, rawKey, op, rawVal] = m;
+      const key = rawKey.toLowerCase();
+      if (["order", "direction", "dir", "unique", "prefer", "include", "lang", "game"].includes(key)) return null;
+      const val = chipUnquote(rawVal);
+      const opText = CHIP_OPS[op] ?? `${op} `;
+      const label = (() => {
+        if (key === "eur") return `${opText}€${val}`;
+        if (key === "usd") return `${opText}$${val}`;
+        if (["o", "oracle", "fo", "fulloracle"].includes(key)) return `“${val}”`;
+        if (["c", "color", "colour", "id", "identity"].includes(key) && /^[wubrgcm]+$/i.test(val)) {
+          const names = [...val.toLowerCase()].map((ch) => CHIP_COLOURS[ch]).join(" + ");
+          return (key === "id" || key === "identity") && op === "<=" ? `within ${names}` : `${opText}${names}`;
+        }
+        if (["s", "e", "set", "edition"].includes(key)) return val.toUpperCase();
+        if (["t", "type", "kw", "keyword", "is", "has", "not", "f", "format", "legal", "function", "otag", "oracletag", "r", "rarity"].includes(key)) {
+          return chipTitleCase(val);
+        }
+        return `${opText}${val}`;
+      })();
+      return { key: not(CHIP_KEYS[key] || rawKey), label };
+    }
+
+    // The core query (without the Commander filters) as chips. A top-level "or" can't be split into ANDed
+    // conditions without changing its meaning, so such a query stays one chip.
+    function queryChips(core) {
+      const text = String(core || "").trim();
+      if (!text) return [];
+      if (hasTopLevelOr(text)) return [{ term: text, key: "Any of", label: text.replace(/\s+or\s+/gi, " / ") }];
+      return tokenizeScryfallQuery(text)
+        .map((term) => ({ term, ...(describeQueryTerm(term) || {}) }))
+        .filter((chip) => chip.key);
+    }
+
+    // The core query from the chips still switched on, plus any added terms.
+    function rebuildQuery(chips, off = new Set(), added = []) {
+      return [...chips.filter((chip) => !off.has(chip.term)).map((chip) => chip.term), ...added].join(" ").trim();
+    }
+    // @testable query-chips end
+
     function repairLeadingOrGroup(query) {
       if (!query || query.trim().startsWith("(")) return query;
       const tokens = tokenizeScryfallQuery(query);
@@ -113,6 +176,7 @@
       searchBtn.textContent = "Searching...";
       startLoadingAnimation();
       queryDisplay.classList.remove("visible");
+      showQueryRepair(null);
       aiSummary.style.display = "none";
       comboHeader.style.display = "none";
       comboRun++; // supersede any in-flight combo load
@@ -187,9 +251,10 @@
           const scryfallQuery = withCommanderFilters(data.query || data.scryfallQuery || "");
           state.currentQuery = scryfallQuery;
           const core = stripCommanderFilters(scryfallQuery).trim();
-          queryText.textContent = core || scryfallQuery;
-          queryText.title = scryfallQuery; // full query (with f:commander / identity) on hover
+          showQueryChips(scryfallQuery);
           queryDisplay.classList.toggle("visible", Boolean(core) && core.toLowerCase() !== query.trim().toLowerCase());
+          // The server ran the AI's query and had it repaired (syntax error or nothing found): say what changed.
+          showQueryRepair(data.repaired);
           await searchScryfall(scryfallQuery, null, searchRun.run, searchRun.signal);
         }
       } catch (err) {
@@ -313,6 +378,127 @@
       const { run, signal } = startSearchRun();
       searchScryfall(state.currentQuery, null, run, signal);
     }
+
+    // ── Query chips (UI) ──
+    // The query under the search bar as chips: switching one off (or adding a preset) re-runs Scryfall only,
+    // with no AI call. The Commander filters are shown as locked chips; the code view is one click away.
+    const queryChipsEl = $("#query-chips");
+    const queryCodeBtn = $("#query-code-btn");
+    const queryRepairEl = $("#query-repair");
+    const CHIP_PRESETS = [
+      { term: "eur<=2", label: "Under €2" },
+      { term: "mv<=3", label: "Mana value ≤ 3" },
+      { term: "t:creature", label: "Creatures only" },
+    ];
+    let queryChipState = { chips: [], off: new Set(), added: [], adding: false, idTerm: "" };
+    const ID_TERM = /\b(?:id|identity)\s*(?:<=|>=|!=|=|<|>|:)\s*[a-z]+\b/i;
+
+    // Keeps the colour identity the query came with (the AI's, or a deck's for guided build), so switching a
+    // chip off never widens the colours.
+    function showQueryChips(fullQuery) {
+      const idTerm = (ID_TERM.exec(fullQuery || "") || [""])[0];
+      queryChipState = { chips: queryChips(stripCommanderFilters(fullQuery)), off: new Set(), added: [], adding: false, idTerm };
+      renderQueryChips();
+    }
+    function chipQuery() {
+      const { chips, off, added, idTerm } = queryChipState;
+      const core = repairLeadingOrGroup(rebuildQuery(chips, off, added));
+      return [core ? (hasTopLevelOr(core) ? `(${core})` : core) : "", "f:commander", idTerm, "game:paper"].filter(Boolean).join(" ");
+    }
+
+    function renderQueryChips() {
+      const { chips, off, added, adding } = queryChipState;
+      const core = rebuildQuery(chips, off, added);
+      queryText.textContent = core || state.currentQuery;
+      queryText.title = state.currentQuery; // full query (with f:commander / identity) on hover
+      const chipHtml = (chip, i, kind) => {
+        const isOff = off.has(chip.term);
+        const action = kind === "added" ? "Remove" : isOff ? "Put back" : "Switch off";
+        return `<span class="qchip${isOff ? " off" : ""}"><span class="qchip-k">${esc(chip.key)}</span> ${esc(chip.label)}`
+          + `<button type="button" class="qchip-x" data-chip="${kind}:${i}" aria-label="${esc(`${action} ${chip.key} ${chip.label}`)}" title="${action}">${isOff ? "↺" : "×"}</button></span>`;
+      };
+      const addedChips = added.map((term) => ({ term, ...(describeQueryTerm(term) || { key: "Added", label: term }) }));
+      const idChip = queryChipState.idTerm ? describeQueryTerm(queryChipState.idTerm.replace(/^identity/i, "id")) : null;
+      const ident = idChip
+        ? `<span class="qchip lock" title="Always on: your commander's colours"><span class="qchip-k">Colours</span> ${esc(idChip.label)}</span>`
+        : "";
+      const presets = CHIP_PRESETS.filter((p) => !added.includes(p.term) && !chips.some((c) => c.term === p.term));
+      queryChipsEl.innerHTML = chips.map((c, i) => chipHtml(c, i, "chip")).join("")
+        + addedChips.map((c, i) => chipHtml(c, i, "added")).join("")
+        + ident
+        + `<span class="qchip lock" title="Always on: Commander-legal paper cards"><span class="qchip-k">Legal</span> Commander</span>`
+        + (adding
+          ? presets.map((p) => `<button type="button" class="qchip add" data-preset="${esc(p.term)}">+ ${esc(p.label)}</button>`).join("")
+          : presets.length ? `<button type="button" class="qchip add" data-chip-add aria-expanded="false">+ Add</button>` : "");
+    }
+
+    function rerunFromChips() {
+      state.currentQuery = chipQuery();
+      renderQueryChips();
+      resultsEl.innerHTML = "";
+      state.results = [];
+      state.nextPage = null;
+      paginationEl.style.display = "none";
+      showStatus("Searching…");
+      const { run, signal } = startSearchRun();
+      searchScryfall(state.currentQuery, null, run, signal);
+    }
+
+    queryChipsEl.addEventListener("click", (e) => {
+      const x = e.target.closest("[data-chip]");
+      if (x) {
+        const [kind, i] = x.dataset.chip.split(":");
+        if (kind === "added") queryChipState.added.splice(Number(i), 1);
+        else {
+          const term = queryChipState.chips[Number(i)]?.term;
+          if (queryChipState.off.has(term)) queryChipState.off.delete(term); else queryChipState.off.add(term);
+        }
+        rerunFromChips();
+        // keep keyboard focus on the same chip's button after the re-render
+        queryChipsEl.querySelector(`[data-chip="${x.dataset.chip}"]`)?.focus();
+        return;
+      }
+      if (e.target.closest("[data-chip-add]")) {
+        queryChipState.adding = true;
+        renderQueryChips();
+        queryChipsEl.querySelector("[data-preset]")?.focus();
+        return;
+      }
+      const preset = e.target.closest("[data-preset]");
+      if (preset) {
+        queryChipState.added.push(preset.dataset.preset);
+        queryChipState.adding = false;
+        rerunFromChips();
+      }
+    });
+
+    queryCodeBtn.addEventListener("click", () => {
+      const showCode = queryText.hidden;
+      queryText.hidden = !showCode;
+      queryChipsEl.hidden = showCode;
+      queryCodeBtn.setAttribute("aria-pressed", String(showCode));
+      queryCodeBtn.title = showCode ? "Show the conditions" : "Show the Scryfall query";
+      queryCodeBtn.setAttribute("aria-label", queryCodeBtn.title);
+    });
+
+    // "Fix it before you see it": the note when the server had the AI repair its query, with a way back to the
+    // query as first written.
+    let queryRepairFrom = "";
+    function showQueryRepair(repaired) {
+      queryRepairFrom = repaired?.from || "";
+      queryRepairEl.hidden = !repaired;
+      if (!repaired) return;
+      $("#query-repair-text").textContent = repaired.note
+        || (repaired.reason === "invalid" ? "I fixed a mistake in the search." : "Nothing matched exactly, so I widened the search.");
+    }
+    $("#query-repair-undo").addEventListener("click", () => {
+      if (!queryRepairFrom) return;
+      state.currentQuery = withCommanderFilters(queryRepairFrom);
+      showQueryChips(state.currentQuery);
+      showQueryRepair(null);
+      queryDisplay.classList.add("visible");
+      rerunFromChips();
+    });
 
     // Add/remove the "Recommended" (AI order) option depending on the active mode.
     function setSortMode(mode) {

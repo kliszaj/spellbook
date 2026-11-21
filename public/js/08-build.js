@@ -173,8 +173,7 @@
       sortField.value = "edhrec";
       const full = `${query} f:commander -t:basic game:paper`;
       state.currentQuery = full;
-      queryText.textContent = stripCommanderFilters(full);
-      queryText.title = full;
+      showQueryChips(full);
       queryDisplay.classList.add("visible");
       searchInput.value = "";
       renderBuildTarget();

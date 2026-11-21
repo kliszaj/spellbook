@@ -154,9 +154,12 @@
               <button class="ai-search-toggle" id="ai-search-toggle" type="button" title="Force AI web search" aria-label="Force AI web search" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg></button>
               <button id="search-btn">Search</button>
             </div>
+            <div class="query-repair" id="query-repair" role="status" hidden><span class="query-repair-ic" aria-hidden="true">✦</span><span id="query-repair-text"></span><button type="button" id="query-repair-undo">Use my exact wording</button></div>
             <div class="query-display" id="query-display">
-              <span class="query-label">Scryfall query</span>
-              <code id="query-text"></code>
+              <span class="query-label">Searching</span>
+              <div class="query-chips" id="query-chips" role="group" aria-label="Search conditions: switch one off to widen the search"></div>
+              <code id="query-text" hidden></code>
+              <button id="query-code-btn" type="button" title="Show the Scryfall query" aria-label="Show the Scryfall query" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></button>
               <button id="copy-query-btn" type="button" title="Copy the full query" aria-label="Copy the full query"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
               <button id="open-scryfall-btn" type="button" title="Open on Scryfall" aria-label="Open on Scryfall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button>
             </div>
