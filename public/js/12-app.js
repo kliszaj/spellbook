@@ -8,7 +8,7 @@
       function build(q) {
         const deck = activeDeck();
         const out = [];
-        state.folders.filter((d) => d.id !== pendingDeckDelete?.id).forEach((d) => out.push({ sec: "Decks", label: d.name, hint: `${folderCount(d.id)} cards`, run: () => { state.activeFolder = d.id; go("saved"); renderSavedCards(); } }));
+        state.folders.filter((d) => d.id !== pendingDeckDelete?.id).forEach((d) => out.push({ sec: "Decks", label: d.name, hint: `${folderCount(d.id)} cards`, run: () => { state.activeFolder = d.id; state.addingClosed = false; go("saved"); renderSavedCards(); } }));
         const act = (label, run, hint = "") => out.push({ sec: "Actions", label, hint, run });
         act("Go to Search", () => go("search"));
         act("Go to Decks", () => go("saved"));

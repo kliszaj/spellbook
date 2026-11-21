@@ -1826,6 +1826,16 @@
     .card-item.off-deck img { filter: grayscale(1); opacity: 0.5; }
     .off-deck-tag { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 5; text-align: center; padding: 4px 6px; border-radius: 7px; background: rgba(24,23,21,0.82); color: #fff; font-size: 11px; font-weight: 700; pointer-events: none; }
     .build-target.cutting { background: var(--c-bg-ffefd5); border-color: rgba(255,159,28,0.35); }
+    /* The bar floats at the bottom of the screen, so the deck and its count stay in view while you scroll results. It sits
+       outside the content panel in the markup (the panel's backdrop blur would otherwise pin it to the panel), so it hides
+       itself when another tab is open. */
+    .build-target { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 350; width: min(640px, calc(100vw - 32px)); margin: 0; flex-wrap: nowrap; padding: 6px 6px 6px 16px; border-radius: 999px; box-shadow: 0 14px 36px -14px rgba(0,0,0,0.45); }
+    .side-menu:not(.search-mode) ~ .build-target { display: none; }
+    .app-shell:has(> .build-target:not([hidden])) .search-content { padding-bottom: 76px; }
+    body:has(.side-menu.search-mode ~ .build-target:not([hidden])) :is(.app-toast, .sync-badge) { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+    .bt-close { flex: none; width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--c-text-57524a); cursor: pointer; }
+    .bt-close:hover { background: var(--c-bg-r31-29-25-0-1); color: var(--c-text-181715); }
+    .bt-close svg { width: 16px; height: 16px; }
     .cut-btn { background: #FF9F1C; color: var(--c-text-3b2500); box-shadow: 0 6px 14px -6px rgba(255,159,28,0.9); }
     .cut-btn:hover { background: #F08C00; }
     .cut-btn.in { background: #15803D; color: #fff; box-shadow: none; }
@@ -2790,6 +2800,11 @@
     .sync-badge { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 400; max-width: calc(100vw - 32px); padding: 8px 14px; border-radius: 999px; background: #B45309; color: #fff; font-size: 12.5px; font-weight: 650; box-shadow: 0 10px 30px -12px rgba(0,0,0,0.5); text-align: center; }
     .sync-badge[hidden] { display: none; }
     @media (max-width: 760px) { .sync-badge { bottom: 84px; } }
+    /* Phones: the Adding to bar sits just above the bottom tab bar, and toasts above it. */
+    @media (max-width: 760px) {
+      .build-target { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+      body:has(.side-menu.search-mode ~ .build-target:not([hidden])) :is(.app-toast, .sync-badge) { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
+    }
 
     /* ── Query chips and the repair note under the search bar (04-search.js) ── */
     .query-display { flex-wrap: wrap; row-gap: 6px; }

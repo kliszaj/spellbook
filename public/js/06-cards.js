@@ -200,7 +200,7 @@
       if (!append) resultsEl.innerHTML = "";
       // looked up once per render, not once per tile
       const savedIds = new Set(state.savedCards.map((s) => s.id));
-      const deck = activeDeck();
+      const deck = state.addingClosed ? null : activeDeck();
       const ident = deck ? deckIdentity(deck) : null;
       cards.forEach((card) => {
         const el = document.createElement("div");

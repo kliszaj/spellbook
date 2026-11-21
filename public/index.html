@@ -190,7 +190,6 @@
             <button class="sort-dir-btn" id="sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
           </div>
           <div class="type-filter" id="type-filter" style="display:none" aria-label="Filter by card type"></div>
-          <div class="build-target" id="build-target" hidden></div>
           <div id="results" class="results-grid"></div>
           <div id="pagination" class="pagination" style="display:none">
             <button id="load-more-btn">Load more</button>
@@ -318,6 +317,8 @@
           <div id="swaps-grid" class="results-grid"></div>
         </div>
       </section>
+      <!-- Outside the content panel: its backdrop blur would pin a fixed child to the panel instead of the screen. -->
+      <div class="build-target" id="build-target" hidden></div>
 
       <aside class="detail-panel empty" id="detail-panel" aria-label="Card details">
         <div class="detail-header">

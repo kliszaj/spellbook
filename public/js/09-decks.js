@@ -297,7 +297,7 @@
       if (e.target.closest("#folder-add-btn")) { openNewDeck(); return; }
       if (e.target.closest(".renaming")) return;
       const btn = e.target.closest(".folder-btn");
-      if (btn) { state.activeFolder = btn.dataset.folder; renderSavedCards(); }
+      if (btn) { state.activeFolder = btn.dataset.folder; state.addingClosed = false; renderSavedCards(); }
     });
 
     // ── Save-to-folder popover ──

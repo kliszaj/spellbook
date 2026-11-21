@@ -151,6 +151,7 @@
     // The "Adding to" bar then tracks that job's progress as cards are added.
     async function guidedSearch(deck, { role, label, want, query }) {
       state.buildTarget = { folderId: deck.id, role, label, want };
+      state.addingClosed = false;
       state.cutView = null;
       setActiveTab("search");
       const searchRun = startSearchRun();
@@ -221,7 +222,7 @@
       }
       el.classList.remove("cutting");
       const deck = activeDeck();
-      if (!deck || state.mode === "combos") { el.hidden = true; return; }
+      if (!deck || state.mode === "combos" || state.addingClosed) { el.hidden = true; return; }
       const t = state.buildTarget && state.buildTarget.folderId === deck.id ? state.buildTarget : null;
       const cards = getFolderCards(deck.id).filter((c) => !isMaybe(deck.id, c.id));
       const total = cards.reduce((n, c) => n + cardQty(deck.id, c.id), 0);
@@ -238,10 +239,13 @@
       el.innerHTML = `<span class="bt-lbl">Adding to</span>
         <label class="bt-deck">${pips}<select id="bt-deck-select" aria-label="Deck to add cards to">${state.folders.filter((x) => x.id !== pendingDeckDelete?.id).map((x) => `<option value="${x.id}"${x.id === deck.id ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>
         ${goal}
-        ${t ? `<button class="bt-back" type="button" id="bt-back">← Back to deck</button>` : ""}`;
+        ${t ? `<button class="bt-back" type="button" id="bt-back">← Back to deck</button>` : ""}
+        <button class="bt-close" type="button" id="bt-close" aria-label="Stop adding to ${escAttr(deck.name)}" title="Stop adding to this deck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>`;
       el.hidden = false;
       $("#bt-deck-select").addEventListener("change", (e) => { state.activeFolder = e.target.value; state.buildTarget = null; renderBuildTarget(); renderSearchView(); renderFolderRail(); });
       $("#bt-back")?.addEventListener("click", () => { state.buildTarget = null; setActiveTab("saved"); window.scrollTo(0, 0); });
+      // ✕: stop adding to a deck. Hides the bar and the Add buttons until a deck is picked again.
+      $("#bt-close").addEventListener("click", () => { state.addingClosed = true; state.buildTarget = null; renderSearchView(); });
     }
     // Add / un-add a search result to the deck in the "Adding to" bar.
     function toggleInActiveDeck(card) {

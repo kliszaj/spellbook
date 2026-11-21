@@ -2033,6 +2033,7 @@
       setCardFolder(card, deck.id, true);
       if (deck.commanderId !== card.id) setDeckCommander(deck.id, card.id);
       state.activeFolder = deck.id;
+      state.addingClosed = false;
       closeNewDeck();
       if (state.activeTab !== "saved") setActiveTab("saved");
       renderFolderRail();
