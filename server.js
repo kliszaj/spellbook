@@ -82,12 +82,13 @@ function plainObject(value) {
 function normalizeAppState(value = {}) {
   const input = plainObject(value) || {};
   return {
-    savedCards: Array.isArray(input.savedCards) ? input.savedCards : [],
-    folders: Array.isArray(input.folders) ? input.folders : [],
-    membership: plainObject(input.membership),
-    quantities: plainObject(input.quantities) || {},
-    maybeboard: plainObject(input.maybeboard) || {},
-    pins: plainObject(input.pins) || {},
+    savedCards: Array.isArray(input.savedCards) ? input.savedCards.filter((c) => plainObject(c) && isId(c.id)) : [],
+    folders: Array.isArray(input.folders) ? input.folders.map(cleanFolder).filter(Boolean) : [],
+    // null (not {}) when absent: the client migrates pre-membership saves from that
+    membership: plainObject(input.membership) ? cleanMembership(input.membership) : null,
+    quantities: cleanPerDeck(input.quantities, (n) => (Number.isInteger(n) && n > 1 ? n : undefined)),
+    maybeboard: cleanPerDeck(input.maybeboard, (v) => (v === true ? true : undefined)),
+    pins: cleanPerDeck(input.pins, (v) => (v === true ? true : undefined)),
     deckNotes: normalizeDeckNotes(input.deckNotes),
     colorIdentity: Array.isArray(input.colorIdentity) ? input.colorIdentity.filter((c) => COLOR_IDS.has(c)) : [],
     translateCache: capTranslateCache(plainObject(input.translateCache) || {}),
@@ -100,6 +101,56 @@ function normalizeAppState(value = {}) {
     forceAiSearch: Boolean(input.forceAiSearch),
     playmatUrl: normalizePlaymatUrl(input.playmatUrl),
   };
+}
+
+// ── Shape checks for everything a client sends: a malformed op is dropped instead of being saved and served
+// to every device.
+const isId = (v) => typeof v === "string" && v.length > 0 && v.length <= 200;
+function cleanFolder(f) {
+  if (!plainObject(f) || !isId(f.id)) return null;
+  return { ...f, name: String(f.name ?? "").slice(0, 200), commanderId: isId(f.commanderId) ? f.commanderId : null };
+}
+function cleanMembership(m) {
+  const out = {};
+  for (const [id, folders] of Object.entries(m)) {
+    if (!Array.isArray(folders)) continue;
+    const list = [...new Set(folders.filter(isId))];
+    if (list.length) out[id] = list;
+  }
+  return out;
+}
+// { [folderId]: { [cardId]: value } }, keeping only values `keep` accepts (it returns undefined to drop one)
+function cleanPerDeck(value, keep) {
+  const out = {};
+  for (const [folderId, cards] of Object.entries(plainObject(value) || {})) {
+    if (!plainObject(cards)) continue;
+    const inner = {};
+    for (const [id, v] of Object.entries(cards)) {
+      const kept = keep(v);
+      if (kept !== undefined) inner[id] = kept;
+    }
+    if (Object.keys(inner).length) out[folderId] = inner;
+  }
+  return out;
+}
+function setPerDeck(map, folderId, id, value) {
+  if (value === undefined) {
+    if (map[folderId]) { delete map[folderId][id]; if (!Object.keys(map[folderId]).length) delete map[folderId]; }
+  } else {
+    (map[folderId] ||= {})[id] = value;
+  }
+}
+// A card in no deck any more is unsaved everywhere, with its per-deck counts and flags.
+function dropCardFromDeck(state, folderId, id) {
+  const left = (state.membership[id] || []).filter((f) => f !== folderId);
+  if (left.length) state.membership[id] = left;
+  else {
+    delete state.membership[id];
+    state.savedCards = state.savedCards.filter((c) => c.id !== id);
+  }
+  setPerDeck(state.quantities, folderId, id, undefined);
+  setPerDeck(state.maybeboard, folderId, id, undefined);
+  setPerDeck(state.pins, folderId, id, undefined);
 }
 
 // Playmat (a web client for XMage) imports a deck from a link to its own /import page.
@@ -297,6 +348,63 @@ function applyOps(state, ops) {
   state.membership = state.membership && typeof state.membership === "object" ? state.membership : {};
   for (const op of Array.isArray(ops) ? ops : []) {
     switch (op?.type) {
+      // ── Per-item ops: each changes one thing, so two devices editing different things never undo each
+      // other. (The whole-list ops below stay for tabs still running an older page.)
+      case "upsertFolder": {
+        const folder = cleanFolder(op.folder);
+        if (!folder) break;
+        const idx = state.folders.findIndex((f) => f.id === folder.id);
+        if (idx >= 0) state.folders[idx] = { ...state.folders[idx], ...folder };
+        else state.folders.push(folder);
+        break;
+      }
+      case "deleteFolder": {
+        if (!isId(op.id)) break;
+        state.folders = state.folders.filter((f) => f.id !== op.id);
+        for (const cardId of Object.keys(state.membership)) {
+          if (state.membership[cardId].includes(op.id)) dropCardFromDeck(state, op.id, cardId);
+        }
+        delete state.quantities[op.id];
+        delete state.maybeboard[op.id];
+        delete state.pins[op.id];
+        delete state.deckNotes[op.id];
+        break;
+      }
+      case "setCardInFolder": {
+        if (!isId(op.id) || !isId(op.folderId)) break;
+        if (op.on) {
+          const card = plainObject(op.card) && op.card.id === op.id ? op.card : null;
+          const idx = state.savedCards.findIndex((c) => c.id === op.id);
+          if (idx >= 0) { if (card) state.savedCards[idx] = card; }
+          else if (card) state.savedCards.push(card);
+          else break; // a card the server has never seen needs its data
+          const mem = state.membership[op.id] || [];
+          if (!mem.includes(op.folderId)) state.membership[op.id] = [...mem, op.folderId];
+        } else {
+          dropCardFromDeck(state, op.folderId, op.id);
+        }
+        break;
+      }
+      case "setQuantity": {
+        if (!isId(op.folderId) || !isId(op.id)) break;
+        const n = Math.floor(Number(op.n));
+        setPerDeck(state.quantities, op.folderId, op.id, n > 1 ? n : undefined);
+        break;
+      }
+      case "setFlag": {
+        const map = op.kind === "maybe" ? state.maybeboard : op.kind === "pin" ? state.pins : null;
+        if (!map || !isId(op.folderId) || !isId(op.id)) break;
+        setPerDeck(map, op.folderId, op.id, op.on ? true : undefined);
+        break;
+      }
+      case "setDeckNote": {
+        if (!isId(op.folderId)) break;
+        const text = typeof op.text === "string" ? op.text.trim() : "";
+        if (text) state.deckNotes[op.folderId] = text;
+        else delete state.deckNotes[op.folderId];
+        state.deckNotes = normalizeDeckNotes(state.deckNotes);
+        break;
+      }
       case "moveCard": {
         // folders empty/absent => unsave the card everywhere; otherwise upsert + set membership.
         const id = op.id;

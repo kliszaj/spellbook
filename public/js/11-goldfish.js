@@ -1,15 +1,12 @@
     // ── Decks tab: Game plan, Owned count, color filter ────────────────
     const DECK_NOTES_MAX_UI = 20000;
 
-    function persistDeckNotes() {
-      lsSet("deck_notes", JSON.stringify(state.deckNotes));
-      queueOp({ type: "setDeckNotes", deckNotes: state.deckNotes });
-    }
     function setDeckNotes(folderId, text) {
       const value = String(text || "").trim();
       if (value) state.deckNotes[folderId] = value;
       else delete state.deckNotes[folderId];
-      persistDeckNotes();
+      lsSet("deck_notes", JSON.stringify(state.deckNotes));
+      queueOp({ type: "setDeckNote", folderId, text: value });
     }
 
     function renderDeckTools(isRealDeck, mainVisible) {

@@ -72,11 +72,8 @@
       if (n <= 1) delete state.quantities[folderId][id];
       else state.quantities[folderId][id] = n;
       if (!Object.keys(state.quantities[folderId]).length) delete state.quantities[folderId];
-      persistQuantities();
-    }
-    function persistQuantities() {
       lsSet("card_quantities", JSON.stringify(state.quantities));
-      queueOp({ type: "setQuantities", quantities: state.quantities });
+      queueOp({ type: "setQuantity", folderId, id, n });
     }
 
     // ── Maybeboard (per deck) ──────────────────────────────────────────
@@ -96,7 +93,8 @@
         delete state.maybeboard[folderId][id];
         if (!Object.keys(state.maybeboard[folderId]).length) delete state.maybeboard[folderId];
       }
-      persistMaybeboard();
+      lsSet("card_maybeboard", JSON.stringify(state.maybeboard));
+      queueOp({ type: "setFlag", kind: "maybe", folderId, id, on: Boolean(on) });
     }
     // ── Pins (per deck): "keep this card" — never offered as a cut in the trim planner.
     function isPinned(folderId, id) {
@@ -111,15 +109,8 @@
         delete state.pins[folderId][id];
         if (!Object.keys(state.pins[folderId]).length) delete state.pins[folderId];
       }
-      persistPins();
-    }
-    function persistPins() {
       lsSet("card_pins", JSON.stringify(state.pins));
-      queueOp({ type: "setPins", pins: state.pins });
-    }
-    function persistMaybeboard() {
-      lsSet("card_maybeboard", JSON.stringify(state.maybeboard));
-      queueOp({ type: "setMaybeboard", maybeboard: state.maybeboard });
+      queueOp({ type: "setFlag", kind: "pin", folderId, id, on: Boolean(on) });
     }
 
     // Add/remove a card to/from one collection. Auto-saves the card on first add;
@@ -139,13 +130,21 @@
         } else {
           state.membership[card.id] = mem;
         }
-        setCardQty(folderId, card.id, 1); // drop any stored count for the folder it left
-        setMaybe(folderId, card.id, false); // drop any Maybe flag for the folder it left
+        dropLocalDeckFlags(folderId, card.id); // its count and Maybe/pin flags for the deck it left
       }
       saveCardsStore();
       saveMembership();
-      // Empty membership => the card was fully unsaved; server drops it everywhere.
-      queueOp({ type: "moveCard", id: card.id, card, folders: state.membership[card.id] || [] });
+      // One card in one deck: the server adds or removes just that (and unsaves a card left in no deck).
+      queueOp({ type: "setCardInFolder", id: card.id, folderId, on: Boolean(on), card: on ? card : undefined });
+    }
+    // Local mirror of what the server does when a card leaves a deck (dropCardFromDeck in server.js).
+    function dropLocalDeckFlags(folderId, id) {
+      for (const [map, key] of [[state.quantities, "card_quantities"], [state.maybeboard, "card_maybeboard"], [state.pins, "card_pins"]]) {
+        if (!map[folderId] || !(id in map[folderId])) continue;
+        delete map[folderId][id];
+        if (!Object.keys(map[folderId]).length) delete map[folderId];
+        lsSet(key, JSON.stringify(map));
+      }
     }
 
     function newFolderId() {
@@ -157,7 +156,7 @@
       const folder = { id: newFolderId(), name: n, commanderId: null };
       state.folders.push(folder);
       saveFolders();
-      queueOp({ type: "setFolders", folders: state.folders });
+      queueOp({ type: "upsertFolder", folder });
       return folder;
     }
     // Designate (or clear) a deck's commander. Persists via the setFolders op.
@@ -167,27 +166,41 @@
       deck.commanderId = deck.commanderId === cardId ? null : cardId;
       if (deck.commanderId) setMaybe(deckId, cardId, false); // the commander can never be Maybe
       saveFolders();
-      queueOp({ type: "setFolders", folders: state.folders });
+      queueOp({ type: "upsertFolder", folder: deck });
       renderSavedCards();
     }
     function renameFolder(id, name) {
       const f = state.folders.find((x) => x.id === id);
       const n = (name || "").trim();
-      if (f && n) { f.name = n; saveFolders(); queueOp({ type: "setFolders", folders: state.folders }); }
+      if (f && n) { f.name = n; saveFolders(); queueOp({ type: "upsertFolder", folder: f }); }
     }
     function deleteFolder(id) {
-      // Leaving the deck removes a card that's in no other deck (setCardFolder does that).
-      getFolderCards(id).forEach((c) => setCardFolder(c, id, false));
+      // One op: the server removes the deck, takes it out of every card's membership (unsaving cards left in
+      // no deck) and drops its counts, flags and notes, so another device's newer changes survive. The same
+      // happens here locally.
+      for (const c of getFolderCards(id)) {
+        const left = cardFolders(c.id).filter((f) => f !== id);
+        if (left.length) state.membership[c.id] = left;
+        else {
+          delete state.membership[c.id];
+          const idx = state.savedCards.findIndex((s) => s.id === c.id);
+          if (idx >= 0) state.savedCards.splice(idx, 1);
+        }
+      }
       state.folders = state.folders.filter((f) => f.id !== id);
-      if (state.quantities[id]) { delete state.quantities[id]; persistQuantities(); }
-      if (state.maybeboard[id]) { delete state.maybeboard[id]; persistMaybeboard(); }
-      if (state.pins[id]) { delete state.pins[id]; persistPins(); }
-      if (state.deckNotes[id]) { delete state.deckNotes[id]; persistDeckNotes(); }
+      delete state.quantities[id];
+      delete state.maybeboard[id];
+      delete state.pins[id];
+      delete state.deckNotes[id];
+      lsSet("card_quantities", JSON.stringify(state.quantities));
+      lsSet("card_maybeboard", JSON.stringify(state.maybeboard));
+      lsSet("card_pins", JSON.stringify(state.pins));
+      lsSet("deck_notes", JSON.stringify(state.deckNotes));
       if (deckReviewCache[id]) { delete deckReviewCache[id]; persistDeckReviews(); }
+      saveCardsStore();
       saveFolders();
       saveMembership();
-      queueOp({ type: "setFolders", folders: state.folders });
-      queueOp({ type: "replaceMembership", membership: state.membership });
+      queueOp({ type: "deleteFolder", id });
       if (state.activeFolder === id) state.activeFolder = null;
       ensureActiveDeck();
     }

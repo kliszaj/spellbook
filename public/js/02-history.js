@@ -355,28 +355,33 @@
         const res = await fetch("/api/app-state");
         if (!res.ok) throw new Error("Could not load saved app state");
         const serverState = await res.json();
-        // Union this device's local copy with the shared server copy, show it, then
-        // push the union up ONCE (server merges) so nothing is lost migrating to sync.
-        const mergedState = mergeAppState(currentAppStatePayload(), serverState);
-        applyAppState(mergedState);
-        const putRes = await fetch("/api/app-state", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(currentAppStatePayload()),
-        });
-        if (putRes.ok) {
-          const synced = await putRes.json();
-          lastSyncedSig = JSON.stringify([
-            synced.savedCards, synced.folders, synced.membership, synced.quantities, synced.maybeboard, synced.pins, synced.deckNotes,
-            synced.colorIdentity, synced.forceAiSearch,
-            synced.searchHistory, synced.translateCache,
-          ]);
-        }
-      } catch (err) {
-        console.warn(err);
-      } finally {
+        let migrated = false;
+        try { migrated = localStorage.getItem(SYNC_MIGRATED_KEY) === "1"; } catch {}
+        if (!migrated) {
+          // First visit since sync existed: union this device's local copy with the server's and upload it,
+          // ONCE, so nothing saved only here is lost. (Doing it on every load brought deleted decks back.)
+          const mergedState = mergeAppState(currentAppStatePayload(), serverState);
+          applyAppState(mergedState);
+          const putRes = await fetch("/api/app-state", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(currentAppStatePayload()),
+          });
+          if (!putRes.ok) throw new Error("Could not upload this device's saved data");
+          adoptServerState(await putRes.json());
+          lsSet(SYNC_MIGRATED_KEY, "1");
+        } else if (!pendingOps.length) {
+          // The server's copy is the truth; this device's local copy is only a cache of it.
+          adoptServerState(serverState);
+        } // else: unsent changes from last time are still shown locally; sending them below returns the result
         syncReady = true;
         startStateSync();
+        flushOps();
+      } catch (err) {
+        console.warn(err, "— retrying in 5s");
+        // Keep working from this device's copy; changes queue up (and are kept) until the server answers.
+        if (++syncFailures >= 2) setSyncBadge(true);
+        setTimeout(loadAppState, 5000);
       }
     }
 

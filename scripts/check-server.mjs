@@ -130,4 +130,62 @@ test("the web client script is served joined as /app.js", async () => {
   } finally { srv.stop(); }
 });
 
+test("per-item changes from two devices don't undo each other", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "spellbook-server-"));
+  const srv = await startServer(dir);
+  try {
+    const ops = (list) => json(srv.base, "/api/app-state/ops", "POST", { ops: list });
+    await ops([{ type: "upsertFolder", folder: { id: "A", name: "Deck A" } }]);
+    // phone: creates deck B and files a card in it
+    await ops([{ type: "upsertFolder", folder: { id: "B", name: "Deck B" } }, { type: "setCardInFolder", id: "sol", folderId: "B", on: true, card: { id: "sol", name: "Sol Ring" } }]);
+    // laptop (hadn't seen B): renames A and adds a card to it
+    await ops([{ type: "upsertFolder", folder: { id: "A", name: "Deck A2" } }, { type: "setCardInFolder", id: "sol", folderId: "A", on: true, card: { id: "sol", name: "Sol Ring" } }]);
+    const state = await (await json(srv.base, "/api/app-state")).json();
+    assert.deepEqual(state.folders.map((f) => `${f.id}:${f.name}`).sort(), ["A:Deck A2", "B:Deck B"]);
+    assert.deepEqual(state.membership.sol.sort(), ["A", "B"]);
+  } finally { srv.stop(); }
+});
+
+test("deleting a deck on the server unsaves cards left in no deck and keeps the others", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "spellbook-server-"));
+  const srv = await startServer(dir);
+  try {
+    const ops = (list) => json(srv.base, "/api/app-state/ops", "POST", { ops: list });
+    await ops([
+      { type: "upsertFolder", folder: { id: "A", name: "A" } }, { type: "upsertFolder", folder: { id: "B", name: "B" } },
+      { type: "setCardInFolder", id: "x", folderId: "A", on: true, card: { id: "x", name: "Only in A" } },
+      { type: "setCardInFolder", id: "y", folderId: "A", on: true, card: { id: "y", name: "In both" } },
+      { type: "setCardInFolder", id: "y", folderId: "B", on: true, card: { id: "y", name: "In both" } },
+      { type: "setQuantity", folderId: "A", id: "x", n: 4 }, { type: "setFlag", kind: "maybe", folderId: "A", id: "y", on: true },
+      { type: "setDeckNote", folderId: "A", text: "go wide" },
+    ]);
+    await ops([{ type: "deleteFolder", id: "A" }]);
+    const state = await (await json(srv.base, "/api/app-state")).json();
+    assert.deepEqual(state.folders.map((f) => f.id), ["B"]);
+    assert.deepEqual(state.savedCards.map((c) => c.id), ["y"]);
+    assert.deepEqual(state.membership, { y: ["B"] });
+    assert.deepEqual([state.quantities, state.maybeboard, state.deckNotes], [{}, {}, {}]);
+  } finally { srv.stop(); }
+});
+
+test("malformed ops are dropped, not saved", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "spellbook-server-"));
+  const srv = await startServer(dir);
+  try {
+    const res = await json(srv.base, "/api/app-state/ops", "POST", { ops: [
+      { type: "setFolders", folders: [null, 5, { name: "no id" }, { id: "ok", name: "Fine" }] },
+      { type: "replaceMembership", membership: { a: "not-a-list", b: ["ok", 7, null] } },
+      { type: "setQuantities", quantities: { ok: { b: "lots", c: 3 } } },
+      { type: "setQuantity", folderId: "ok", id: { bad: 1 }, n: 3 },
+      { type: "setCardInFolder", id: "new", folderId: "ok", on: true }, // no card data for a card the server lacks
+    ] });
+    assert.equal(res.status, 200);
+    const state = await res.json();
+    assert.deepEqual(state.folders, [{ id: "ok", name: "Fine", commanderId: null }]);
+    assert.deepEqual(state.membership, { b: ["ok"] });
+    assert.deepEqual(state.quantities, { ok: { c: 3 } });
+    assert.equal(state.savedCards.length, 0);
+  } finally { srv.stop(); }
+});
+
 await run("Server");
