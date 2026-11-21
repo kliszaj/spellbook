@@ -1,13 +1,14 @@
-// Evaluates the "Play in Playmat" helpers from public/index.html (between the markers) and reads their links back
+// Evaluates the "Play in Playmat" helpers from the web client (public/index.html + public/js) (between the markers) and reads their links back
 // the way Playmat does (decodePayload in Mage.Web.Client/src/core/deckImport/payload.ts).
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test, run } from "./lib/tiny-test.mjs";
+import { readAppSource } from "./lib/app-source.mjs";
 
-const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+const html = readAppSource();
 const BEGIN = "// @testable playmat-helpers begin";
 const END = "// @testable playmat-helpers end";
-if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("playmat-helpers markers not found in public/index.html");
+if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("playmat-helpers markers not found in the web client source");
 const block = html.split(BEGIN)[1].split(END)[0];
 const h = Function(`${block}; return { playmatDeckList, encodePlaymatPayload, playmatImportUrl };`)();
 

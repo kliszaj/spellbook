@@ -1,13 +1,14 @@
-// Evaluates the pure analysis-helpers block from public/index.html (between the markers).
+// Evaluates the pure analysis-helpers block from the web client (public/index.html + public/js) (between the markers).
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test, run } from "./lib/tiny-test.mjs";
 import { commanderSlug as serverCommanderSlug } from "../lib/edhrec.js";
+import { readAppSource } from "./lib/app-source.mjs";
 
-const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+const html = readAppSource();
 const BEGIN = "// @testable analysis-helpers begin";
 const END = "// @testable analysis-helpers end";
-if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in public/index.html");
+if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("analysis helper markers not found in the web client source");
 const block = html.split(BEGIN)[1].split(END)[0];
 const h = Function(`${block}; return { gapSummary, chipGroups, rolesFromProfile, isWincon, hypergeomAtLeast, openingHandOdds, drawRandom, commanderSlug, edhrecPicks, escAttr, oddsTone, typicalCurve, typeTargetsFor, suggestBasicSplit, trimBudget, cutKeepScore, projectTo99, simulateTurns, pickStaples, landEntersTapped, colorBalance, suggestLandCuts, pairLandSwaps, planAutofill, autofillNeeds };`)();
 

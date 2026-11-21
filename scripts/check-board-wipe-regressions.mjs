@@ -1,12 +1,12 @@
 import { readFile } from "node:fs/promises";
+import { readAppSource } from "./lib/app-source.mjs";
 
-const pagePath = new URL("../public/index.html", import.meta.url);
-const html = await readFile(pagePath, "utf8");
+const html = readAppSource();
 const errors = [];
 
 function expressionFor(constant) {
   const match = html.match(new RegExp(`const ${constant} = (\\/.*?\\/)\\.test\\(ot\\);`));
-  if (!match) throw new Error(`Could not locate ${constant} in public/index.html.`);
+  if (!match) throw new Error(`Could not locate ${constant} in the web client source.`);
   return Function(`return (${match[1]});`)();
 }
 

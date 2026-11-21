@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import express from "express";
 import compression from "compression";
 import { callOpenAIJsonRaw, parseJsonObject, createAiClient, priceUsd, supportsEffort } from "./lib/ai-client.js";
-import { copyFile, mkdir, readdir, readFile, rename, unlink, writeFile } from "fs/promises";
+import { copyFile, mkdir, readdir, readFile, rename, stat, unlink, writeFile } from "fs/promises";
 import { constants as fsConstants } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -24,6 +24,29 @@ const app = express();
 // exceed body-parser's 100 KB default, so raise the JSON body limit.
 app.use(compression()); // gzip the ~350 KB page and large JSON (collection, app state)
 app.use(express.json({ limit: "25mb" }));
+// The web client's script lives in public/js as numbered files (01-core.js, 02-history.js, …) so it's easy to
+// work on, but it was written as one script: top-level code calls functions defined further down, which only
+// works inside a single script. So the server joins the files, in name order, into /app.js. No build step: the
+// join is redone whenever a file changes.
+const CLIENT_JS_DIR = join(__dirname, "public", "js");
+let clientJs = { key: "", body: "" };
+async function clientScript() {
+  const files = (await readdir(CLIENT_JS_DIR)).filter((f) => /^\d{2}-[\w-]+\.js$/.test(f)).sort();
+  const stats = await Promise.all(files.map((f) => stat(join(CLIENT_JS_DIR, f))));
+  const key = files.map((f, i) => `${f}:${stats[i].mtimeMs}:${stats[i].size}`).join("|");
+  if (key !== clientJs.key) {
+    const parts = await Promise.all(files.map((f) => readFile(join(CLIENT_JS_DIR, f), "utf8")));
+    clientJs = { key, body: parts.map((text, i) => `// ── public/js/${files[i]} ──\n${text}`).join("\n") };
+  }
+  return clientJs.body;
+}
+app.get("/app.js", async (req, res) => {
+  try {
+    res.set("Cache-Control", "no-cache").type("application/javascript").send(await clientScript());
+  } catch (err) {
+    res.status(500).type("text/plain").send(`// couldn't build app.js: ${err.message}`);
+  }
+});
 app.use(express.static(join(__dirname, "public")));
 
 const DATA_DIR = process.env.DATA_DIR || join(__dirname, "data");

@@ -1,8 +1,9 @@
 import { readFile } from "node:fs/promises";
+import { readAppSource } from "./lib/app-source.mjs";
 
 const [server, client] = await Promise.all([
   readFile(new URL("../server.js", import.meta.url), "utf8"),
-  readFile(new URL("../public/index.html", import.meta.url), "utf8"),
+  Promise.resolve(readAppSource()),
 ]);
 
 const errors = [];
