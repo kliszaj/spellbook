@@ -270,7 +270,7 @@
       el.innerHTML = Array.from({ length: n }, () => `<div class="card-skeleton" aria-hidden="true"></div>`).join("");
     }
 
-    function renderDeckProgress({ name, colors, s, grade, path = null }) {
+    function renderDeckProgress({ name, colors, s, grade, path = null, own = null, autofill = null }) {
       const el = $("#deck-progress");
       if (!el) return;
       lastDeckPath = path;
@@ -281,14 +281,16 @@
       const pill = s.total > 100 ? `<span class="dp-pill cut">${over} to cut</span>`
         : s.total < 100 ? `<span class="dp-pill">${100 - s.total} to go</span>` : `<span class="dp-pill ok">100 ✓</span>`;
       el.innerHTML = `
-        <div class="dp-id">${esc(name)}${colors.length ? manaPipsHtml(colors) : ""}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}</small></div>
+        <div class="dp-id">${esc(name)}${colors.length ? manaPipsHtml(colors) : ""}<small>${s.total}/100 · ${s.lands} lands · avg MV ${s.avgMv.toFixed(1)} · €${s.price.toFixed(2)}${own ? ` · own ${own.owned} of ${own.total}` : ""}${s.total < ANALYSIS_MIN_CARDS ? `<span class="dp-lock"> · analysis unlocks at ${ANALYSIS_MIN_CARDS}</span>` : ""}</small></div>
         <div class="dp-bar" title="${s.total} of 100${over ? `, ${over} over` : ""}"><i class="in" style="width:${(within / scale) * 100}%"></i><i class="over" style="width:${(over / scale) * 100}%"></i></div>
         ${pill}
         ${grade ? `<span class="dp-grade ${gradeTone(grade)}" id="deck-progress-grade">${grade}</span>` : ""}
+        ${autofill ? `<button class="dp-autofill" type="button" title="Fill the deck to 100 from EDHREC within a budget">${ICON_WAND}<span>Autofill</span></button>` : ""}
         <button class="dp-maybe" type="button" aria-label="Open the maybeboard">Maybe <b>${maybeCards(activeDeck()).length}</b></button>
         ${path ? deckPathHtml(path) : ""}`;
       el.querySelectorAll("[data-path-step]").forEach((b) => b.addEventListener("click", () => { pathSel = +b.dataset.pathStep; el.querySelector(".dp-path").outerHTML = deckPathHtml(lastDeckPath).replace(/^\s+/, ""); wireDeckPath(el); }));
       wireDeckPath(el);
+      if (autofill) el.querySelector(".dp-autofill").addEventListener("click", autofill);
       const switched = el.dataset.deck !== name;
       el.dataset.deck = name;
       el.hidden = false;
@@ -449,16 +451,13 @@
       const colors = deckColors(cards, commander);
       const deckName = deck ? deck.name : "All saved cards";
 
-      // Below a near-complete count, targets calibrated for a 100-card deck would flag
-      // everything as "short" — noise. Show only the deck's identity + a build prompt.
+      const own = hasCollection() ? ownCount(collectionIndex, cards.filter((c) => !isBasicLand(c))) : null;
       if (s.total < ANALYSIS_MIN_CARDS) {
-        renderDeckProgress({ name: deckName, colors, s, grade: null, path: deck ? deckPath(deck, cards) : null });
-        dA.innerHTML = `
-          ${deck ? `<div class="da2-actions"><div class="da2-actions-btns"><button class="da2-autofill-btn" id="da2-autofill-btn" type="button">${ICON_WAND}<span>Autofill</span></button></div></div>` : ""}
-          <div class="da2-building"><b>Deck analysis unlocks at ${ANALYSIS_MIN_CARDS} cards.</b> You have ${s.total} — keep building and the grade, role ledger, bracket and mana checks will appear here.</div>`;
-        dA.style.display = "block";
-        dA.classList.remove("collapsed");
-        $("#da2-autofill-btn")?.addEventListener("click", () => { if (deck) openAutofill(deck, commander); });
+        // Below a near-complete count, targets calibrated for a 100-card deck would flag
+        // everything as "short", so the analysis stays hidden; the progress card says when it unlocks.
+        renderDeckProgress({ name: deckName, colors, s, grade: null, own, path: deck ? deckPath(deck, cards) : null, autofill: deck ? () => openAutofill(deck, commander) : null });
+        dA.style.display = "none";
+        dA.innerHTML = "";
         return;
       }
       // The AI review persists across deck edits (stale reads beat losing the analysis
@@ -501,7 +500,7 @@
       const toCutKpi = s.total > 100
         ? { n: s.total - 100, label: "to cut", tone: "bad" }
         : s.total < 100 ? { n: 100 - s.total, label: "to go", tone: "" } : { n: 100, label: "cards · complete", tone: "good" };
-      renderDeckProgress({ name: deckName, colors, s, grade: s.total >= 90 ? grade.letter : null, path: deck ? deckPath(deck, cards, { s, counts, sources, profile, commander }) : null });
+      renderDeckProgress({ name: deckName, colors, s, own, grade: s.total >= 90 ? grade.letter : null, path: deck ? deckPath(deck, cards, { s, counts, sources, profile, commander }) : null });
       const tab = DA_TABS.some(([k]) => k === daTab) ? daTab : "overview";
       const tabBtn = ([k, label]) => {
         const badge = k === "build" && s.total > 100 ? ` <span class="da2-tab-badge">${s.total - 100}</span>` : "";

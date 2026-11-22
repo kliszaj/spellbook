@@ -69,7 +69,6 @@
     const detailCombosBtn = $("#detail-combos-btn");
     const detailEdhrecBtn = $("#detail-edhrec-btn");
     const typeFilterEl = $("#type-filter");
-    const savedTypeFilterEl = $("#saved-type-filter");
     const sideMenu = $("#side-menu");
     const folderRail = $("#folder-rail");
     const historyList = $("#history-list");

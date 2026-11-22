@@ -9,7 +9,7 @@ const BEGIN = "// @testable type-helpers begin";
 const END = "// @testable type-helpers end";
 if (!html.includes(BEGIN) || !html.includes(END)) throw new Error("type-helpers markers not found in the web client source");
 const block = html.split(BEGIN)[1].split(END)[0];
-const h = Function(`${block}; return { parseTypeLine, typeFacets, matchesTypeFilter, visibleSubtypes };`)();
+const h = Function(`${block}; return { parseTypeLine, typeFacets, matchesTypeFilter, visibleSubtypes, makeSection, sectionPasses, sectionIsOn };`)();
 
 const card = (type_line, extra = {}) => ({ type_line, ...extra });
 
@@ -119,6 +119,22 @@ test("matchesTypeFilter: excludeMode hides any card carrying a deselected value"
   assert.equal(h.matchesTypeFilter(card("Basic Land — Forest"), filter), false);
   assert.equal(h.matchesTypeFilter(card("Instant"), filter), true);
   assert.equal(h.matchesTypeFilter(card("Instant"), { types: new Set(), subtypes: new Set(), excludeMode: true }), true);
+});
+
+test("sectionPasses: picks show cards with any picked value; none picked passes all", () => {
+  const sec = h.makeSection();
+  assert.equal(h.sectionPasses(sec, new Set(["Land"])), true);
+  sec.set.add("Creature"); sec.set.add("Instant");
+  assert.equal(h.sectionPasses(sec, new Set(["Creature", "Land"])), true);
+  assert.equal(h.sectionPasses(sec, new Set(["Land"])), false);
+});
+
+test("sectionPasses: after All, a switched-off value hides every card that has it", () => {
+  const sec = { mode: "all", set: new Set(["Land"]) };
+  assert.equal(h.sectionPasses(sec, new Set(["Creature", "Land"])), false);
+  assert.equal(h.sectionPasses(sec, new Set(["Instant"])), true);
+  assert.equal(h.sectionIsOn(sec, "Land"), false);
+  assert.equal(h.sectionIsOn(sec, "Instant"), true);
 });
 
 await run("Type/subtype filter helpers");

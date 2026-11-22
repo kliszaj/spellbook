@@ -116,12 +116,21 @@
       return extraSelected.length ? [...top, ...extraSelected] : top;
     }
 
+
+    // Filter-drawer sections (Decks, Collection). Every section follows one rule:
+    // mode "in" shows cards carrying any picked value (nothing picked = no filter);
+    // mode "all" starts with every value on, `set` holds the values switched off,
+    // and a card carrying any of them is hidden. Sections combine with AND.
+    function makeSection() { return { mode: "in", set: new Set() }; }
+    function sectionPasses(sec, keys) {
+      if (sec.mode === "all") return ![...sec.set].some((k) => keys.has(k));
+      return !sec.set.size || [...sec.set].some((k) => keys.has(k));
+    }
+    const sectionIsOn = (sec, value) => (sec.mode === "all" ? !sec.set.has(value) : sec.set.has(value));
     // @testable type-helpers end
 
     function makeTypeFilterState() { return { types: new Set(), subtypes: new Set(), expanded: false, excludeMode: false }; }
     const searchTypeFilter = makeTypeFilterState();
-    const savedTypeFilter = makeTypeFilterState();
-    const collectionTypeFilter = makeTypeFilterState();
 
     function toggleSet(set, value) { set.has(value) ? set.delete(value) : set.add(value); }
 
@@ -471,29 +480,8 @@
     // Set by renderSavedCards: the filtered main-deck cards on screen, which the deck
     // analysis's mana curve follows (so "Creatures only" shows where the creatures sit).
     let deckCurveView = null; // { folderId, cards, filtered }
-    // Mana-value filter chips (shown while sorting by Mana value). Buckets 0..6, 7 = 7+.
-    // Lands have no real mana value, so any MV selection hides them.
-    const savedMvFilter = new Set();
+    // Mana-value buckets 0..6, 7 = 7+.
     const mvBucket = (c) => Math.min(7, Math.max(0, Math.round(Number(c.cmc || 0))));
-    // Shared by the Decks and Collection sort rows: chips 0..7+ with nonland counts, always
-    // shown on both tabs (on === false hides them). Toggles `selected`.
-    function renderMvChips(el, cards, { on, selected, onChange }) {
-      if (!el) return;
-      el.hidden = !on;
-      if (!on) { el.replaceChildren(); return; }
-      const counts = [0, 0, 0, 0, 0, 0, 0, 0];
-      cards.forEach((c) => { if (!isLandCard(c)) counts[mvBucket(c)] += 1; });
-      el.innerHTML = counts.map((n, i) => {
-        const active = selected.has(i);
-        return `<button type="button" class="mv-chip${active ? " active" : ""}" data-mv="${i}" aria-pressed="${active}" title="${n} card${n === 1 ? "" : "s"} at MV ${i === 7 ? "7+" : i}">${i === 7 ? "7+" : i}</button>`;
-      }).join("");
-      el.querySelectorAll(".mv-chip").forEach((b) => b.addEventListener("click", () => {
-        const v = Number(b.dataset.mv);
-        if (selected.has(v)) selected.delete(v); else selected.add(v);
-        onChange();
-      }));
-    }
-    const mvMatches = (c, selected) => !isLandCard(c) && selected.has(mvBucket(c));
 
     // Land-colour chips (shown while the type filter is on Lands). One colour = every land
     // that makes it; several = lands that make all of them (e.g. U+R finds Izzet duals and
@@ -510,7 +498,6 @@
       if (selected.includes("C")) return made.size === 0;
       return selected.every((c) => made.has(c));
     }
-    const typeFilterIsLands = (filter) => !filter.excludeMode && filter.types.has("Land");
     function renderLandChips(el, cards, { on, selected, onChange }) {
       if (!el) return;
       el.hidden = !on;
@@ -528,8 +515,218 @@
         onChange();
       }));
     }
-    const savedLandFilter = [];
-    const collectionLandFilter = [];
+
+    // ── Filter drawer (Decks, Collection) ──────────────────────────────
+    // A "Filters" button opens a drawer of labelled sections (Mana value, Type, Subtype,
+    // and Lands while Type is on Land). Active filters, colours included, show as removable
+    // pills beside the button, so nothing is hidden while the drawer is closed.
+    const DRAWER_SUBTYPES = 8;
+    const MV_LABELS = ["0", "1", "2", "3", "4", "5", "6", "7+"];
+    const COLOR_PILL = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colorless" };
+    function makeDrawerFilter(key) {
+      let open = false;
+      try { open = localStorage.getItem(`filters_open_${key}`) === "true"; } catch {}
+      return { key, open, mv: makeSection(), type: makeSection(), sub: makeSection(), lands: [], subQuery: "", ctx: null };
+    }
+    const savedDrawer = makeDrawerFilter("saved");
+    const collectionDrawer = makeDrawerFilter("collection");
+    const typeLineCache = new WeakMap();
+    function typeLineOf(card) {
+      let v = typeLineCache.get(card);
+      if (!v) { v = parseTypeLine(card); typeLineCache.set(card, v); }
+      return v;
+    }
+    // Lands have no real mana value, so they carry no MV key: picking an MV hides them.
+    const mvKeys = (c) => (isLandCard(c) ? new Set() : new Set([mvBucket(c)]));
+    const DRAWER_KEYS = { mv: mvKeys, type: (c) => typeLineOf(c).types, sub: (c) => typeLineOf(c).subtypes };
+    const drawerLandsOn = (f) => f.type.mode === "in" && f.type.set.has("Land");
+    // skip: a section left out, so its own chips can count what picking them would show.
+    function drawerMatch(card, f, skip = null) {
+      for (const k of ["mv", "type", "sub"]) if (k !== skip && !sectionPasses(f[k], DRAWER_KEYS[k](card))) return false;
+      return skip === "lands" || landColorMatches(card, f.lands);
+    }
+    // The MV buckets the deck curve should highlight, or null when MV isn't filtered.
+    function drawerMvSelection(f) {
+      if (!f.mv.set.size) return null;
+      return new Set(MV_LABELS.map((_, i) => i).filter((i) => sectionIsOn(f.mv, i)));
+    }
+    function resetDrawer(f) { f.mv = makeSection(); f.type = makeSection(); f.sub = makeSection(); f.lands.length = 0; f.subQuery = ""; }
+    const syncColorPicker = (picker) => picker?.querySelectorAll(".color-toggle").forEach((b) => b._sync?.());
+
+    // ctx: { f, cards (the view's list before the drawer), pruneFrom (every card the view
+    // could show), btn, count, drawer, pills, colors: { set, picker }, onChange }
+    function renderFilterUi(ctx) {
+      const { f } = ctx;
+      f.ctx = ctx;
+      // Drop picks no card in this deck/collection has (e.g. after switching decks).
+      ["mv", "type", "sub"].forEach((k) => {
+        const present = new Set();
+        ctx.pruneFrom.forEach((c) => DRAWER_KEYS[k](c).forEach((v) => present.add(v)));
+        [...f[k].set].forEach((v) => { if (!present.has(v)) f[k].set.delete(v); });
+        if (f[k].mode === "all" && !f[k].set.size && !present.size) f[k].mode = "in";
+      });
+      if (!drawerLandsOn(f)) f.lands.length = 0;
+      ctx.btn.setAttribute("aria-expanded", String(f.open));
+      ctx.btn.classList.toggle("open", f.open);
+      renderDrawerPills(ctx);
+      renderDrawerBody(ctx);
+    }
+
+    function wireFiltersButton(btn, f) {
+      btn.addEventListener("click", () => {
+        f.open = !f.open;
+        lsSet(`filters_open_${f.key}`, String(f.open));
+        if (f.ctx) renderFilterUi(f.ctx);
+      });
+    }
+
+    function renderDrawerPills(ctx) {
+      const { f, pills } = ctx;
+      pills.replaceChildren();
+      let n = 0;
+      const add = (label, struck, remove) => {
+        n += 1;
+        const pill = document.createElement("span");
+        pill.className = "filter-pill" + (struck ? " not" : "");
+        pill.textContent = struck ? `Not ${label}` : label;
+        if (struck) pill.title = `Hiding every ${label} card`;
+        const x = document.createElement("button");
+        x.type = "button";
+        x.textContent = "×";
+        x.setAttribute("aria-label", `Remove the ${label} filter`);
+        x.addEventListener("click", () => { remove(); ctx.onChange(); });
+        pill.appendChild(x);
+        pills.appendChild(pill);
+      };
+      const removeFrom = (sec, v) => { sec.set.delete(v); if (sec.mode === "all" && !sec.set.size) sec.mode = "in"; };
+      ["W", "U", "B", "R", "G", "C"].filter((k) => ctx.colors.set.has(k)).forEach((k) => add(COLOR_PILL[k], false, () => { ctx.colors.set.delete(k); syncColorPicker(ctx.colors.picker); }));
+      [...f.mv.set].sort((a, b) => a - b).forEach((v) => add(`MV ${MV_LABELS[v]}`, f.mv.mode === "all", () => removeFrom(f.mv, v)));
+      f.type.set.forEach((v) => add(v, f.type.mode === "all", () => removeFrom(f.type, v)));
+      f.sub.set.forEach((v) => add(v, f.sub.mode === "all", () => removeFrom(f.sub, v)));
+      f.lands.forEach((c) => add(c === "C" ? "Colorless lands" : `${COLOR_PILL[c]} lands`, false, () => f.lands.splice(f.lands.indexOf(c), 1)));
+      if (n) {
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "fd-link";
+        clear.textContent = "Clear all";
+        clear.addEventListener("click", () => { ctx.colors.set.clear(); syncColorPicker(ctx.colors.picker); resetDrawer(f); ctx.onChange(); });
+        pills.appendChild(clear);
+      }
+      ctx.count.hidden = !n;
+      ctx.count.textContent = String(n);
+    }
+
+    function drawerCounts(ctx, key) {
+      const m = new Map();
+      ctx.cards.forEach((c) => { if (drawerMatch(c, ctx.f, key)) DRAWER_KEYS[key](c).forEach((v) => m.set(v, (m.get(v) || 0) + 1)); });
+      ctx.f[key].set.forEach((v) => { if (!m.has(v)) m.set(v, 0); }); // a pick never loses its chip
+      return m;
+    }
+
+    function drawerSection(ctx, title, { all, clear, active }) {
+      const row = document.createElement("div");
+      row.className = "fd-sec";
+      const head = document.createElement("div");
+      head.className = "fd-head";
+      head.innerHTML = `<span class="fd-label">${esc(title)}</span><span class="fd-acts"></span>`;
+      const acts = head.querySelector(".fd-acts");
+      const link = (label, fn, hint) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "fd-link"; b.textContent = label; b.title = hint;
+        b.addEventListener("click", () => { fn(); ctx.onChange(); });
+        acts.appendChild(b);
+      };
+      if (all) link("All", all, `Select every ${title.toLowerCase()}, then click one to hide it`);
+      if (active) link("Clear", clear, `Clear the ${title.toLowerCase()} filter`);
+      const chips = document.createElement("div");
+      chips.className = "fd-chips";
+      row.append(head, chips);
+      return { row, chips };
+    }
+
+    function sectionChip(ctx, sec, value, label, count) {
+      const on = sectionIsOn(sec, value);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "type-chip" + (on ? " active" : "") + (sec.mode === "all" && !on ? " off" : "");
+      b.setAttribute("aria-pressed", String(on));
+      b.textContent = label;
+      const n = document.createElement("small");
+      n.textContent = String(count);
+      b.appendChild(n);
+      b.addEventListener("click", () => { sec.set.has(value) ? sec.set.delete(value) : sec.set.add(value); ctx.onChange(); });
+      return b;
+    }
+
+    function addSection(ctx, el, title, key, values) {
+      const sec = ctx.f[key];
+      const { row, chips } = drawerSection(ctx, title, {
+        all: () => { sec.mode = "all"; sec.set.clear(); },
+        clear: () => { sec.mode = "in"; sec.set.clear(); },
+        active: sec.mode === "all" || sec.set.size > 0,
+      });
+      values.forEach(([value, label, count]) => chips.appendChild(sectionChip(ctx, sec, value, label, count)));
+      el.appendChild(row);
+      return chips;
+    }
+
+    function renderDrawerBody(ctx) {
+      const { f, drawer: el } = ctx;
+      el.hidden = !f.open;
+      el.replaceChildren();
+      if (!f.open) return;
+
+      const mv = drawerCounts(ctx, "mv");
+      addSection(ctx, el, "Mana value", "mv", MV_LABELS.map((label, i) => [i, label, mv.get(i) || 0]).filter(([i, , n]) => n || f.mv.set.has(i)));
+
+      const ty = drawerCounts(ctx, "type");
+      addSection(ctx, el, "Type", "type", TYPE_ROW_ORDER.filter((t) => ty.has(t)).map((t) => [t, t, ty.get(t)]));
+
+      if (drawerLandsOn(f)) {
+        const { row, chips } = drawerSection(ctx, "Lands", { clear: () => { f.lands.length = 0; }, active: f.lands.length > 0 });
+        const wrap = document.createElement("div");
+        wrap.className = "land-chips";
+        renderLandChips(wrap, ctx.cards.filter((c) => drawerMatch(c, f, "lands")), { on: true, selected: f.lands, onChange: ctx.onChange });
+        const hint = document.createElement("span");
+        hint.className = "fd-hint";
+        hint.textContent = "by the colours they make";
+        chips.append(wrap, hint);
+        el.appendChild(row);
+      }
+
+      const sb = drawerCounts(ctx, "sub");
+      if (!sb.size) return;
+      const sorted = [...sb.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      const q = f.subQuery.trim().toLowerCase();
+      const shown = q ? sorted.filter(([v]) => v.toLowerCase().includes(q)).slice(0, 24) : sorted.slice(0, DRAWER_SUBTYPES);
+      f.sub.set.forEach((v) => { if (!shown.some(([x]) => x === v)) shown.push([v, sb.get(v) || 0]); });
+      const chips = addSection(ctx, el, "Subtype", "sub", shown.map(([v, n]) => [v, v, n]));
+      if (sorted.length > DRAWER_SUBTYPES) {
+        const find = document.createElement("input");
+        find.type = "search";
+        find.className = "fd-find";
+        find.id = `fd-find-${f.key}`;
+        find.placeholder = `Find among ${sorted.length}…`;
+        find.setAttribute("aria-label", "Find a subtype");
+        find.value = f.subQuery;
+        // Typing only narrows the chips shown, so repaint the drawer, not the whole view.
+        find.addEventListener("input", () => {
+          f.subQuery = find.value;
+          const pos = find.selectionStart;
+          renderDrawerBody(ctx);
+          const again = document.getElementById(find.id);
+          again?.focus();
+          again?.setSelectionRange(pos, pos);
+        });
+        chips.appendChild(find);
+        if (q && !sorted.some(([v]) => v.toLowerCase().includes(q))) {
+          const none = document.createElement("span");
+          none.className = "fd-hint";
+          none.textContent = "No subtype matches";
+          chips.appendChild(none);
+        }
+      }
+    }
     let trimOpenKey = null; // trim-planner category whose cut list is open
     let trimShowAll = false;
     let trimCtx = null;
@@ -544,7 +741,7 @@
       const spellsTarget = 100 - Math.round((profile.landTarget[0] + profile.landTarget[1]) / 2);
       const target = curveTarget(scoped ? deckCurveView.targetCards : cards, cards, spellsTarget, typeTargetsFor(identityLensKeys(identityTags)));
       const curve = scoped ? computeDeckStats(deckCurveView.cards, folderId).curve : stats.curve;
-      const mvOnly = scoped && savedMvFilter.size ? savedMvFilter : null;
+      const mvOnly = scoped ? drawerMvSelection(savedDrawer) : null;
       return `<div class="da-h">Mana curve${scoped ? ` <span class="da2-approx">· current selection</span>` : ""}</div>${curveHtml(curve, target, mvOnly)}`;
     }
     function refreshDeckCurve() {
@@ -650,16 +847,16 @@
       ensureActiveDeck();
       const isRealDeck = state.folders.some((f) => f.id === state.activeFolder);
 
-      // Type chips reflect the folder/text-filtered set (both sections); then narrow to selection.
-      renderTypeFilterChips(savedTypeFilterEl, cards, savedTypeFilter, () => renderSavedCards({ filtersOnly: true }));
-      renderMvChips($("#saved-mv-chips"), cards, { on: true, selected: savedMvFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
-      const mvActive = savedMvFilter.size > 0;
-      const landsOn = typeFilterIsLands(savedTypeFilter);
-      if (!landsOn) savedLandFilter.length = 0;
-      renderLandChips($("#saved-land-chips"), cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)), { on: landsOn, selected: savedLandFilter, onChange: () => renderSavedCards({ filtersOnly: true }) });
-      const preMv = cards.filter((c) => matchesTypeFilter(c, savedTypeFilter)).filter((c) => deckColorMatch(c, deckColorFilter))
-        .filter((c) => landColorMatches(c, savedLandFilter));
-      const visible = preMv.filter((c) => !mvActive || (!isLandCard(c) && savedMvFilter.has(mvBucket(c))));
+      // The drawer counts and prunes over the deck's cards (text filter applied);
+      // then narrow to the selection. preMv: everything but the MV picks.
+      const colorCards = cards.filter((c) => deckColorMatch(c, deckColorFilter));
+      renderFilterUi({
+        f: savedDrawer, cards: colorCards, pruneFrom: getFolderCards(state.activeFolder),
+        btn: $("#saved-filters-btn"), count: $("#saved-filters-count"), drawer: $("#saved-drawer"), pills: $("#saved-pills"),
+        colors: { set: deckColorFilter, picker: $("#deck-colors") }, onChange: () => renderSavedCards({ filtersOnly: true }),
+      });
+      const preMv = colorCards.filter((c) => drawerMatch(c, savedDrawer, "mv"));
+      const visible = preMv.filter((c) => sectionPasses(savedDrawer.mv, mvKeys(c)));
 
       // Maybeboard cards stay in the deck but are excluded from the main section and
       // everything that measures the deck (analysis, size, export) — see below.
@@ -682,12 +879,12 @@
       $("#deck-start").hidden = !showStart;
       if (showStart) {
         savedEmpty.style.display = "none";
-        $("#deck-tools").style.display = "none";
         $("#deck-start-title").textContent = noDecks ? "Create your first deck" : "Start with a commander";
         $("#deck-start-pick").textContent = noDecks ? "New deck" : "Choose a commander";
         $("#deck-start-import").hidden = noDecks;
       }
       $("#saved-sort-bar").style.display = showStart ? "none" : "";
+      if (showStart) $("#saved-drawer").hidden = true;
       state.savedVisible = mainVisible; // exact on-screen main-deck set, used by the export button
       if (savedExportBtn) savedExportBtn.disabled = mainVisible.length === 0;
       const playmatBtn = $("#saved-playmat-btn");

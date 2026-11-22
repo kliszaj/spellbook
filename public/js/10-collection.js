@@ -253,7 +253,6 @@
     const COLLECTION_PAGE = 60;
     const COLOR_NAMES = { w: "White", u: "Blue", b: "Black", r: "Red", g: "Green", c: "Colorless" };
     const collectionUi = { colors: new Set(), query: "", binder: "", sortField: "name", sortDir: "asc", shown: 0, notice: "" };
-    const collectionMvFilter = new Set(); // mana-value chips (while sorting by Mana value)
     let collectionLoading = null;
     let swapsStatusTimer = null;
 
@@ -357,7 +356,6 @@
 
     function renderCollection(reset) {
       const grid = $("#collection-grid");
-      const collectionTypeFilterEl = $("#collection-type-filter");
       renderCollectionHeader();
       renderBinderOptions();
       renderBinderRail();
@@ -366,19 +364,19 @@
       if (hasCollection()) {
         const filtered = filterCollectionItems(collectionIndex.list, { query: collectionUi.query, colors: [...collectionUi.colors], binder: collectionUi.binder });
         const byId = new Map(filtered.map((it) => [it.card.id, it]));
-        renderTypeFilterChips(collectionTypeFilterEl, filtered.map((it) => it.card), collectionTypeFilter, () => renderCollection(true));
-        const landsOn = typeFilterIsLands(collectionTypeFilter);
-        if (!landsOn) collectionLandFilter.length = 0;
-        const typeOnly = filtered.filter((it) => matchesTypeFilter(it.card, collectionTypeFilter));
-        renderLandChips($("#collection-land-chips"), typeOnly.map((it) => it.card), { on: landsOn, selected: collectionLandFilter, onChange: () => renderCollection(true) });
-        const typeFiltered = typeOnly.filter((it) => landColorMatches(it.card, collectionLandFilter));
-        const mvOn = true; // always shown, like the Decks tab
-        renderMvChips($("#collection-mv-chips"), typeFiltered.map((it) => it.card), { on: mvOn, selected: collectionMvFilter, onChange: () => renderCollection(true) });
-        const mvFiltered = mvOn && collectionMvFilter.size ? typeFiltered.filter((it) => mvMatches(it.card, collectionMvFilter)) : typeFiltered;
+        renderFilterUi({
+          f: collectionDrawer, cards: filtered.map((it) => it.card), pruneFrom: collectionIndex.list.map((it) => it.card),
+          btn: $("#collection-filters-btn"), count: $("#collection-filters-count"), drawer: $("#collection-drawer"), pills: $("#collection-pills"),
+          colors: { set: collectionUi.colors, picker: $("#collection-colors") }, onChange: () => renderCollection(true),
+        });
+        const mvFiltered = filtered.filter((it) => drawerMatch(it.card, collectionDrawer));
+        const showing = $("#collection-showing");
+        if (showing) showing.textContent = mvFiltered.length === collectionIndex.list.length ? "" : `Showing ${mvFiltered.length.toLocaleString()} of ${collectionIndex.list.length.toLocaleString()}`;
         items = sortCardsByField(mvFiltered.map((it) => it.card), collectionUi.sortField, collectionUi.sortDir).map((c) => byId.get(c.id));
       } else {
-        collectionTypeFilterEl.style.display = "none";
-        collectionTypeFilterEl.replaceChildren();
+        $("#collection-drawer").hidden = true;
+        $("#collection-pills").replaceChildren();
+        $("#collection-showing").textContent = "";
       }
       if (reset) { grid.replaceChildren(); collectionUi.shown = 0; }
       const next = items.slice(collectionUi.shown, collectionUi.shown + COLLECTION_PAGE);
@@ -439,6 +437,7 @@
     }
 
     buildColorPicker($("#collection-colors"), collectionUi.colors, () => renderCollection(true), { colorless: true, exclusiveColorless: true });
+    wireFiltersButton($("#collection-filters-btn"), collectionDrawer);
     let collectionFilterTimer = null;
     $("#collection-filter").addEventListener("input", (e) => {
       collectionUi.query = e.target.value;

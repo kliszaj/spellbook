@@ -10,18 +10,17 @@
     }
 
     function renderDeckTools(isRealDeck, mainVisible) {
-      $("#deck-tools").style.display = "flex";
       const qty = (list) => list.reduce((n, c) => n + cardQty(state.activeFolder, c.id), 0);
       const allMain = getFolderCards(state.activeFolder).filter((c) => !isMaybe(state.activeFolder, c.id));
-      $("#deck-showing").textContent = deckColorFilter.size ? `Showing ${qty(mainVisible)} of ${qty(allMain)}` : "";
-      const own = isRealDeck && hasCollection() ? ownCount(collectionIndex, allMain.filter((c) => !isBasicLand(c))) : null;
-      $("#deck-owned").textContent = own ? `Own ${own.owned} of ${own.total}` : "";
+      const shown = qty(mainVisible), total = qty(allMain);
+      $("#deck-showing").textContent = shown === total ? "" : `Showing ${shown} of ${total}`;
       const planBtn = $("#deck-gameplan-btn");
       planBtn.style.display = isRealDeck ? "" : "none";
       planBtn.textContent = state.deckNotes[state.activeFolder] ? "Game plan ✓" : "Game plan";
     }
 
     buildColorPicker($("#deck-colors"), deckColorFilter, () => renderSavedCards({ filtersOnly: true }), { colorless: true });
+    wireFiltersButton($("#saved-filters-btn"), savedDrawer);
 
     const gameplanModal = $("#gameplan-modal");
     function updateGameplanCount() {

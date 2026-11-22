@@ -199,21 +199,14 @@
         <div class="saved-section" id="saved-section">
           <div class="saved-main">
           <div class="search-section">
-            <div class="color-identity">
-              <div class="color-toggles" id="deck-colors" aria-label="Filter deck by color"></div>
-            </div>
-            <div class="search-bar">
-              <input type="text" id="saved-filter" placeholder="Filter saved cards...">
+            <div class="search-bar has-colors">
+              <input type="text" id="saved-filter" placeholder="Filter saved cards..." aria-label="Filter cards by name or type">
+              <div class="color-toggles inline-colors" id="deck-colors" aria-label="Filter deck by color"></div>
             </div>
           </div>
           <div class="deck-progress-sentinel" id="deck-progress-sentinel" aria-hidden="true"></div>
           <div class="deck-progress" id="deck-progress" hidden></div>
           <div id="deck-analysis" class="deck-analysis" style="display:none"></div>
-          <div class="deck-tools" id="deck-tools" style="display:none">
-            <span class="deck-owned" id="deck-owned"></span>
-            <span class="deck-showing" id="deck-showing"></span>
-            <button class="export-btn" id="deck-gameplan-btn" type="button">Game plan</button>
-          </div>
           <div class="sort-bar saved-sort-bar" id="saved-sort-bar">
             <span class="sort-label">Sort</span>
             <select id="saved-sort-field">
@@ -224,16 +217,16 @@
               <option value="eur">Price</option>
             </select>
             <button class="sort-dir-btn" id="saved-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
-            <div class="mv-chips" id="saved-mv-chips" aria-label="Filter by mana value" hidden></div>
-            <div class="land-chips" id="saved-land-chips" aria-label="Filter lands by the colours they make" hidden></div>
+            <button class="export-btn filters-btn" id="saved-filters-btn" type="button" aria-expanded="false" aria-controls="saved-drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M7 12h10M10 18h4"/></svg><span>Filters</span><span class="filters-count" id="saved-filters-count" hidden></span></button>
+            <div class="filter-pills" id="saved-pills"></div>
             <div class="deck-io">
+              <span class="view-showing" id="deck-showing"></span>
+              <button class="export-btn" id="deck-gameplan-btn" type="button">Game plan</button>
               <button class="export-btn" id="saved-playmat-btn" title="Play in Playmat: opens this deck there, ready to import" aria-label="Play in Playmat" hidden>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                <span>Play</span>
               </button>
               <button class="export-btn" id="saved-import-btn" title="Import a card list into this deck" aria-label="Import card list">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                <span>Import</span>
               </button>
               <div class="export-wrap">
               <button class="export-btn" id="saved-export-btn" title="Copy the visible cards as a Cardmarket list" aria-label="Export list" aria-haspopup="menu" aria-expanded="false">
@@ -247,7 +240,7 @@
               </div>
             </div>
           </div>
-          <div class="type-filter" id="saved-type-filter" style="display:none" aria-label="Filter by card type"></div>
+          <div class="filter-drawer" id="saved-drawer" hidden aria-label="Filters"></div>
           <div class="deck-start" id="deck-start" hidden>
             <div class="deck-start-crown" aria-hidden="true">♛</div>
             <h2 id="deck-start-title">Start with a commander</h2>
@@ -268,11 +261,9 @@
 
         <div class="collection-section" id="collection-section">
           <div class="search-section">
-            <div class="color-identity">
-              <div class="color-toggles" id="collection-colors" aria-label="Filter by color identity"></div>
-            </div>
-            <div class="search-bar">
-              <input type="text" id="collection-filter" placeholder="Filter your collection by name…">
+            <div class="search-bar has-colors">
+              <input type="text" id="collection-filter" placeholder="Filter your collection by name…" aria-label="Filter your collection by name">
+              <div class="color-toggles inline-colors" id="collection-colors" aria-label="Filter by color identity"></div>
             </div>
           </div>
           <div class="sort-bar">
@@ -285,17 +276,18 @@
               <option value="eur">Price</option>
             </select>
             <button class="sort-dir-btn" id="collection-sort-dir" data-dir="asc" title="Ascending" aria-label="Ascending"></button>
-            <div class="mv-chips" id="collection-mv-chips" aria-label="Filter by mana value" hidden></div>
-            <div class="land-chips" id="collection-land-chips" aria-label="Filter lands by the colours they make" hidden></div>
+            <button class="export-btn filters-btn" id="collection-filters-btn" type="button" aria-expanded="false" aria-controls="collection-drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M7 12h10M10 18h4"/></svg><span>Filters</span><span class="filters-count" id="collection-filters-count" hidden></span></button>
+            <div class="filter-pills" id="collection-pills"></div>
+            <span class="view-showing" id="collection-showing"></span>
             <select id="collection-binder" aria-label="Binder"></select>
           </div>
+          <div class="filter-drawer" id="collection-drawer" hidden aria-label="Filters"></div>
           <div class="collection-header">
             <div class="collection-stats" id="collection-stats"></div>
             <button class="export-btn" id="collection-upload-btn" type="button">Upload CSV</button>
             <input type="file" id="collection-file" accept=".csv,text/csv" hidden>
           </div>
           <div class="collection-swaps-status" id="collection-swaps-status"></div>
-          <div class="type-filter" id="collection-type-filter" style="display:none" aria-label="Filter by card type"></div>
           <div id="collection-empty" class="empty-state">
             <p>No collection yet</p>
             <small>In ManaBox, open the Collection tab, use the top-right menu to export your whole collection (or a single binder) as CSV, then upload it here.</small>
